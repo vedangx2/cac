@@ -61,10 +61,24 @@ Each entry below corresponds to one build phase.
   of the baseline that was on file at that moment (`lib/session.ts`); the results screen now
   compares against that pinned baseline first and only falls back to the athlete's current
   baseline for older checks saved before the field existed (`app/results/[id]/page.tsx`, new pure
-  helper `lib/engine/resolveComparedBaselineId`). This stops a newly-recorded baseline from
+  helper `resolveComparedBaselineId` in `lib/engine/resolveBaseline.ts`). This stops a newly-recorded baseline from
   silently rewriting the outcome of a past check; the existing "baseline must predate the check"
   guard was left unchanged. AI also added `lib/engine/pinning.test.ts` (9 tests) and
   `lib/regression.test.ts` (10 tests) locking in four previously-fixed bugs — rapid number-scan
   taps, the reaction pad recovering when `requestAnimationFrame` never fires, a no-baseline check
   refusing without inviting a baseline, and an unchanged check never showing a green/"cleared"
   state. AI changed no threshold values, no safety copy, and added no clinical claims or sources.
+
+- **2026-07-27 (same day, second session) — Verification of the above, plus one test gap closed.**
+  The session that wrote the entry above was interrupted before it could verify its own work, so a
+  second AI session audited it from the code rather than trusting it. It confirmed the pinning
+  change was complete and that vitest, `tsc --noEmit`, lint and build were all already clean. To
+  check that the four regression tests genuinely fail against the OLD behaviour (rather than
+  passing no matter what), it temporarily reverted each of the seven fixes those tests guard, one
+  at a time, confirmed the matching test failed, and restored the file — the app's own code was
+  left byte-for-byte unchanged by that exercise. It found one real gap: nothing tested that
+  `finishSession` actually WRITES the pin at save time, which is the mechanism the whole feature
+  rests on. It added `lib/session.test.ts` (6 tests) covering that, using a small in-memory
+  stand-in for `lib/storage` and no new dependencies. It also corrected the file name cited in the
+  entry above, which named the helper function as though it were the file. No threshold values, no
+  safety copy, no clinical claims, and no product behaviour were changed in this session.
