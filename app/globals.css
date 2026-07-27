@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/*
+  ─────────────────────────────────────────────────────────────────────────────────────
+  DESIGN SYSTEM — "sideline instrument"
+  ─────────────────────────────────────────────────────────────────────────────────────
+
+  The design position, and why:
+
+  This app is read OUTDOORS, in daylight, one-handed, by someone in a hurry and possibly
+  rattled. So we split the interface into two worlds:
+
+    1. THE APP IS A DOCUMENT (light).  Rosters, results, forms — anything you READ — sits on
+       a near-white surface with near-black type. In bright sun a phone screen is fighting
+       ambient glare, and a light background at full brightness gives the highest real-world
+       luminance contrast. This is the clipboard on the sideline.
+
+    2. THE TESTS ARE INSTRUMENTS (dark).  The reaction pad and the number grid sit on
+       near-black. A dark surround removes every competing bright element so the stimulus —
+       a red/green pad, a white numeral — is the only thing your eye can land on. This is
+       the timing gate, not the clipboard.
+
+  Only two accent colors carry meaning, so nothing is ambiguous:
+    • SIGNAL BLUE  = "you can act here" (buttons, links, focus rings)
+    • FLAG RED     = "this is serious" (a flagged screening result, destructive actions)
+
+  There is deliberately NO success/OK green in the app chrome. A green UI state would imply
+  "cleared," which this app must never say. See CLAUDE.md → THE HARD RULE.
+
+  (The one green in this codebase is the reaction pad's GO stimulus. That is a physical
+  target to tap, not a verdict about anyone's health — see the note in the reaction test.)
+*/
+
+@theme {
+  /* ---- App chrome: the light "field document" ---- */
+  --color-paper: #ffffff;
+  --color-surface: #f1f3f4;
+  --color-line: #ccd4d9;
+  --color-line-strong: #9aa7b0;
+  --color-ink: #0b0f12;
+  --color-ink-soft: #4b565d;
+
+  /* ---- Instruments: the dark test screens ---- */
+  --color-instrument: #0a0d10;
+  --color-instrument-panel: #161c21;
+  --color-instrument-line: #2b343b;
+  --color-instrument-ink: #f3f5f6;
+  --color-instrument-ink-soft: #9dabb4;
+
+  /* ---- Meaning ---- */
+  --color-signal: #0b5fff;
+  --color-signal-deep: #0846c2;
+  --color-flag: #ce1126;
+  --color-flag-deep: #8c0a19;
+
+  /* ---- Reaction pad stimulus (physical targets, not verdicts) ---- */
+  --color-pad-wait: #c8102e;
+  --color-pad-go: #00a651;
+
+  /* Type scale leans large — this is read at arm's length, in a hurry. */
+  --text-hero: 2.75rem;
+  --text-hero--line-height: 1.05;
+}
+
+@layer base {
+  html {
+    /* Never let a stray wide element cause sideways scrolling on a phone. */
+    overflow-x: hidden;
+    /* Stop iOS from silently inflating type in landscape. */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    /* Removes the ~300ms double-tap-to-zoom delay, which would otherwise make every
+       button in the app feel sluggish on a phone. */
+    touch-action: manipulation;
+  }
+
+  /*
+    ACCESSIBILITY FLOOR — visible keyboard focus.
+    :focus-visible only fires for keyboard/AT users, so mouse and touch users never see a
+    ring, but a keyboard user can always tell exactly where they are. The ring is drawn with
+    outline (not box-shadow) so it survives on top of any background, light or dark.
+  */
+  :focus-visible {
+    outline: 3px solid var(--color-signal);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* On the dark instrument screens a blue ring is hard to see, so it goes white there. */
+  .instrument :focus-visible {
+    outline-color: #ffffff;
+  }
+
+  /*
+    The 0-3 ratings on the symptom checklist are real radio inputs that are visually hidden
+    (sr-only) with a styled label drawn in their place. A focus ring on a 1px clipped input is
+    invisible, which would leave a keyboard user with no idea which rating they were on — so
+    the ring is drawn on the label whenever the input inside it has keyboard focus.
+
+    It is a box-shadow rather than an outline, for two reasons. The ring has to read against
+    two very different backgrounds: the white card (for unselected ratings) and the solid blue
+    chip (for the selected one). Two stacked shadows give a white separator ring first and the
+    blue ring outside it, so there is always contrast either way. It also keeps the indicator
+    under our control instead of relying on the browser's automatic focus ring, whose colour
+    the browser picks for itself.
+  */
+  label:has(input:focus-visible) {
+    box-shadow:
+      0 0 0 3px #ffffff,
+      0 0 0 6px var(--color-signal);
+  }
+
+  /* Timing numbers must not jitter as digits change. Tabular figures keep every digit the
+     same width, so a live stopwatch counts up without the layout dancing. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/*
+  ACCESSIBILITY FLOOR — respect reduced motion.
+  Someone who has just taken a hit to the head may be motion-sensitive, which makes this
+  more than a nicety here. We keep transitions functional but effectively instant.
+  NOTE: we never animate anything load-bearing, so removing motion never hides information.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+  Note: the number grid's wrong-tap feedback is deliberately NOT a CSS animation. The
+  reduced-motion rule above would switch an animation off, and that would silently remove the
+  only signal telling someone they tapped the wrong number. Instead the grid holds a red
+  background for a moment using ordinary state, so the feedback survives for every user.
+*/
