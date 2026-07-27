@@ -36,6 +36,7 @@ import {
   MissingBaselineError,
   buildBreakdown,
   compareToBaseline,
+  resolveComparedBaselineId,
 } from '@/lib/engine';
 import type { Athlete, FlagOutcome, TestResult } from '@/lib/types';
 import { formatDateTime } from '@/lib/format';
@@ -73,7 +74,20 @@ export default function ResultPage() {
     }
 
     // Find the baseline this check should be measured against.
-    const baseline = athlete?.baselineId ? await getResult(athlete.baselineId) : null;
+    //
+    // PINNED FIRST: a check saved by a current version of the app records the baseline that was
+    // on file the moment it was taken (`comparedToBaselineId`). We resolve THAT, so a later
+    // re-baselining can never change which baseline this old check is scored against. The old
+    // baseline record is never deleted when a new one is recorded, so it is still here to load.
+    //
+    // LEGACY FALLBACK: checks saved before this field existed have no pin, so for them we fall
+    // back to the athlete's current `baselineId` — exactly the old behaviour, so they still open.
+    //
+    // Either way the id might resolve to nothing (no baseline at all, or a pinned baseline that
+    // has somehow gone missing). We pass whatever we find — including null — to the engine, which
+    // refuses loudly rather than inventing a reassuring "no change" result.
+    const baselineId = resolveComparedBaselineId(check, athlete);
+    const baseline = baselineId ? await getResult(baselineId) : null;
 
     try {
       // The engine throws rather than returning anything when it can't legitimately compare.

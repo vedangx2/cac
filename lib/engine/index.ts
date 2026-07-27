@@ -5,4 +5,5 @@
 
 export { compareToBaseline, MissingBaselineError, InvalidComparisonError } from './compare';
 export { buildBreakdown, type ComparisonRow } from './breakdown';
+export { resolveComparedBaselineId } from './resolveBaseline';
 export * from './thresholds';

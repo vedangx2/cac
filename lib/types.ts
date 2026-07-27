@@ -7,8 +7,11 @@
 // and engine are all built against exactly these definitions. If a shape needs to change,
 // change it here first, on purpose, and update everything that depends on it.
 //
-// (The only thing added versus the original brief is the `export` keyword, so other files
-// can import these types. The field names and types are untouched.)
+// (The only things added versus the original brief are the `export` keyword, so other files
+// can import these types, and ONE optional field on TestResult — `comparedToBaselineId` — which
+// pins a check to the exact baseline it was scored against at save time. It is optional so
+// every existing record and shape stays valid; nothing else is renamed or changed. See the
+// note on that field below and CLAUDE.md's data-contract section.)
 
 /**
  * The scores from one sitting of the test battery.
@@ -47,6 +50,22 @@ export type TestResult = {
   takenAt: number; // Date.now()
   kind: 'baseline' | 'check';
   scores: ModuleScores;
+
+  /**
+   * Which baseline this sitting was compared against, pinned at save time.
+   *
+   * WHY THIS EXISTS: an Athlete holds exactly ONE `baselineId`, and recording a new baseline
+   * replaces it. Without this field a check is always re-scored against whatever the athlete's
+   * CURRENT baseline happens to be when the result is opened — so recording a new baseline
+   * silently changes the outcome of every past check. That is dangerous: a result that once
+   * read "flagged" could quietly turn into "no change detected".
+   *
+   * So at the moment a CHECK is saved we stamp the baseline that was on file right then. The
+   * results screen honours that pin first and only falls back to the athlete's current
+   * `baselineId` when this field is ABSENT — i.e. for legacy checks saved before this field
+   * existed. It is only ever set on `kind: 'check'` records; baselines leave it undefined.
+   */
+  comparedToBaselineId?: string; // set on 'check' records at save time
 };
 
 /**

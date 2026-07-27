@@ -55,3 +55,16 @@ Each entry below corresponds to one build phase.
   recording a baseline on the spot, and there are unit tests for the exact scenario. Also
   fixed: a failed save could silently look like a successful one, the final "Save and continue"
   could be double-tapped, and a storage read failure left the results screen loading forever.
+
+- **2026-07-27 — Baseline pinning + regression tests.** AI added one optional field,
+  `TestResult.comparedToBaselineId`, which stamps each sideline check, at save time, with the id
+  of the baseline that was on file at that moment (`lib/session.ts`); the results screen now
+  compares against that pinned baseline first and only falls back to the athlete's current
+  baseline for older checks saved before the field existed (`app/results/[id]/page.tsx`, new pure
+  helper `lib/engine/resolveComparedBaselineId`). This stops a newly-recorded baseline from
+  silently rewriting the outcome of a past check; the existing "baseline must predate the check"
+  guard was left unchanged. AI also added `lib/engine/pinning.test.ts` (9 tests) and
+  `lib/regression.test.ts` (10 tests) locking in four previously-fixed bugs — rapid number-scan
+  taps, the reaction pad recovering when `requestAnimationFrame` never fires, a no-baseline check
+  refusing without inviting a baseline, and an unchanged check never showing a green/"cleared"
+  state. AI changed no threshold values, no safety copy, and added no clinical claims or sources.

@@ -97,6 +97,10 @@ type TestResult = {
   takenAt: number;              // Date.now()
   kind: 'baseline' | 'check';
   scores: ModuleScores;
+  comparedToBaselineId?: string; // set on 'check' records at save time; pins which baseline
+                                 // this check was scored against, so re-baselining can't
+                                 // silently rewrite an old check's result. Absent on legacy
+                                 // checks (they fall back to the athlete's current baselineId).
 };
 
 type Athlete = {

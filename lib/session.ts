@@ -133,6 +133,12 @@ export function stepPosition(step: BatteryStep): string {
  * result without updating those pointers would leave a result nothing links to.
  */
 export async function finishSession(session: BatterySession): Promise<TestResult> {
+  // Re-read the athlete FIRST, rather than trusting a stale copy. We do this before building the
+  // result (it used to happen after the save) because a check needs to know which baseline is on
+  // file RIGHT NOW so it can pin it — see below.
+  const athletes = await getAthletes();
+  const athlete = athletes.find((a) => a.id === session.athleteId);
+
   const result: TestResult = {
     id: crypto.randomUUID(),
     athleteId: session.athleteId,
@@ -141,15 +147,25 @@ export async function finishSession(session: BatterySession): Promise<TestResult
     scores: session.scores,
   };
 
+  // Pin a CHECK to the baseline that is on file at this exact moment.
+  //
+  // WHY: an Athlete holds one `baselineId`, and recording a new baseline replaces it. If a check
+  // only ever resolved "the athlete's current baseline" when it was later opened, then recording
+  // a new baseline would silently change which baseline that old check is scored against — quietly
+  // rewriting a past result. Stamping the baseline in use now freezes this check's comparison for
+  // good. If the athlete has no baseline yet, we leave it unset: that is a genuinely
+  // baseline-less check, which the results screen must refuse, not a legacy record.
+  if (result.kind === 'check' && athlete?.baselineId) {
+    result.comparedToBaselineId = athlete.baselineId;
+  }
+
   await saveResult(result);
 
-  // Re-read the athlete rather than trusting a stale copy, then update the right pointer.
-  const athletes = await getAthletes();
-  const athlete = athletes.find((a) => a.id === session.athleteId);
+  // Then update the right pointer on the athlete.
   if (athlete) {
     if (session.kind === 'baseline') {
-      // The newest baseline replaces the old one — we always compare against the most
-      // recent healthy measurement for this athlete.
+      // The newest baseline replaces the old one for FUTURE checks — but the old baseline record
+      // is left in storage untouched, so any check already pinned to it can still resolve it.
       athlete.baselineId = result.id;
     } else {
       athlete.checkIds = [...athlete.checkIds, result.id];
