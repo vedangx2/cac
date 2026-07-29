@@ -126,3 +126,23 @@ against a written brief. Each step below was a separate commit.
   and 3 tests to `lib/session.test.ts` for the write-side stamp. All 69 pre-existing tests
   still pass unchanged in behaviour; five test fixture factories gained the new required
   field. No threshold value, no safety copy, and no app behaviour was changed.
+
+- **2026-07-29, step 2 — The version guard.** AI added rule 7 to the comparison engine: both
+  sittings must have been measured by the version of the battery the app currently runs, or the
+  comparison is refused with a new `SchemaVersionMismatchError` (`lib/engine/compare.ts`). The
+  reason this is a safety guard rather than housekeeping: an old sitting holds only the fields
+  the old battery measured, so a newer engine reading it finds `null` for everything else, and
+  the engine's existing and correct behaviour of skipping anything it cannot compare would make
+  it silently report on whatever few fields happened to overlap — a one-module comparison
+  rendered with the same confidence as a full one. The guard requires both records to match the
+  current version rather than merely each other, because two old records are consistent with one
+  another but this build no longer knows what its comparison would be leaving out. AI gave the
+  error its own class so the result screen can explain it differently (`app/results/[id]/page.tsx`
+  gained a `schema-mismatch` state) and added a warning to the athlete detail screen
+  (`app/athletes/[id]/page.tsx`) so an out-of-date baseline is visible before someone runs a
+  check rather than after. Both screens keep the existing safety copy: no green, no checkmark,
+  and every path still ends in seeing a medical professional. The pre-existing ordering guard was
+  left byte-identical, verified by diffing it against the `v1-three-module` tag. AI added
+  `lib/engine/schemaGuard.test.ts` (13 tests) using fixtures, since the guard cannot fire in the
+  app today — every record and the app itself are both version 1. Tests 98 → 111. No threshold
+  value and no clinical claim was added.

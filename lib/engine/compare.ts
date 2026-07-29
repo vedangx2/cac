@@ -37,10 +37,16 @@
 // 6. A baseline must predate the check.
 //    See the guard below - this one closes a genuinely dangerous path through the app.
 //
+// 7. Both sittings must have been measured by THIS version of the battery.
+//    When the battery changes, older records hold different fields. Rule 3 would skip the
+//    missing ones one by one and quietly report on whatever overlapped, which would look
+//    exactly like a full comparison. We refuse instead. See lib/schema.ts.
+//
 // And the rule that governs the wording of everything below: this file describes CHANGES in
 // test scores. It never says anything about whether a person is concussed, healthy, or safe.
 
 import type { FlagOutcome, TestResult } from '../types';
+import { CURRENT_SCHEMA_VERSION } from '../schema';
 import {
   BALANCE_SWAY_INCREASE,
   REACTION_SLOWER_MS,
@@ -75,6 +81,38 @@ export class InvalidComparisonError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'InvalidComparisonError';
+  }
+}
+
+/**
+ * Thrown when a sitting was recorded under a different version of the battery than this build
+ * measures — see lib/schema.ts.
+ *
+ * WHY THIS IS ITS OWN ERROR rather than a flavour of InvalidComparisonError: the UI has to
+ * say something completely different about it. Every other refusal in here is about the two
+ * records being wrong for each other; this one is about the records being fine and the APP
+ * having moved on. The only fix is recording a fresh baseline, so the screen needs to say
+ * that, and it needs the version numbers to explain which side is out of date.
+ */
+export class SchemaVersionMismatchError extends Error {
+  /** The version the baseline sitting was recorded under. */
+  readonly baselineVersion: number;
+  /** The version the check sitting was recorded under. */
+  readonly checkVersion: number;
+  /** The version this build of the app measures. */
+  readonly currentVersion: number;
+
+  constructor(baselineVersion: number, checkVersion: number) {
+    super(
+      'These sittings were recorded under a different version of the test battery than this ' +
+        'version of the app measures, so their scores are not comparable. ' +
+        `(baseline: version ${baselineVersion}; check: version ${checkVersion}; ` +
+        `this app: version ${CURRENT_SCHEMA_VERSION}.)`,
+    );
+    this.name = 'SchemaVersionMismatchError';
+    this.baselineVersion = baselineVersion;
+    this.checkVersion = checkVersion;
+    this.currentVersion = CURRENT_SCHEMA_VERSION;
   }
 }
 
@@ -136,6 +174,34 @@ export function compareToBaseline(
         'only means something if it was recorded BEFORE the hit, while the athlete was well, so ' +
         'this check cannot be compared against it.',
     );
+  }
+
+  // -- Rule 7: both sittings must have been measured by THIS version of the battery. --
+  //
+  // The scores object holds whatever the battery measured at the time. Change the battery and
+  // the records written afterwards have different keys from the ones written before. Both are
+  // honest records; they are simply not measurements of the same things.
+  //
+  // The danger is that nothing about this fails loudly on its own. A module the older sitting
+  // never measured arrives here as `null`, and rule 3 above correctly skips anything it cannot
+  // compare — so an old baseline against a new check would quietly compare whatever few fields
+  // happened to survive the change and report on those. A one-module comparison rendered with
+  // the same confidence as a full one is exactly the false reassurance this app exists to
+  // avoid.
+  //
+  // So we require BOTH sittings to match the current version, not merely each other. Two old
+  // sittings are comparable with one another in principle, but this build no longer knows what
+  // its own comparison logic would be leaving out, and guessing is not a thing we do here.
+  //
+  // The cost is real and accepted: after the battery changes, old baselines stop opening and
+  // the athlete has to record a new one. That is the same trade rule 6 makes — losing the
+  // ability to re-read an old result is worth it to never show a comparison we cannot stand
+  // behind.
+  if (
+    baseline.schemaVersion !== CURRENT_SCHEMA_VERSION ||
+    check.schemaVersion !== CURRENT_SCHEMA_VERSION
+  ) {
+    throw new SchemaVersionMismatchError(baseline.schemaVersion, check.schemaVersion);
   }
 
   const modules = { reaction: false, scan: false, symptom: false, balance: false };

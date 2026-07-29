@@ -34,6 +34,7 @@ import { getAthlete, getResult } from '@/lib/storage';
 import {
   type ComparisonRow,
   MissingBaselineError,
+  SchemaVersionMismatchError,
   buildBreakdown,
   compareToBaseline,
   resolveComparedBaselineId,
@@ -48,6 +49,19 @@ type ScreenState =
   | { status: 'baseline'; result: TestResult; athlete: Athlete | null }
   /** We could not run the comparison at all. `check` is null when storage itself failed. */
   | { status: 'cannot-compare'; message: string; athlete: Athlete | null; check: TestResult | null }
+  /**
+   * The records are fine but were measured by a different version of the battery than this
+   * build. Its own state because the explanation and the fix are completely different from
+   * every other refusal: nothing is wrong with the data, the app moved on, and the only way
+   * forward is a fresh baseline.
+   */
+  | {
+      status: 'schema-mismatch';
+      athlete: Athlete | null;
+      check: TestResult;
+      staleSide: 'baseline' | 'check' | 'both';
+      fromFuture: boolean;
+    }
   | {
       status: 'compared';
       outcome: FlagOutcome;
@@ -97,6 +111,23 @@ export default function ResultPage() {
       const rows = buildBreakdown(baseline as TestResult, check);
       return { status: 'compared', outcome, rows, baseline: baseline as TestResult, check, athlete };
     } catch (error) {
+      // A version mismatch gets its own screen. It is not a data problem and it is not a
+      // "wrong baseline" problem, so the generic refusal copy would be actively misleading.
+      if (error instanceof SchemaVersionMismatchError) {
+        const baselineStale = error.baselineVersion !== error.currentVersion;
+        const checkStale = error.checkVersion !== error.currentVersion;
+        return {
+          status: 'schema-mismatch',
+          athlete,
+          check,
+          staleSide: baselineStale && checkStale ? 'both' : baselineStale ? 'baseline' : 'check',
+          // A record from a NEWER build means this phone is running an old copy of the app,
+          // which is a different instruction to the user: reload, don't re-record.
+          fromFuture:
+            error.baselineVersion > error.currentVersion || error.checkVersion > error.currentVersion,
+        };
+      }
+
       const message =
         error instanceof MissingBaselineError
           ? `${athlete?.name ?? 'This athlete'} has no baseline recorded, so this check cannot be compared against anything.`
@@ -170,6 +201,90 @@ export default function ResultPage() {
             </ButtonLink>
           </div>
         )}
+      </PageShell>
+    );
+  }
+
+  /* ── The battery changed under these records — also an ERROR, never a pass ────── */
+  if (state.status === 'schema-mismatch') {
+    const name = state.athlete?.name ?? 'this athlete';
+
+    return (
+      <PageShell>
+        <PageHeaderLite
+          title="This check could not be compared"
+          subtitle={`${state.athlete?.name ?? 'Athlete'} · ${formatDateTime(state.check.takenAt)}`}
+          backHref={state.athlete ? `/athletes/${state.athlete.id}` : '/athletes'}
+        />
+
+        {/*
+          Same visual weight as every other refusal on this screen: heavy flag border, no
+          green, no checkmark. A version mismatch is a "we have no answer for you" outcome and
+          it must look like one. The one thing that differs from the generic refusal is the
+          explanation and the next step.
+        */}
+        <div className="rounded-xl border-4 border-flag bg-paper p-6">
+          <p className="text-2xl font-black text-ink sm:text-3xl">No comparison was possible</p>
+
+          {state.fromFuture ? (
+            <p className="mt-3 text-lg leading-relaxed text-ink">
+              These test results were recorded by a newer version of this app than the one this
+              phone is running, so this copy cannot read their scores properly. Close the app
+              completely and reopen it to pick up the newer version, then try again.
+            </p>
+          ) : (
+            <p className="mt-3 text-lg leading-relaxed text-ink">
+              The tests in this app changed after{' '}
+              {state.staleSide === 'check'
+                ? 'this check was recorded'
+                : state.staleSide === 'both'
+                  ? 'both of these sittings were recorded'
+                  : `${name}'s baseline was recorded`}
+              . The app now measures different things, so the old scores and the new ones are
+              not measurements of the same tests and cannot be compared to each other.
+            </p>
+          )}
+
+          <p className="mt-4 text-lg font-bold leading-relaxed text-ink">
+            This is not a result. It does not mean anything was found, and it does not mean
+            nothing is wrong. If {name} may have hit their head,{' '}
+            <span className="underline decoration-flag decoration-4 underline-offset-4">
+              have them seen by a medical professional.
+            </span>
+          </p>
+        </div>
+
+        {!state.fromFuture && (
+          <div className="mt-6">
+            {/*
+              Same reasoning as the no-baseline screen: never invite a baseline recording on
+              the day of a possible head impact. A baseline taken from a possibly-concussed
+              athlete would make every future check look reassuringly normal.
+            */}
+            <Notice title="What to do about this">
+              {name} needs a new baseline recorded on the current tests before checks can be
+              compared again. Record it on a day when they are well and rested —{' '}
+              <strong>not today, and not after a possible head impact.</strong> The old
+              recordings stay saved on this device; they simply cannot be compared against the
+              new tests.
+            </Notice>
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          {state.athlete && (
+            <ButtonLink href={`/athletes/${state.athlete.id}`} variant="neutral">
+              Back to {state.athlete.name}
+            </ButtonLink>
+          )}
+          <ButtonLink href="/athletes" variant="neutral">
+            All athletes
+          </ButtonLink>
+        </div>
+
+        <div className="mt-8">
+          <ThresholdDisclaimer />
+        </div>
       </PageShell>
     );
   }

@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Button, ButtonLink, Card, Notice, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete, getResultsFor } from '@/lib/storage';
+import { isCurrentSchema } from '@/lib/schema';
 import { BATTERY_STEPS, STEP_PATHS, startSession } from '@/lib/session';
 import type { Athlete, TestResult } from '@/lib/types';
 import { completedModules, formatDateTime } from '@/lib/format';
@@ -82,6 +83,15 @@ export default function AthleteDetailPage() {
   const baseline = results.find((r) => r.id === athlete.baselineId) ?? null;
   const checks = results.filter((r) => r.kind === 'check');
 
+  // Was this baseline recorded on the tests the app runs today?
+  //
+  // WHY WARN HERE AND NOT ONLY ON THE RESULT SCREEN: the result screen catches it too, but by
+  // then someone has already run a check on a hurt athlete and has nothing to show for it. This
+  // is the screen where a sitting starts, so it is the last useful moment to say "the baseline
+  // you are about to measure against is out of date" — while there is still time to do
+  // something about it on a day when the athlete is well.
+  const baselineOutOfDate = baseline !== null && !isCurrentSchema(baseline);
+
   return (
     <PageShell>
       <header className="mb-8">
@@ -104,6 +114,21 @@ export default function AthleteDetailPage() {
           <Notice title="Baseline saved">
             {athlete.name}&apos;s baseline is stored on this device. Future sideline checks will
             be compared against it.
+          </Notice>
+        </div>
+      )}
+
+      {baselineOutOfDate && (
+        <div className="mb-6">
+          <Notice tone="flag" title="This baseline was recorded on an older version of the tests">
+            The tests in this app have changed since {athlete.name}&apos;s baseline was recorded,
+            so it measures different things than a check would today. The app will{' '}
+            <strong>refuse to compare against it</strong> rather than compare the few parts that
+            happen to overlap — a partial comparison would look just like a complete one.
+            <br />
+            <br />
+            Record a new baseline for {athlete.name} on a day when they are well and rested. The
+            old recording stays saved on this device.
           </Notice>
         </div>
       )}
