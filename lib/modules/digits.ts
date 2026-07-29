@@ -27,6 +27,11 @@
 // ask people to trust. All-or-nothing needs no justification beyond the task itself.
 
 import { type DigitForm, DIGIT_TRIALS_PER_FORM } from '../forms';
+import { type SpanScore, isExactMatch, scoreSpanTrials } from './span';
+
+// Re-exported so the screen and the tests import span scoring from the module they are about,
+// while the arithmetic itself stays in one place shared with pattern span.
+export { type SpanScore, scoreSpanTrials };
 
 /**
  * How long each digit stays on screen, in milliseconds.
@@ -55,32 +60,7 @@ export function reversedSequence(sequence: readonly number[]): number[] {
  * too: a partial answer that happens to start correctly is still a failed trial.
  */
 export function isTrialCorrect(sequence: readonly number[], entered: readonly number[]): boolean {
-  const expected = reversedSequence(sequence);
-  if (entered.length !== expected.length) return false;
-
-  return expected.every((digit, index) => entered[index] === digit);
-}
-
-export type SpanScore = {
-  formId: string;
-  trialsCorrect: boolean[];
-  correct: number;
-};
-
-/**
- * Turn per-trial pass/fail into the stored score.
- *
- * `trialsCorrect` is kept in presentation order rather than collapsed to a count alone, because
- * the pattern carries information the total does not: "failed both sixes and the seven" and
- * "failed two threes" are the same score of 6 and very different sittings. That detail survives
- * into the JSON export, where it is the kind of thing threshold work actually needs.
- */
-export function scoreSpanTrials(formId: string, trialsCorrect: readonly boolean[]): SpanScore {
-  return {
-    formId,
-    trialsCorrect: [...trialsCorrect],
-    correct: trialsCorrect.filter(Boolean).length,
-  };
+  return isExactMatch(reversedSequence(sequence), entered);
 }
 
 /** The best possible score, for showing "x out of 9". */

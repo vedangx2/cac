@@ -69,6 +69,7 @@ export const BATTERY_STEPS: BatteryStep[] = [
   'symptom',
   'wordLearning',
   'digitSpan',
+  'patternSpan',
   'wordRecognition',
 ];
 

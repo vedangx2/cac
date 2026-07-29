@@ -59,6 +59,7 @@ function source(relativePath: string): string {
   re-established against app/tests/pattern when that screen is built. See SESSION-REPORT.md.
 */
 const NOISE_FLOOR_SRC = source(join('app', 'tools', 'noise-floor', 'page.tsx'));
+const PATTERN_SRC = source(join('app', 'tests', 'pattern', 'page.tsx'));
 const RESULTS_SRC = source(join('app', 'results', '[id]', 'page.tsx'));
 
 /* ── Small fixtures for the behavioural (engine) assertions ───────────────────────── */
@@ -132,28 +133,41 @@ function identicalCheck(): TestResult {
    — fails these assertions.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
-describe.todo(
-  '#1 rapid taps are not miscounted — RE-ESTABLISH against app/tests/pattern when it is built',
-  /*
-    NOT SKIPPED BECAUSE IT FAILS. Skipped because its subject was deleted and its replacement does
-    not exist yet, and a `todo` says that out loud in the test output every single run instead of
-    letting the gap disappear quietly.
+/*
+  RE-ESTABLISHED against app/tests/pattern, which is the screen that now has this problem.
 
-    THE BUG, so whoever builds pattern span knows what to protect against: the number scan's tap
-    handler read "which number are we looking for" from React state. State only updates on the next
-    render, so two correct taps arriving in the same frame were both judged against the OLD target
-    and the second was counted as an error. An athlete tapping fast and correctly was scored as
-    making mistakes.
+  THE ORIGINAL BUG: the deleted number scan's tap handler read "which number are we looking for"
+  from React state. State only updates on the next render, so two correct taps arriving in the same
+  frame were both judged against the OLD target and the second was counted as an error. An athlete
+  tapping fast and correctly — which is what a good answer looks like — was scored as making
+  mistakes.
 
-    WHY PATTERN SPAN HAS EXACTLY THIS PROBLEM: it judges each tap against the next expected cell in
-    a remembered sequence. Someone reproducing a six-cell pattern taps quickly and confidently —
-    that is what a correct answer looks like — so several taps will land inside one frame. Reading
-    the expected cell from React state would fail the fast, correct athlete and pass the slow one.
+  WHY PATTERN SPAN HAS EXACTLY THIS PROBLEM: it judges each tap against the next expected cell in a
+  remembered sequence. Someone reproducing a six-cell pattern taps quickly and confidently, so
+  several taps land inside one frame. Reading the expected position from React state would fail the
+  fast, accurate athlete and pass the slow one.
 
-    THE FIX to assert: keep the expected position in a ref written synchronously, and have the tap
-    handler read the ref. Then re-point these assertions at app/tests/pattern/page.tsx.
-  */
-);
+  STRUCTURAL GUARD (see the note at the top of this file).
+*/
+describe('#1 pattern span — rapid taps are judged against a ref, not React state (structural guard)', () => {
+  it('keeps the expected position in a ref, written synchronously', () => {
+    expect(PATTERN_SRC).toMatch(/const expectedIndexRef = useRef\(/);
+    expect(PATTERN_SRC).toMatch(/expectedIndexRef\.current = nextIndex;/);
+  });
+
+  it('judges each tap against that ref, so taps arriving before a re-render see the real position', () => {
+    // The exact line the fix depends on. Reverting to reading the render-only `tapCount` state
+    // would fail this — which is the regression being guarded.
+    expect(PATTERN_SRC).toMatch(/const expectedIndex = expectedIndexRef\.current;/);
+  });
+
+  it('tracks a failed trial in a ref too, so several wrong taps in one frame cannot undo it', () => {
+    // Same hazard, second variable. If "this trial is already wrong" lived in state, a later tap in
+    // the same frame could read the stale value and score a failed trial as correct.
+    expect(PATTERN_SRC).toMatch(/const trialFailedRef = useRef\(/);
+    expect(PATTERN_SRC).toMatch(/trialFailedRef\.current = true;/);
+  });
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════════════
    #2 — Reaction pad recovers if requestAnimationFrame never fires (backgrounded tab).
@@ -182,6 +196,41 @@ describe('#2 timed pad — recovers when requestAnimationFrame never fires (stru
 
   it('throws out an implausibly long trial and repeats it instead of recording garbage', () => {
     expect(NOISE_FLOOR_SRC).toMatch(/if \(ms > MAX_PLAUSIBLE_REACTION_MS\)/);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #2b — Pattern span cannot soft-lock if its playback timer chain stalls.
+
+   The same class of bug as #2, in the screen that inherited the risk. Playback is a chain of
+   timers; if any link fails to fire — backgrounded tab, throttled timer, suspended page — the
+   athlete would sit forever on a grid that never finishes flashing and never accepts a tap, with
+   no way forward and no sign anything had broken.
+
+   The fix: reaching the input phase does not depend solely on the chain completing. A watchdog is
+   armed BEFORE the chain starts and force-completes playback if the chain has not finished by the
+   time it possibly could have.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#2b pattern span — a stalled playback chain cannot trap the athlete (structural guard)', () => {
+  it('arms a watchdog that force-completes playback', () => {
+    expect(PATTERN_SRC).toMatch(/watchdogRef\.current = setTimeout\(\(\) => beginTapping\(\)/);
+  });
+
+  it('gives the watchdog a delay derived from the trial length, not a guess', () => {
+    expect(PATTERN_SRC).toMatch(/watchdogDelayMs\(cells\.length\)/);
+  });
+
+  it('can reach the athlete input phase without the timer chain finishing', () => {
+    // beginTapping must be reachable from the watchdog independently of the chain. If the only
+    // caller were inside the chain, the watchdog could not rescue anything.
+    const watchdogCallsIt = /watchdogRef\.current = setTimeout\(\(\) => beginTapping\(\)/.test(PATTERN_SRC);
+    const chainCallsIt = /position >= cells\.length\) \{\s*beginTapping\(\);/.test(PATTERN_SRC);
+
+    expect(watchdogCallsIt).toBe(true);
+    expect(chainCallsIt).toBe(true);
   });
 });
 

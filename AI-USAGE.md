@@ -265,3 +265,28 @@ against a written brief. Each step below was a separate commit.
   have failed three in a row starts guessing, which stops the remaining trials measuring anything.
   `digitSpan` was appended to `BATTERY_STEPS` between the two word screens, since the gap between
   the word pair is what makes the delayed score meaningful. Tests 224 → 244.
+
+- **2026-07-29, step 5c — Pattern span, and both lost guards re-established.** AI built
+  `/tests/pattern` (cells light up on a 3x3 grid, tapped back in the same order), the pure logic in
+  `lib/modules/pattern.ts`, shared span scoring in `lib/modules/span.ts`, and 28 tests. Nine fixed
+  trials at lengths 2,2,3,3,4,4,5,5,6 — shorter than digit span's ladder because a remembered path
+  across a grid is harder than digits at the same length, and matching digit span would have
+  produced a floor where almost nobody passes the long trials. A 3x3 grid rather than 4x4 because
+  this is used on a phone outdoors: nine cells keep tap targets well above the accessible minimum,
+  and a mis-tap caused by a small button would score as a memory failure.
+
+  This step re-established the two guards that died with the deleted screens, and **AI verified both
+  by mutation rather than by reading**:
+
+  1. *Judge a tap against a ref, not React state* — the number scan's original bug. AI changed the
+     tap handler to read the render-only `tapCount` state instead of `expectedIndexRef`; the test
+     "judges each tap against that ref" failed. File restored, confirmed byte-identical.
+  2. *Reaching the input phase must not depend on a callback that might never fire* — the reaction
+     pad's soft-lock, in its pattern-span form. Playback is a chain of timers, so AI armed a
+     watchdog before the chain starts that force-completes playback if the chain stalls. AI then
+     deleted the watchdog; three tests failed, including one asserting the input phase is reachable
+     independently of the chain. File restored, confirmed byte-identical.
+
+  `patternSpan` was appended to `BATTERY_STEPS` between digit span and the delayed word screen. Lit
+  cells are a bright neutral panel, never green, and there is still no per-trial right/wrong
+  feedback. Tests 244 → 272.
