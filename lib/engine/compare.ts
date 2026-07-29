@@ -47,19 +47,22 @@
 
 import type { FlagOutcome, TestResult } from '../types';
 import { CURRENT_SCHEMA_VERSION } from '../schema';
+import { DIGIT_TRIALS_PER_FORM, PATTERN_TRIALS_PER_FORM, RECOGNITION_GRID_SIZE } from '../forms';
 import {
   BALANCE_SWAY_INCREASE,
-  REACTION_SLOWER_MS,
-  SCAN_EXTRA_ERRORS,
-  SCAN_SLOWER_MS,
+  DIGIT_SPAN_FEWER_CORRECT,
+  GO_NO_GO_MORE_COMMISSION_ERRORS,
+  GO_NO_GO_MORE_OMISSION_ERRORS,
+  GO_NO_GO_SLOWER_MS,
+  PATTERN_SPAN_FEWER_CORRECT,
   SYMPTOM_INCREASE,
+  WORD_LEARNING_FEWER_CORRECT,
+  WORD_LEARNING_MORE_FALSE_ALARMS,
+  WORD_RECOGNITION_FEWER_CORRECT,
+  WORD_RECOGNITION_MORE_FALSE_ALARMS,
 } from './thresholds';
-import {
-  displayedSecondsDifference,
-  msText as ms,
-  pointsText as points,
-  secondsText as seconds,
-} from './units';
+import { type ChangeWords, type MeasurementKey, worseningFor } from './direction';
+import { msText as ms, pointsText as points } from './units';
 
 /* -------------------------------------------------------------------------------------
    Errors - these exist so the UI can tell the difference between "we compared and found
@@ -204,161 +207,260 @@ export function compareToBaseline(
     throw new SchemaVersionMismatchError(baseline.schemaVersion, check.schemaVersion);
   }
 
-  const modules = { reaction: false, scan: false, symptom: false, balance: false };
+  const modules = {
+    symptom: false,
+    wordLearning: false,
+    wordRecognition: false,
+    digitSpan: false,
+    patternSpan: false,
+    goNoGo: false,
+    balance: false,
+  };
   const explanations: string[] = [];
+  const unevaluated: string[] = [];
 
-  // -- Reaction time -----------------------------------------------------------------
-  // Higher = slower = worse, so we look for the check being LARGER than the baseline.
-  const baseReaction = baseline.scores.reaction;
-  const checkReaction = check.scores.reaction;
+  /*
+    WHY THE COMPARISONS ARE A TABLE AND NOT ELEVEN HAND-WRITTEN BLOCKS
 
-  if (baseReaction && checkReaction) {
-    const difference = checkReaction.medianMs - baseReaction.medianMs;
+    The original engine compared three modules with three near-identical blocks of if/else. At
+    eleven measurements that stops being readable and starts being dangerous: every block
+    repeats the same subtraction, and one of them getting the operands backwards is a silent,
+    severe bug — an athlete who has declined would read as improved (see direction.ts). It would
+    also be eleven separate places to remember the null-threshold rule.
 
-    if (difference >= REACTION_SLOWER_MS) {
-      modules.reaction = true;
+    So each measurement declares WHAT it is, and the single loop below decides what to say about
+    it. Direction lives in direction.ts, the magnitude comparison happens once, and the
+    null-threshold rule is applied in exactly one place.
+  */
+  type Comparison = {
+    /** Which module's flag this measurement can set. */
+    module: keyof typeof modules;
+    /** Which direction rule applies — see direction.ts. */
+    measurement: MeasurementKey;
+    /** How this measurement is named to a parent. */
+    label: string;
+    /** The flagging threshold, or null if we have no validated value yet. */
+    threshold: number | null;
+    /** The two values, or null on a side where the module was not recorded. */
+    baselineValue: number | null;
+    checkValue: number | null;
+    /** Render a value for display, e.g. "7 out of 9". */
+    format: (value: number) => string;
+    /** Render the SIZE of a change, e.g. "3", "62 ms", "5 points". */
+    formatChange: (magnitude: number) => string;
+    /** Words for a change in each direction, e.g. worse: "fewer correct". */
+    words: ChangeWords;
+    /**
+     * When true, a measurement missing from BOTH sittings produces no sentence at all.
+     * Used for modules that are not built yet — saying "go/no-go was not recorded" on every
+     * single result screen would be noise, not information.
+     */
+    silentWhenAbsent?: boolean;
+  };
+
+  const count = (value: number) => String(value);
+  const outOf = (total: number) => (value: number) => `${value} out of ${total}`;
+
+  const comparisons: Comparison[] = [
+    {
+      module: 'symptom',
+      measurement: 'symptomTotal',
+      label: 'The symptom score',
+      threshold: SYMPTOM_INCREASE,
+      baselineValue: baseline.scores.symptom?.total ?? null,
+      checkValue: check.scores.symptom?.total ?? null,
+      format: outOf(30),
+      formatChange: points,
+      words: { worse: 'higher', better: 'lower' },
+    },
+    {
+      module: 'wordLearning',
+      measurement: 'wordLearningCorrect',
+      label: 'Word learning, straight after seeing the words',
+      threshold: WORD_LEARNING_FEWER_CORRECT,
+      baselineValue: baseline.scores.wordLearning?.correct ?? null,
+      checkValue: check.scores.wordLearning?.correct ?? null,
+      format: outOf(RECOGNITION_GRID_SIZE),
+      formatChange: count,
+      words: { worse: 'fewer correct', better: 'more correct' },
+    },
+    {
+      module: 'wordLearning',
+      measurement: 'wordLearningFalseAlarms',
+      label: 'Words wrongly remembered straight away',
+      threshold: WORD_LEARNING_MORE_FALSE_ALARMS,
+      baselineValue: baseline.scores.wordLearning?.falseAlarms ?? null,
+      checkValue: check.scores.wordLearning?.falseAlarms ?? null,
+      format: count,
+      formatChange: count,
+      words: { worse: 'more', better: 'fewer' },
+    },
+    {
+      module: 'wordRecognition',
+      measurement: 'wordRecognitionCorrect',
+      label: 'Word recall after a delay',
+      threshold: WORD_RECOGNITION_FEWER_CORRECT,
+      baselineValue: baseline.scores.wordRecognition?.correct ?? null,
+      checkValue: check.scores.wordRecognition?.correct ?? null,
+      format: outOf(RECOGNITION_GRID_SIZE),
+      formatChange: count,
+      words: { worse: 'fewer correct', better: 'more correct' },
+    },
+    {
+      module: 'wordRecognition',
+      measurement: 'wordRecognitionFalseAlarms',
+      label: 'Words wrongly remembered after a delay',
+      threshold: WORD_RECOGNITION_MORE_FALSE_ALARMS,
+      baselineValue: baseline.scores.wordRecognition?.falseAlarms ?? null,
+      checkValue: check.scores.wordRecognition?.falseAlarms ?? null,
+      format: count,
+      formatChange: count,
+      words: { worse: 'more', better: 'fewer' },
+    },
+    {
+      module: 'digitSpan',
+      measurement: 'digitSpanCorrect',
+      label: 'Repeating numbers backwards',
+      threshold: DIGIT_SPAN_FEWER_CORRECT,
+      baselineValue: baseline.scores.digitSpan?.correct ?? null,
+      checkValue: check.scores.digitSpan?.correct ?? null,
+      format: outOf(DIGIT_TRIALS_PER_FORM),
+      formatChange: count,
+      words: { worse: 'fewer correct', better: 'more correct' },
+    },
+    {
+      module: 'patternSpan',
+      measurement: 'patternSpanCorrect',
+      label: 'Repeating tapped patterns',
+      threshold: PATTERN_SPAN_FEWER_CORRECT,
+      baselineValue: baseline.scores.patternSpan?.correct ?? null,
+      checkValue: check.scores.patternSpan?.correct ?? null,
+      format: outOf(PATTERN_TRIALS_PER_FORM),
+      formatChange: count,
+      words: { worse: 'fewer correct', better: 'more correct' },
+    },
+    {
+      module: 'goNoGo',
+      measurement: 'goNoGoMedianMs',
+      label: 'Go / no-go response time',
+      threshold: GO_NO_GO_SLOWER_MS,
+      baselineValue: baseline.scores.goNoGo?.medianMs ?? null,
+      checkValue: check.scores.goNoGo?.medianMs ?? null,
+      format: ms,
+      formatChange: ms,
+      words: { worse: 'slower', better: 'faster' },
+      silentWhenAbsent: true,
+    },
+    {
+      module: 'goNoGo',
+      measurement: 'goNoGoCommissionErrors',
+      label: 'Times they responded when the signal said stop',
+      threshold: GO_NO_GO_MORE_COMMISSION_ERRORS,
+      baselineValue: baseline.scores.goNoGo?.commissionErrors ?? null,
+      checkValue: check.scores.goNoGo?.commissionErrors ?? null,
+      format: count,
+      formatChange: count,
+      words: { worse: 'more', better: 'fewer' },
+      silentWhenAbsent: true,
+    },
+    {
+      module: 'goNoGo',
+      measurement: 'goNoGoOmissionErrors',
+      label: 'Times they missed a go signal entirely',
+      threshold: GO_NO_GO_MORE_OMISSION_ERRORS,
+      baselineValue: baseline.scores.goNoGo?.omissionErrors ?? null,
+      checkValue: check.scores.goNoGo?.omissionErrors ?? null,
+      format: count,
+      formatChange: count,
+      words: { worse: 'more', better: 'fewer' },
+      silentWhenAbsent: true,
+    },
+    {
+      module: 'balance',
+      measurement: 'balanceSway',
+      label: 'Balance sway',
+      threshold: BALANCE_SWAY_INCREASE,
+      baselineValue: baseline.scores.balance?.swayScore ?? null,
+      checkValue: check.scores.balance?.swayScore ?? null,
+      format: (value) => value.toFixed(1),
+      formatChange: (magnitude) => magnitude.toFixed(1),
+      words: { worse: 'more sway', better: 'less sway' },
+      silentWhenAbsent: true,
+    },
+  ];
+
+  for (const item of comparisons) {
+    const { baselineValue, checkValue } = item;
+
+    // -- Rule 3: a module we cannot compare is never counted as "no change". ------------
+    if (baselineValue === null || checkValue === null) {
+      const absentFromBoth = baselineValue === null && checkValue === null;
+      if (!(absentFromBoth && item.silentWhenAbsent)) {
+        explanations.push(
+          `${item.label} was not recorded in both sittings, so it could not be compared.`,
+        );
+      }
+      continue;
+    }
+
+    // Positive means worse, whichever way "worse" runs for this measurement. The sign handling
+    // lives in direction.ts precisely so it is not repeated here eleven times.
+    const worsening = worseningFor(item.measurement, baselineValue, checkValue);
+    const bothValues =
+      `(${item.format(checkValue)} now, compared with ${item.format(baselineValue)} at baseline)`;
+
+    /*
+      -- THE NULL-THRESHOLD RULE -------------------------------------------------------
+      No validated cut-off exists for this measurement yet, so we have no basis for saying
+      whether the change matters. We report the change, say plainly that we did not judge it,
+      and record it in `unevaluated` so the results screen can refuse to look reassuring.
+
+      What we must NOT do is fall through without setting a flag, because that is
+      indistinguishable from having checked and found nothing. "We did not look" is not
+      "we looked and it was fine". See thresholds.ts for why these are null.
+    */
+    if (item.threshold === null) {
+      unevaluated.push(item.label);
+
+      const movement =
+        worsening > 0
+          ? `${item.formatChange(worsening)} ${item.words.worse} than baseline`
+          : worsening < 0
+            ? `${item.formatChange(Math.abs(worsening))} ${item.words.better} than baseline`
+            : 'the same as baseline';
+
       explanations.push(
-        `Reaction time was ${ms(difference)} slower than this athlete's baseline ` +
-          `(${ms(checkReaction.medianMs)} now, compared with ${ms(baseReaction.medianMs)} at baseline). ` +
-          `This screen flags a slowdown of ${ms(REACTION_SLOWER_MS)} or more.`,
+        `${item.label}: ${movement} ${bothValues}. This screen has no tested cut-off for this ` +
+          'measurement yet, so it was NOT judged — treat it as unread, not as normal.',
       );
-    } else if (difference > 0) {
+      continue;
+    }
+
+    if (worsening >= item.threshold) {
+      modules[item.module] = true;
       explanations.push(
-        `Reaction time was ${ms(difference)} slower than baseline ` +
-          `(${ms(checkReaction.medianMs)} now, compared with ${ms(baseReaction.medianMs)}), ` +
-          `which is under the ${ms(REACTION_SLOWER_MS)} mark this screen flags at.`,
+        `${item.label} was ${item.formatChange(worsening)} ${item.words.worse} than this ` +
+          `athlete's baseline ${bothValues}. This screen flags a change of ` +
+          `${item.formatChange(item.threshold)} ${item.words.worse} or more.`,
+      );
+    } else if (worsening > 0) {
+      explanations.push(
+        `${item.label} was ${item.formatChange(worsening)} ${item.words.worse} than baseline ` +
+          `${bothValues}, which is under the ${item.formatChange(item.threshold)} ` +
+          `${item.words.worse} mark this screen flags at.`,
+      );
+    } else if (worsening < 0) {
+      explanations.push(
+        `${item.label} was ${item.formatChange(Math.abs(worsening))} ${item.words.better} than ` +
+          `baseline ${bothValues}.`,
       );
     } else {
-      explanations.push(
-        `Reaction time was ${ms(Math.abs(difference))} faster than baseline ` +
-          `(${ms(checkReaction.medianMs)} now, compared with ${ms(baseReaction.medianMs)}).`,
-      );
-    }
-  } else {
-    explanations.push(
-      'Reaction time was not recorded in both sittings, so it could not be compared.',
-    );
-  }
-
-  // -- Number scan -------------------------------------------------------------------
-  // Two independent ways to flag: taking longer, or making more mistakes. Either one alone
-  // is enough, because they can come apart - someone can stay fast by getting sloppy.
-  const baseScan = baseline.scores.scan;
-  const checkScan = check.scores.scan;
-
-  if (baseScan && checkScan) {
-    // ONE number does both jobs: the flag decision and the sentence.
-    //
-    // We originally flagged on the exact millisecond difference while printing a rounded one,
-    // and that could produce a sentence contradicting itself - "took 4.0 s longer ... which is
-    // under the 4.0 s mark this screen flags at" - because 3,960ms displays as 4.0s but does
-    // not cross a 4,000ms threshold. On a screen whose only job is to be believed, visibly
-    // broken arithmetic is worse than the 100ms of precision we give up.
-    //
-    // Rounding to the displayed precision can only ever move a borderline case ACROSS the
-    // threshold into flagging, never out of it - the safe direction for this app.
-    const timeDifference = displayedSecondsDifference(baseScan.elapsedMs, checkScan.elapsedMs);
-    const errorDifference = checkScan.errors - baseScan.errors;
-
-    if (timeDifference >= SCAN_SLOWER_MS) {
-      modules.scan = true;
-      explanations.push(
-        `The number scan took ${seconds(timeDifference)} longer than this athlete's baseline ` +
-          `(${seconds(checkScan.elapsedMs)} now, compared with ${seconds(baseScan.elapsedMs)}). ` +
-          `This screen flags ${seconds(SCAN_SLOWER_MS)} or more.`,
-      );
-    } else if (timeDifference > 0) {
-      explanations.push(
-        `The number scan took ${seconds(timeDifference)} longer than baseline ` +
-          `(${seconds(checkScan.elapsedMs)} now, compared with ${seconds(baseScan.elapsedMs)}), ` +
-          `which is under the ${seconds(SCAN_SLOWER_MS)} mark this screen flags at.`,
-      );
-    } else {
-      explanations.push(
-        `The number scan was ${seconds(Math.abs(timeDifference))} faster than baseline ` +
-          `(${seconds(checkScan.elapsedMs)} now, compared with ${seconds(baseScan.elapsedMs)}).`,
-      );
-    }
-
-    if (errorDifference >= SCAN_EXTRA_ERRORS) {
-      modules.scan = true;
-      explanations.push(
-        `There were ${errorDifference} more wrong taps on the number scan than at baseline ` +
-          `(${checkScan.errors} now, compared with ${baseScan.errors}). ` +
-          `This screen flags ${SCAN_EXTRA_ERRORS} or more extra mistakes.`,
-      );
-    } else if (errorDifference > 0) {
-      explanations.push(
-        `There ${errorDifference === 1 ? 'was' : 'were'} ${errorDifference} more wrong ` +
-          `${errorDifference === 1 ? 'tap' : 'taps'} on the number scan than at baseline ` +
-          `(${checkScan.errors} now, compared with ${baseScan.errors}), which is under the ` +
-          `${SCAN_EXTRA_ERRORS}-mistake mark this screen flags at.`,
-      );
-    }
-  } else {
-    explanations.push(
-      'The number scan was not recorded in both sittings, so it could not be compared.',
-    );
-  }
-
-  // -- Symptom checklist -------------------------------------------------------------
-  // Higher total = more/worse symptoms than this athlete's own normal.
-  const baseSymptom = baseline.scores.symptom;
-  const checkSymptom = check.scores.symptom;
-
-  if (baseSymptom && checkSymptom) {
-    const difference = checkSymptom.total - baseSymptom.total;
-
-    if (difference >= SYMPTOM_INCREASE) {
-      modules.symptom = true;
-      explanations.push(
-        `The symptom score rose by ${points(difference)} compared with this athlete's baseline ` +
-          `(${checkSymptom.total} out of 30 now, compared with ${baseSymptom.total}). ` +
-          `This screen flags a rise of ${points(SYMPTOM_INCREASE)} or more.`,
-      );
-    } else if (difference > 0) {
-      explanations.push(
-        `The symptom score rose by ${points(difference)} compared with baseline ` +
-          `(${checkSymptom.total} out of 30 now, compared with ${baseSymptom.total}), which is ` +
-          `under the ${points(SYMPTOM_INCREASE)} rise this screen flags at.`,
-      );
-    } else if (difference < 0) {
-      explanations.push(
-        `The symptom score was ${points(Math.abs(difference))} lower than baseline ` +
-          `(${checkSymptom.total} out of 30 now, compared with ${baseSymptom.total}).`,
-      );
-    } else {
-      explanations.push(
-        `The symptom score was the same as baseline (${checkSymptom.total} out of 30).`,
-      );
-    }
-  } else {
-    explanations.push(
-      'The symptom checklist was not completed in both sittings, so it could not be compared.',
-    );
-  }
-
-  // -- Balance -----------------------------------------------------------------------
-  // Not built yet (scores.balance is always null today), but the comparison is written so
-  // that adding the test later requires no change in here.
-  const baseBalance = baseline.scores.balance;
-  const checkBalance = check.scores.balance;
-
-  if (baseBalance && checkBalance) {
-    const difference = checkBalance.swayScore - baseBalance.swayScore;
-    if (difference >= BALANCE_SWAY_INCREASE) {
-      modules.balance = true;
-      explanations.push(
-        `Balance sway increased by ${difference.toFixed(1)} compared with this athlete's baseline ` +
-          `(${checkBalance.swayScore.toFixed(1)} now, compared with ${baseBalance.swayScore.toFixed(1)}).`,
-      );
+      explanations.push(`${item.label} was the same as baseline ${bothValues}.`);
     }
   }
-  // No "not compared" line for balance: the test doesn't exist yet, so saying it was skipped
-  // every single time would be noise.
 
   // -- Rule 4: any one module is enough. ---------------------------------------------
-  const flagged = modules.reaction || modules.scan || modules.symptom || modules.balance;
+  const flagged = Object.values(modules).some(Boolean);
 
-  return { flagged, modules, explanations };
+  return { flagged, modules, explanations, unevaluated };
 }

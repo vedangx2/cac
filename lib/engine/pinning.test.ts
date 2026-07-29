@@ -16,7 +16,7 @@ import type { Athlete, ModuleScores, TestResult } from '../types';
 import { CURRENT_SCHEMA_VERSION } from '../schema';
 import { InvalidComparisonError, compareToBaseline } from './compare';
 import { resolveComparedBaselineId } from './resolveBaseline';
-import { REACTION_SLOWER_MS } from './thresholds';
+import { SYMPTOM_INCREASE } from './thresholds';
 
 /* ── Fixtures ─────────────────────────────────────────────────────────────────────── */
 
@@ -27,24 +27,47 @@ const DAY = 24 * 60 * 60 * 1000;
 function scores(partial: Partial<ModuleScores> = {}): ModuleScores {
   return {
     symptom: partial.symptom ?? null,
-    reaction: partial.reaction ?? null,
-    scan: partial.scan ?? null,
+    wordLearning: partial.wordLearning ?? null,
+    wordRecognition: partial.wordRecognition ?? null,
+    digitSpan: partial.digitSpan ?? null,
+    patternSpan: partial.patternSpan ?? null,
+    goNoGo: partial.goNoGo ?? null,
     balance: partial.balance ?? null,
   };
 }
 
-/** A reaction module with a given median (the only thing the engine compares on). */
-function reaction(medianMs: number): NonNullable<ModuleScores['reaction']> {
-  return { trialsMs: [medianMs], medianMs, falseStarts: 0 };
+/**
+ * A symptom module with a given total, which is the one number these tests vary.
+ *
+ * WHY SYMPTOM: this file is about WHICH baseline a check resolves to, not about any particular
+ * measurement — it just needs one number that can differ between two sittings enough to change
+ * the verdict. The reaction module it used to use was deleted with the battery rewrite, and
+ * symptom is the natural replacement because it is currently the only module with a real
+ * threshold, so a difference in it actually flips flagged/not-flagged. A null-threshold module
+ * would leave every comparison unevaluated and these tests would stop distinguishing anything.
+ */
+function symptom(total: number): NonNullable<ModuleScores['symptom']> {
+  // itemScores is left empty on purpose: nothing in this file reads the per-item detail, and
+  // inventing ten numbers that happen to add up would only invite someone to read meaning into
+  // them. The engine compares on `total`.
+  return { itemScores: [], total };
 }
 
-function baselineSitting(id: string, takenAt: number, medianMs: number): TestResult {
+/**
+ * A baseline symptom total high enough that a LOWER later baseline can flip the verdict.
+ *
+ * Expressed in terms of the threshold rather than as a bare number, like every other test in this
+ * project, so retuning SYMPTOM_INCREASE cannot silently make these tests meaningless.
+ */
+const BASE_TOTAL = SYMPTOM_INCREASE + 1;
+
+function baselineSitting(id: string, takenAt: number, symptomTotal: number): TestResult {
   return {
     id,
     athleteId: ATHLETE,
     takenAt,
     kind: 'baseline',
-    scores: scores({ reaction: reaction(medianMs) }),
+    scores: scores({ symptom: symptom(symptomTotal) }),
     schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 }
@@ -52,7 +75,7 @@ function baselineSitting(id: string, takenAt: number, medianMs: number): TestRes
 function checkSitting(
   id: string,
   takenAt: number,
-  medianMs: number,
+  symptomTotal: number,
   comparedToBaselineId?: string,
 ): TestResult {
   return {
@@ -60,7 +83,7 @@ function checkSitting(
     athleteId: ATHLETE,
     takenAt,
     kind: 'check',
-    scores: scores({ reaction: reaction(medianMs) }),
+    scores: scores({ symptom: symptom(symptomTotal) }),
     comparedToBaselineId,
     schemaVersion: CURRENT_SCHEMA_VERSION,
   };
@@ -114,9 +137,10 @@ describe('resolveComparedBaselineId', () => {
 
 describe('a pinned baseline is used instead of the athlete current one', () => {
   it('scores the check against its pin, which can give a different verdict than the current baseline', () => {
-    const b1 = baselineSitting('b1', T0, 310); // the baseline that was on file when the check ran
-    const b2 = baselineSitting('b2', T0 + DAY, 310 - REACTION_SLOWER_MS - 10); // a faster baseline recorded later
-    const check = checkSitting('c1', T0 + 7 * DAY, 310, 'b1'); // pinned to b1
+    const b1 = baselineSitting('b1', T0, BASE_TOTAL); // the baseline on file when the check ran
+    // A later baseline recorded with FEWER symptoms — a "healthier" reference.
+    const b2 = baselineSitting('b2', T0 + DAY, BASE_TOTAL - SYMPTOM_INCREASE - 1);
+    const check = checkSitting('c1', T0 + 7 * DAY, BASE_TOTAL, 'b1'); // pinned to b1
     const store = new Map<string, TestResult>([
       ['b1', b1],
       ['b2', b2],
@@ -127,11 +151,11 @@ describe('a pinned baseline is used instead of the athlete current one', () => {
     const resolved = resolveBaseline(check, athlete('b2'), store);
     expect(resolved?.id).toBe('b1');
 
-    // Against its pin (b1) the reaction time is unchanged, so nothing flags...
+    // Against its pin (b1) the symptom total is unchanged, so nothing flags...
     expect(compareToBaseline(resolved, check).flagged).toBe(false);
 
-    // ...whereas against the current baseline (b2, a faster reference) the very same check would
-    // have crossed the reaction threshold. Pinning is what keeps the reassuring verdict here.
+    // ...whereas against the current baseline (b2, a lower-symptom reference) the very same check
+    // would have crossed the symptom threshold. Pinning is what keeps the verdict stable here.
     expect(compareToBaseline(b2, check).flagged).toBe(true);
   });
 });
@@ -140,8 +164,8 @@ describe('a pinned baseline is used instead of the athlete current one', () => {
 
 describe('a legacy check with no pin', () => {
   it('is scored against the athlete current baseline, exactly as before', () => {
-    const b2 = baselineSitting('b2', T0 + DAY, 310 - REACTION_SLOWER_MS - 10);
-    const legacyCheck = checkSitting('c-legacy', T0 + 7 * DAY, 310); // no comparedToBaselineId
+    const b2 = baselineSitting('b2', T0 + DAY, BASE_TOTAL - SYMPTOM_INCREASE - 1);
+    const legacyCheck = checkSitting('c-legacy', T0 + 7 * DAY, BASE_TOTAL); // no comparedToBaselineId
     const store = new Map<string, TestResult>([
       ['b2', b2],
       ['c-legacy', legacyCheck],
@@ -159,8 +183,8 @@ describe('a legacy check with no pin', () => {
 
 describe('recording a new baseline later', () => {
   it('leaves a previously-recorded pinned check scoring exactly as it did before', () => {
-    const b1 = baselineSitting('b1', T0, 310);
-    const check = checkSitting('c1', T0 + 7 * DAY, 310, 'b1'); // unchanged vs b1 → will not flag
+    const b1 = baselineSitting('b1', T0, BASE_TOTAL);
+    const check = checkSitting('c1', T0 + 7 * DAY, BASE_TOTAL, 'b1'); // unchanged vs b1 → no flag
     const store = new Map<string, TestResult>([
       ['b1', b1],
       ['c1', check],
@@ -172,7 +196,7 @@ describe('recording a new baseline later', () => {
 
     // Re-baseline: record b2 AFTER the check, and point the athlete at it. The old b1 record is
     // NOT removed from storage (finishSession only moves the pointer), so the pin can still load.
-    const b2 = baselineSitting('b2', T0 + 14 * DAY, 500);
+    const b2 = baselineSitting('b2', T0 + 14 * DAY, 0);
     store.set('b2', b2);
     const reBaselined = athlete('b2');
 
@@ -188,8 +212,8 @@ describe('recording a new baseline later', () => {
     // A legacy (un-pinned) check, after the same re-baselining, resolves to the NEW baseline b2,
     // which was recorded AFTER the check. The engine's ordering guard then refuses the comparison
     // outright — so the old result stops opening. Pinning is precisely what avoids this.
-    const check = checkSitting('c-legacy', T0 + 7 * DAY, 310); // no pin
-    const b2 = baselineSitting('b2', T0 + 14 * DAY, 500); // recorded after the check
+    const check = checkSitting('c-legacy', T0 + 7 * DAY, BASE_TOTAL); // no pin
+    const b2 = baselineSitting('b2', T0 + 14 * DAY, 0); // recorded after the check
     const store = new Map<string, TestResult>([
       ['b2', b2],
       ['c-legacy', check],

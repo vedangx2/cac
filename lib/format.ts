@@ -23,15 +23,30 @@ export function formatDate(timestamp: number): string {
   });
 }
 
-/** Which of the three tests actually got recorded in a sitting. */
+/**
+ * Which modules actually got recorded in a sitting.
+ *
+ * Takes `unknown` per field rather than importing ModuleScores because all it ever does is ask
+ * "is there something here?" — it has no business knowing the shape of a score.
+ *
+ * Go/no-go is included: the module is not built yet, so it will always be null for now, but
+ * listing it here means the day the student's screen lands, saved sittings describe themselves
+ * correctly with no change to this file.
+ */
 export function completedModules(scores: {
   symptom: unknown;
-  reaction: unknown;
-  scan: unknown;
+  wordLearning: unknown;
+  wordRecognition: unknown;
+  digitSpan: unknown;
+  patternSpan: unknown;
+  goNoGo: unknown;
 }): string[] {
   const done: string[] = [];
   if (scores.symptom) done.push('Symptoms');
-  if (scores.reaction) done.push('Reaction');
-  if (scores.scan) done.push('Scan');
+  if (scores.wordLearning) done.push('Word learning');
+  if (scores.digitSpan) done.push('Numbers backwards');
+  if (scores.patternSpan) done.push('Tapped patterns');
+  if (scores.wordRecognition) done.push('Word recall');
+  if (scores.goNoGo) done.push('Go / no-go');
   return done;
 }

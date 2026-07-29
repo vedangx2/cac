@@ -25,14 +25,63 @@ export type ModuleScores = {
   symptom: { itemScores: number[]; total: number } | null; // 10 items, 0-3 each
 
   /**
-   * Reaction time: the raw milliseconds for every trial, the MEDIAN of those trials
-   * (what we actually compare on — robust to one fluke tap), and how many false starts
-   * (tapped too early) happened.
+   * Word learning — IMMEDIATE recognition, taken moments after the words were shown.
+   *
+   * `formId` records which word list produced this score. It has to be stored: the pools are
+   * interchangeable but not identical, and a score means nothing without knowing which twenty
+   * words it came from.
+   *
+   * `hits` are targets correctly identified, `falseAlarms` are distractors wrongly claimed.
+   * Both are kept raw rather than folded into one number, because they mean different things —
+   * missing words and inventing words are not the same failure — and because any summary we
+   * invented now would be a summary nobody could recompute later.
+   *
+   * `correct` is the plain count of grid words classified correctly (hits plus correct
+   * rejections), out of RECOGNITION_GRID_SIZE. Deliberately arithmetic, not a corrected
+   * recognition score: any weighting would be a formula we made up.
    */
-  reaction: { trialsMs: number[]; medianMs: number; falseStarts: number } | null;
+  wordLearning: { formId: string; hits: number; falseAlarms: number; correct: number } | null;
 
-  /** Number scan: total time to tap 1-15 in order, and how many wrong taps happened. */
-  scan: { elapsedMs: number; errors: number } | null;
+  /**
+   * Word learning — DELAYED recognition, asked again after other tests have intervened.
+   *
+   * Same shape and same form as `wordLearning`, on purpose: the pair is only meaningful read
+   * together. The immediate score says whether the words went in; the delayed score says
+   * whether they stayed. Either alone is close to uninterpretable, which is why the two screens
+   * ship as one module.
+   */
+  wordRecognition: { formId: string; hits: number; falseAlarms: number; correct: number } | null;
+
+  /**
+   * Digit span backward: nine fixed trials, scored as how many were reproduced exactly.
+   *
+   * `trialsCorrect` is per-trial pass/fail in presentation order, kept so the raw pattern
+   * survives into an export — "failed both sixes" and "failed two threes" are the same score
+   * and very different sittings. `correct` is simply how many of the nine are true. No partial
+   * credit inside a trial: a sequence with two digits swapped is a failed trial, not most of a
+   * pass.
+   */
+  digitSpan: { formId: string; trialsCorrect: boolean[]; correct: number } | null;
+
+  /** Pattern span: same fixed-trial structure and same scoring rule as digit span. */
+  patternSpan: { formId: string; trialsCorrect: boolean[]; correct: number } | null;
+
+  /**
+   * Go / no-go. NOT BUILT YET — a student is writing this module by hand, so this stays null
+   * and `goNoGo` is deliberately absent from BATTERY_STEPS. The shape is defined here anyway so
+   * the module has a contract to build against and the engine already knows how to read it.
+   *
+   * Two error kinds are kept separate on purpose. A COMMISSION error is responding on a no-go
+   * trial — failing to hold back. An OMISSION error is not responding on a go trial — losing
+   * attention entirely. Collapsing them into one "errors" count would throw away the difference
+   * between "could not stop" and "was not there".
+   */
+  goNoGo: {
+    formId: string;
+    medianMs: number;
+    commissionErrors: number;
+    omissionErrors: number;
+  } | null;
 
   /** Balance: a single sway score. Stays null for now — balance is a P1 feature. */
   balance: { swayScore: number } | null; // stays null for now
@@ -117,6 +166,29 @@ export type Athlete = {
  */
 export type FlagOutcome = {
   flagged: boolean; // true if ANY module flagged
-  modules: { reaction: boolean; scan: boolean; symptom: boolean; balance: boolean };
+  modules: {
+    symptom: boolean;
+    wordLearning: boolean;
+    wordRecognition: boolean;
+    digitSpan: boolean;
+    patternSpan: boolean;
+    goNoGo: boolean;
+    balance: boolean;
+  };
   explanations: string[]; // plain language, shown to the user
+
+  /**
+   * Measurements that WERE recorded in both sittings and compared, but which no threshold
+   * exists to judge yet — so the engine formed no opinion about them.
+   *
+   * WHY THIS FIELD IS A SAFETY REQUIREMENT AND NOT BOOKKEEPING: most of this battery's
+   * thresholds are deliberately `null` until real data has been collected. Without this field,
+   * a measurement with no threshold simply never sets its flag — which is indistinguishable
+   * from a measurement that was checked and found fine. An athlete could complete four tests,
+   * have three of them go unjudged entirely, and be shown the calmest screen in the app.
+   *
+   * So the engine reports them, and the result screen has to say out loud that it could not
+   * judge them. "We did not look" must never render as "we looked and it was fine".
+   */
+  unevaluated: string[];
 };

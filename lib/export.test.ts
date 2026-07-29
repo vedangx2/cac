@@ -31,8 +31,19 @@ const CHECK_TIME = Date.UTC(2026, 6, 20, 17, 0, 0);
 function scores(): ModuleScores {
   return {
     symptom: { itemScores: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], total: 1 },
-    reaction: { trialsMs: [301, 288, 315, 297, 330], medianMs: 301, falseStarts: 1 },
-    scan: { elapsedMs: 21_400, errors: 0 },
+    wordLearning: { formId: 'words-b', hits: 9, falseAlarms: 0, correct: 19 },
+    wordRecognition: { formId: 'words-b', hits: 7, falseAlarms: 2, correct: 15 },
+    digitSpan: {
+      formId: 'digits-b',
+      trialsCorrect: [true, true, true, true, true, true, false, false, false],
+      correct: 6,
+    },
+    patternSpan: {
+      formId: 'pattern-b',
+      trialsCorrect: [true, true, true, true, true, false, false, false, false],
+      correct: 5,
+    },
+    goNoGo: null,
     balance: null,
   };
 }
@@ -109,16 +120,28 @@ describe('buildAthleteExport copies records out faithfully', () => {
     expect(exported.map((r) => r.id)).toEqual(['b1', 'c1']);
   });
 
-  it('preserves every field of a record, including the raw trial arrays', () => {
-    // The raw per-trial numbers are the entire point of the export. A median can be recomputed;
-    // the five individual trials it came from cannot.
+  it('preserves every field of a record, including the raw per-trial arrays', () => {
+    // The raw per-trial detail is the entire point of the export. A total can be recomputed; the
+    // individual trials it came from cannot. "Failed both sixes" and "failed two threes" are the
+    // same score and very different sittings.
     const original = result('b1', 'baseline', BASELINE_TIME);
     const exported = buildAthleteExport(athlete(), [original], EXPORTED_AT).results[0];
 
     expect(exported).toEqual(original);
-    expect(exported.scores.reaction?.trialsMs).toEqual([301, 288, 315, 297, 330]);
-    expect(exported.scores.reaction?.falseStarts).toBe(1);
+    expect(exported.scores.digitSpan?.trialsCorrect).toEqual([
+      true, true, true, true, true, true, false, false, false,
+    ]);
+    expect(exported.scores.wordRecognition?.falseAlarms).toBe(2);
     expect(exported.scores.symptom?.itemScores).toEqual([0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('keeps the form id, without which a score cannot be interpreted', () => {
+    // Forms are interchangeable but not identical. A word score with no record of WHICH twenty
+    // words produced it is not analysable data.
+    const exported = buildAthleteExport(athlete(), [result('b1', 'baseline', BASELINE_TIME)], EXPORTED_AT);
+
+    expect(exported.results[0].scores.wordLearning?.formId).toBe('words-b');
+    expect(exported.results[0].scores.digitSpan?.formId).toBe('digits-b');
   });
 
   it('keeps the schemaVersion on each record', () => {
@@ -213,7 +236,7 @@ describe('serialiseExport', () => {
     const parsed = JSON.parse(serialiseExport(data));
 
     expect(parsed.athlete.name).toBe('Jordan Lee');
-    expect(parsed.results[0].scores.reaction.medianMs).toBe(301);
+    expect(parsed.results[0].scores.digitSpan.correct).toBe(6);
   });
 
   it('is pretty-printed, because a human opens this in a text editor', () => {

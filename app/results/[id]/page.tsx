@@ -354,6 +354,20 @@ export default function ResultPage() {
   const name = athlete?.name ?? 'This athlete';
   const nothingCompared = rows.every((row) => !row.compared);
 
+  /*
+    WERE THERE MEASUREMENTS WE COULD NOT JUDGE?
+
+    Most of this battery's thresholds are deliberately null until real data has been collected
+    (see lib/engine/thresholds.ts). A measurement with no threshold gets compared, gets reported,
+    and gets NO verdict — the engine lists it in `unevaluated`.
+
+    This screen must therefore not render the sober "no change detected" panel just because
+    nothing flagged. With unjudged measurements present, "nothing flagged" does not mean "we
+    looked at everything and it was unremarkable"; it means we looked at some of it and had no
+    yardstick for the rest. Those are different statements and only one of them is true.
+  */
+  const someUnjudged = outcome.unevaluated.length > 0;
+
   return (
     <PageShell>
       <PageHeaderLite
@@ -393,11 +407,59 @@ export default function ResultPage() {
             reason enough for a trained person to take a look.
           </p>
         </section>
+      ) : someUnjudged ? (
+        /*
+          NOTHING FLAGGED, BUT SOME MEASUREMENTS COULD NOT BE JUDGED AT ALL.
+
+          Its own state, and deliberately closer in weight to the refusal states than to the
+          "no change" one. While this battery's thresholds are null, this is the state a normal
+          check will land in — so it is the panel most people will actually see, and it must not
+          be the comfortable one.
+
+          No green. No checkmark. It does not say "no change detected", because that would claim
+          a verdict on measurements that never got one.
+        */
+        <section className="rounded-xl border-4 border-flag bg-paper p-6" aria-live="polite">
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-ink-soft">
+            No verdict available
+          </p>
+          <h2 className="mt-2 text-2xl font-black leading-tight text-ink sm:text-4xl">
+            This screen could not judge {outcome.unevaluated.length === 1 ? 'one of' : 'several of'}{' '}
+            {name}&apos;s results.
+          </h2>
+
+          <div className="mt-5 space-y-3 text-base leading-relaxed text-ink sm:text-lg">
+            <p className="font-bold">This is not a &ldquo;no change&rdquo; result.</p>
+            <p>
+              Some of these tests are too new for us to know how much a healthy athlete&apos;s
+              score moves around on its own, so we have no tested cut-off to compare against yet.
+              Those measurements were recorded and are shown below, but{' '}
+              <strong>nothing was decided about them</strong>. Treat them as unread, not as normal.
+            </p>
+            <ul className="ml-5 list-disc space-y-1 text-base">
+              {outcome.unevaluated.map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </ul>
+            <p className="font-bold">
+              Because of that, this screen cannot tell you whether anything has changed. If{' '}
+              {name} may have hit their head,{' '}
+              <span className="underline decoration-flag decoration-4 underline-offset-4">
+                have them seen by a medical professional.
+              </span>
+            </p>
+            <p className="text-ink-soft">
+              This screen is not a clearance to return to play, and this does not rule out a
+              concussion. Only a medical professional can make that call.
+            </p>
+          </div>
+        </section>
       ) : (
         /*
-          NOT FLAGGED. The three required statements, in order, and nothing that could be
-          mistaken for a clearance. No green. No checkmark. The panel is deliberately the same
-          sober dark neutral as the rest of the app's serious surfaces.
+          NOT FLAGGED, and everything shown was genuinely judged. The three required statements,
+          in order, and nothing that could be mistaken for a clearance. No green. No checkmark.
+          The panel is deliberately the same sober dark neutral as the rest of the app's serious
+          surfaces.
         */
         <section className="rounded-xl border-4 border-ink bg-ink p-6 text-white" aria-live="polite">
           <p className="text-sm font-black uppercase tracking-[0.2em] text-white/70">
@@ -474,6 +536,15 @@ export default function ResultPage() {
                         Flagged
                       </span>
                     )}
+                    {/*
+                      An unjudged row shows a real change with no verdict. Without this badge it
+                      would look exactly like a row that was checked and found unremarkable.
+                    */}
+                    {row.unevaluated && (
+                      <span className="ml-2 rounded border-2 border-ink px-2 py-0.5 text-xs font-black uppercase text-ink">
+                        Not judged
+                      </span>
+                    )}
                   </th>
                   <td className="tabular py-4 pr-4 text-ink-soft">{row.baselineText}</td>
                   <td className="tabular py-4 pr-4 font-bold text-ink">{row.checkText}</td>
@@ -495,6 +566,11 @@ export default function ResultPage() {
                 {row.flagged && (
                   <span className="shrink-0 rounded bg-flag px-2 py-0.5 text-xs font-black uppercase text-white">
                     Flagged
+                  </span>
+                )}
+                {row.unevaluated && (
+                  <span className="shrink-0 rounded border-2 border-ink px-2 py-0.5 text-xs font-black uppercase text-ink">
+                    Not judged
                   </span>
                 )}
               </div>

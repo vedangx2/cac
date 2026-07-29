@@ -1,38 +1,44 @@
 // lib/engine/compare.test.ts
 //
-// Tests for the comparison engine.
+// Tests for the comparison engine, rewritten for the new battery.
 //
 // Note that every expectation below is written in terms of the threshold CONSTANTS, never
-// literal numbers like 50 or 4000. If we retune a threshold in thresholds.ts, these tests
-// keep testing the right behaviour instead of failing for the wrong reason — and it means a
-// test can never quietly disagree with the app about where the line is.
+// literal numbers like 5. If we retune a threshold in thresholds.ts, these tests keep testing
+// the right behaviour instead of failing for the wrong reason — and it means a test can never
+// quietly disagree with the app about where the line is.
+//
+// WHAT LIVES ELSEWHERE:
+//   • The four "a baseline must predate the check" guards → ordering.test.ts. They were moved out
+//     before this file was rewritten, on purpose, so the rewrite could not weaken a guard and
+//     adjust its test to match in the same breath.
+//   • Which way each measurement gets worse → direction.test.ts.
+//   • Refusing sittings from a different battery version → schemaGuard.test.ts.
 
 import { describe, expect, it } from 'vitest';
 import type { ModuleScores, TestResult } from '../types';
 import { CURRENT_SCHEMA_VERSION } from '../schema';
+import { DIGIT_TRIALS_PER_FORM, RECOGNITION_GRID_SIZE } from '../forms';
 import { InvalidComparisonError, MissingBaselineError, compareToBaseline } from './compare';
 import { buildBreakdown } from './breakdown';
-import {
-  REACTION_SLOWER_MS,
-  SCAN_EXTRA_ERRORS,
-  SCAN_SLOWER_MS,
-  SYMPTOM_INCREASE,
-} from './thresholds';
+import { DIGIT_SPAN_FEWER_CORRECT, SYMPTOM_INCREASE } from './thresholds';
 
 /* ── Test data helpers ───────────────────────────────────────────────────────────── */
 
 const ATHLETE = 'athlete-1';
 
-// A baseline is always recorded BEFORE the check it is compared against — the engine now
-// enforces that — so the fixtures use two fixed timestamps a week apart.
+// A baseline is always recorded BEFORE the check it is compared against — the engine enforces
+// that — so the fixtures use two fixed timestamps a week apart.
 const BASELINE_TIME = 1_700_000_000_000;
 const CHECK_TIME = BASELINE_TIME + 7 * 24 * 60 * 60 * 1000;
 
 function scores(partial: Partial<ModuleScores> = {}): ModuleScores {
   return {
     symptom: partial.symptom ?? null,
-    reaction: partial.reaction ?? null,
-    scan: partial.scan ?? null,
+    wordLearning: partial.wordLearning ?? null,
+    wordRecognition: partial.wordRecognition ?? null,
+    digitSpan: partial.digitSpan ?? null,
+    patternSpan: partial.patternSpan ?? null,
+    goNoGo: partial.goNoGo ?? null,
     balance: partial.balance ?? null,
   };
 }
@@ -49,363 +55,333 @@ function sitting(
     takenAt,
     kind,
     scores: moduleScores,
-    // Both sittings in every test below are written under the current shape. Mismatched
-    // versions are a separate concern with their own tests — see lib/schema.test.ts and the
-    // version-guard tests — and are deliberately not mixed into the comparison tests here.
+    // Both sittings are written under the current shape. Mismatched versions are a separate
+    // concern with their own tests — see schemaGuard.test.ts.
     schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 }
 
+function symptom(total: number): NonNullable<ModuleScores['symptom']> {
+  return { itemScores: [], total };
+}
+
+function digits(correct: number): NonNullable<ModuleScores['digitSpan']> {
+  return {
+    formId: 'digits-a',
+    trialsCorrect: Array.from({ length: DIGIT_TRIALS_PER_FORM }, (_, i) => i < correct),
+    correct,
+  };
+}
+
+function words(correct: number, falseAlarms = 0): NonNullable<ModuleScores['wordLearning']> {
+  return { formId: 'words-a', hits: correct - (RECOGNITION_GRID_SIZE / 2 - falseAlarms), falseAlarms, correct };
+}
+
 /** A complete, unremarkable baseline to compare things against. */
 function healthyBaseline(): TestResult {
-  return sitting(
-    'baseline',
-    scores({
-      reaction: { trialsMs: [300, 310, 320, 305, 315], medianMs: 310, falseStarts: 0 },
-      scan: { elapsedMs: 20_000, errors: 1 },
-      symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
-    }),
-  );
+  return sitting('baseline', scores({ symptom: symptom(0), digitSpan: digits(6) }));
 }
 
 /** A check identical to the baseline — nothing has moved. */
 function unchangedCheck(): TestResult {
-  return sitting(
-    'check',
-    scores({
-      reaction: { trialsMs: [300, 310, 320, 305, 315], medianMs: 310, falseStarts: 0 },
-      scan: { elapsedMs: 20_000, errors: 1 },
-      symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
-    }),
-  );
+  return sitting('check', scores({ symptom: symptom(0), digitSpan: digits(6) }));
 }
 
 /* ── 1. Nothing changed ──────────────────────────────────────────────────────────── */
 
 describe('when nothing has changed', () => {
   it('does not flag', () => {
-    const outcome = compareToBaseline(healthyBaseline(), unchangedCheck());
-
-    expect(outcome.flagged).toBe(false);
-    expect(outcome.modules).toEqual({
-      reaction: false,
-      scan: false,
-      symptom: false,
-      balance: false,
-    });
+    expect(compareToBaseline(healthyBaseline(), unchangedCheck()).flagged).toBe(false);
   });
 
-  it('still explains every module, so the screen is never blank', () => {
-    const outcome = compareToBaseline(healthyBaseline(), unchangedCheck());
-    expect(outcome.explanations.length).toBeGreaterThanOrEqual(3);
-    for (const line of outcome.explanations) {
-      expect(typeof line).toBe('string');
-      expect(line.length).toBeGreaterThan(0);
+  it('sets no module flag', () => {
+    const { modules } = compareToBaseline(healthyBaseline(), unchangedCheck());
+    expect(Object.values(modules).every((flag) => flag === false)).toBe(true);
+  });
+
+  it('still explains what it looked at, rather than going silent', () => {
+    const { explanations } = compareToBaseline(healthyBaseline(), unchangedCheck());
+    expect(explanations.length).toBeGreaterThan(0);
+  });
+
+  it('says nothing that could be read as a clearance', () => {
+    const { explanations } = compareToBaseline(healthyBaseline(), unchangedCheck());
+    for (const line of explanations) {
+      expect(line).not.toMatch(/cleared|healthy|safe|fine|no concussion|normal for/i);
     }
-  });
-
-  it('does not flag when the athlete actually did better', () => {
-    const check = sitting(
-      'check',
-      scores({
-        reaction: { trialsMs: [280, 290, 285, 288, 284], medianMs: 285, falseStarts: 0 },
-        scan: { elapsedMs: 15_000, errors: 0 },
-        symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
-      }),
-    );
-
-    expect(compareToBaseline(healthyBaseline(), check).flagged).toBe(false);
   });
 });
 
-/* ── 2. One module flags ─────────────────────────────────────────────────────────── */
+/* ── 2. Symptom flagging — the one module with a real threshold ───────────────────── */
 
-describe('when a single module crosses its threshold', () => {
-  it('flags reaction time only', () => {
-    const check = unchangedCheck();
-    check.scores.reaction = {
-      trialsMs: [360, 370, 365, 362, 368],
-      medianMs: 310 + REACTION_SLOWER_MS,
-      falseStarts: 0,
-    };
-
+describe('the symptom module, which has a real threshold', () => {
+  it('flags a rise of exactly the threshold', () => {
+    const check = sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE) }));
     const outcome = compareToBaseline(healthyBaseline(), check);
 
     expect(outcome.flagged).toBe(true);
-    expect(outcome.modules.reaction).toBe(true);
-    expect(outcome.modules.scan).toBe(false);
+    expect(outcome.modules.symptom).toBe(true);
+  });
+
+  it('does NOT flag one point under the threshold', () => {
+    const check = sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE - 1) }));
+    const outcome = compareToBaseline(healthyBaseline(), check);
+
     expect(outcome.modules.symptom).toBe(false);
   });
 
-  it('flags the scan on time alone', () => {
-    const check = unchangedCheck();
-    check.scores.scan = { elapsedMs: 20_000 + SCAN_SLOWER_MS, errors: 1 };
-
-    const outcome = compareToBaseline(healthyBaseline(), check);
-
-    expect(outcome.flagged).toBe(true);
-    expect(outcome.modules.scan).toBe(true);
-    expect(outcome.modules.reaction).toBe(false);
+  it('flags well above the threshold too', () => {
+    const check = sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE + 10) }));
+    expect(compareToBaseline(healthyBaseline(), check).modules.symptom).toBe(true);
   });
 
-  it('flags the scan on extra mistakes alone, even when the time improved', () => {
-    const check = unchangedCheck();
-    check.scores.scan = { elapsedMs: 12_000, errors: 1 + SCAN_EXTRA_ERRORS };
+  it('does not flag when symptoms went DOWN', () => {
+    const baseline = sitting('baseline', scores({ symptom: symptom(SYMPTOM_INCREASE + 5) }));
+    const check = sitting('check', scores({ symptom: symptom(0) }));
 
-    const outcome = compareToBaseline(healthyBaseline(), check);
-
-    expect(outcome.flagged).toBe(true);
-    expect(outcome.modules.scan).toBe(true);
+    expect(compareToBaseline(baseline, check).modules.symptom).toBe(false);
   });
 
-  it('flags symptoms only', () => {
-    const check = unchangedCheck();
-    check.scores.symptom = { itemScores: [3, 2, 0, 0, 0, 0, 0, 0, 0, 0], total: SYMPTOM_INCREASE };
+  it('describes a rise in the wording, with both values', () => {
+    const check = sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE) }));
+    const { explanations } = compareToBaseline(healthyBaseline(), check);
+    const line = explanations.find((l) => l.startsWith('The symptom score'));
 
-    const outcome = compareToBaseline(healthyBaseline(), check);
-
-    expect(outcome.flagged).toBe(true);
-    expect(outcome.modules.symptom).toBe(true);
-    expect(outcome.modules.reaction).toBe(false);
+    expect(line).toMatch(/higher/);
+    expect(line).toContain(`${SYMPTOM_INCREASE} out of 30`);
+    expect(line).toContain('0 out of 30');
   });
 });
 
-/* ── 3. Threshold boundaries ─────────────────────────────────────────────────────── */
+/* ── 3. Null thresholds — the safety-critical part of this rewrite ────────────────── */
 
-describe('exactly at the threshold', () => {
-  it('flags when the change equals the threshold (the rule is "or more")', () => {
-    const check = unchangedCheck();
-    check.scores.reaction = {
-      trialsMs: [],
-      medianMs: 310 + REACTION_SLOWER_MS,
-      falseStarts: 0,
-    };
+describe('a measurement with no threshold yet is reported as UNJUDGED, never as fine', () => {
+  // Guards the central hazard of shipping a battery whose thresholds are deliberately null. A
+  // measurement with no cut-off must not simply fail to set its flag, because that is
+  // indistinguishable from having been checked and found unremarkable.
 
-    expect(compareToBaseline(healthyBaseline(), check).modules.reaction).toBe(true);
+  it('lists the measurement in `unevaluated`', () => {
+    const outcome = compareToBaseline(healthyBaseline(), unchangedCheck());
+
+    expect(DIGIT_SPAN_FEWER_CORRECT).toBeNull(); // the premise of this test
+    expect(outcome.unevaluated).toContain('Repeating numbers backwards');
   });
 
-  it('does not flag one unit below the threshold', () => {
-    const check = unchangedCheck();
-    check.scores.reaction = {
-      trialsMs: [],
-      medianMs: 310 + REACTION_SLOWER_MS - 1,
-      falseStarts: 0,
-    };
+  it('does not flag it, because it genuinely has no basis to', () => {
+    const collapsed = sitting('check', scores({ symptom: symptom(0), digitSpan: digits(0) }));
+    const outcome = compareToBaseline(healthyBaseline(), collapsed);
 
-    expect(compareToBaseline(healthyBaseline(), check).modules.reaction).toBe(false);
+    expect(outcome.modules.digitSpan).toBe(false);
   });
-});
 
-/* ── 4. Several modules flag ─────────────────────────────────────────────────────── */
+  it('but STILL reports the size of the change, so it is not invisible', () => {
+    // Six correct at baseline, none now — a total collapse. It cannot be judged, but it must not
+    // be hidden either. Someone reading the screen has to be able to see it happened.
+    const collapsed = sitting('check', scores({ symptom: symptom(0), digitSpan: digits(0) }));
+    const { explanations } = compareToBaseline(healthyBaseline(), collapsed);
+    const line = explanations.find((l) => l.startsWith('Repeating numbers backwards'));
 
-describe('when several modules cross their thresholds', () => {
-  it('flags all of them and reports flagged overall', () => {
-    const check = sitting(
-      'check',
-      scores({
-        reaction: { trialsMs: [], medianMs: 310 + REACTION_SLOWER_MS + 30, falseStarts: 2 },
-        scan: { elapsedMs: 20_000 + SCAN_SLOWER_MS + 1000, errors: 1 + SCAN_EXTRA_ERRORS },
-        symptom: { itemScores: [3, 3, 3, 2, 1, 0, 0, 0, 0, 0], total: SYMPTOM_INCREASE + 7 },
-      }),
+    expect(line).toContain('6 fewer correct');
+    expect(line).toContain('0 out of 9');
+    expect(line).toContain('6 out of 9');
+  });
+
+  it('says explicitly that it was NOT judged', () => {
+    const { explanations } = compareToBaseline(healthyBaseline(), unchangedCheck());
+    const line = explanations.find((l) => l.startsWith('Repeating numbers backwards'));
+
+    expect(line).toMatch(/not judged/i);
+    expect(line).toMatch(/unread, not as normal/i);
+  });
+
+  it('gets the DIRECTION right even though it cannot judge — fewer correct reads as worse', () => {
+    // If direction were reversed here, the sentence would tell a parent their child improved.
+    const worse = sitting('check', scores({ symptom: symptom(0), digitSpan: digits(2) }));
+    const better = sitting('check', scores({ symptom: symptom(0), digitSpan: digits(9) }));
+
+    const worseLine = compareToBaseline(healthyBaseline(), worse).explanations.find((l) =>
+      l.startsWith('Repeating numbers backwards'),
+    );
+    const betterLine = compareToBaseline(healthyBaseline(), better).explanations.find((l) =>
+      l.startsWith('Repeating numbers backwards'),
     );
 
-    const outcome = compareToBaseline(healthyBaseline(), check);
-
-    expect(outcome.flagged).toBe(true);
-    expect(outcome.modules.reaction).toBe(true);
-    expect(outcome.modules.scan).toBe(true);
-    expect(outcome.modules.symptom).toBe(true);
-  });
-});
-
-/* ── 5. Missing modules ──────────────────────────────────────────────────────────── */
-
-describe('when a module is missing', () => {
-  it('skips a module the check did not record, and says so', () => {
-    const check = unchangedCheck();
-    check.scores.reaction = null;
-
-    const outcome = compareToBaseline(healthyBaseline(), check);
-
-    expect(outcome.modules.reaction).toBe(false);
-    expect(outcome.explanations.some((line) => line.includes('could not be compared'))).toBe(true);
+    expect(worseLine).toContain('4 fewer correct');
+    expect(betterLine).toContain('3 more correct');
   });
 
-  it('skips a module the baseline never had', () => {
-    const baseline = healthyBaseline();
-    baseline.scores.scan = null;
+  it('an athlete who collapsed on every unjudged module STILL produces flagged=false', () => {
+    /*
+      Documenting the current, honest state of the app rather than pretending otherwise.
 
-    const outcome = compareToBaseline(baseline, unchangedCheck());
+      With every new threshold null, a dramatic decline across the new modules cannot flag. That
+      is why `unevaluated` exists and why the results screen MUST refuse to render the reassuring
+      panel while it is non-empty. If someone ever makes the screen ignore that field, this test
+      is the written record of why they must not.
+    */
+    const collapsed = sitting(
+      'check',
+      scores({
+        symptom: symptom(0), // symptom unchanged, so the one real threshold does not fire
+        digitSpan: digits(0),
+        wordLearning: words(4, 6),
+      }),
+    );
+    const baseline = sitting(
+      'baseline',
+      scores({ symptom: symptom(0), digitSpan: digits(8), wordLearning: words(19, 0) }),
+    );
 
-    expect(outcome.modules.scan).toBe(false);
-    expect(outcome.explanations.some((line) => line.includes('number scan'))).toBe(true);
-  });
-
-  it('still flags the modules it CAN compare when another is missing', () => {
-    const check = unchangedCheck();
-    check.scores.reaction = null;
-    check.scores.symptom = { itemScores: [], total: SYMPTOM_INCREASE };
-
-    const outcome = compareToBaseline(healthyBaseline(), check);
-
-    expect(outcome.flagged).toBe(true);
-    expect(outcome.modules.symptom).toBe(true);
-    expect(outcome.modules.reaction).toBe(false);
-  });
-
-  it('does not flag when nothing at all could be compared, but explains why', () => {
-    // This is the dangerous case: no flag here must never read as "all clear". The engine's
-    // job is to be honest that it compared nothing; the results screen is what has to say so
-    // loudly, which is why it checks whether any row was actually compared.
-    const baseline = sitting('baseline', scores());
-    const check = sitting('check', scores());
-
-    const outcome = compareToBaseline(baseline, check);
+    const outcome = compareToBaseline(baseline, collapsed);
 
     expect(outcome.flagged).toBe(false);
-    expect(outcome.explanations.every((line) => line.includes('could not be compared'))).toBe(true);
+    expect(outcome.unevaluated.length).toBeGreaterThan(0);
   });
 });
 
-/* ── 6. No baseline on file — must ERROR, never pass ─────────────────────────────── */
+/* ── 4. Missing modules ──────────────────────────────────────────────────────────── */
 
-describe('when there is no baseline on file', () => {
-  it('throws rather than returning a comfortable-looking "no flag"', () => {
-    expect(() => compareToBaseline(null, unchangedCheck())).toThrow(MissingBaselineError);
+describe('a module missing from either sitting', () => {
+  it('is reported as not compared, never as no change', () => {
+    const check = sitting('check', scores({ symptom: symptom(0) })); // no digit span
+    const { explanations } = compareToBaseline(healthyBaseline(), check);
+
+    expect(explanations.some((l) => l.includes('not recorded in both sittings'))).toBe(true);
   });
 
-  it('throws for undefined too', () => {
+  it('does not flag on the missing module', () => {
+    const check = sitting('check', scores({ symptom: symptom(0) }));
+    expect(compareToBaseline(healthyBaseline(), check).modules.digitSpan).toBe(false);
+  });
+
+  it('is not listed as unevaluated — that means something different', () => {
+    // "Not recorded" and "recorded but unjudgeable" are separate states and must not be conflated.
+    const check = sitting('check', scores({ symptom: symptom(0) }));
+    const outcome = compareToBaseline(healthyBaseline(), check);
+
+    expect(outcome.unevaluated).not.toContain('Repeating numbers backwards');
+  });
+
+  it('stays quiet about modules that do not exist yet, rather than nagging every screen', () => {
+    // Go/no-go is not built. Saying "go/no-go was not recorded" on every single result would be
+    // noise, so it is silent when absent from both sides.
+    const { explanations } = compareToBaseline(healthyBaseline(), unchangedCheck());
+
+    expect(explanations.some((l) => l.toLowerCase().includes('go / no-go'))).toBe(false);
+  });
+
+  it('still compares the modules that ARE present on both sides', () => {
+    const baseline = sitting('baseline', scores({ symptom: symptom(0) }));
+    const check = sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE) }));
+
+    expect(compareToBaseline(baseline, check).modules.symptom).toBe(true);
+  });
+});
+
+/* ── 5. The must-error cases ─────────────────────────────────────────────────────── */
+
+describe('comparisons the engine must refuse outright', () => {
+  it('throws when there is no baseline at all', () => {
+    expect(() => compareToBaseline(null, unchangedCheck())).toThrow(MissingBaselineError);
     expect(() => compareToBaseline(undefined, unchangedCheck())).toThrow(MissingBaselineError);
   });
 
-  it('gives a message a non-programmer can act on', () => {
-    expect(() => compareToBaseline(null, unchangedCheck())).toThrow(/no baseline on file/i);
+  it('throws rather than returning a quiet no-flag when there is no baseline', () => {
+    let returned: unknown = 'nothing';
+    try {
+      returned = compareToBaseline(null, unchangedCheck());
+    } catch {
+      returned = 'threw';
+    }
+    expect(returned).toBe('threw');
   });
-});
 
-/* ── 7. Comparisons that must be refused ─────────────────────────────────────────── */
-
-describe('comparisons that are not legitimate', () => {
-  it('refuses to compare two different athletes', () => {
-    const baseline = healthyBaseline();
-    const check = sitting('check', unchangedCheck().scores, 'someone-else');
-
-    expect(() => compareToBaseline(baseline, check)).toThrow(InvalidComparisonError);
-    expect(() => compareToBaseline(baseline, check)).toThrow(/different athletes/i);
+  it('refuses two sittings from different athletes', () => {
+    const otherAthlete = sitting('baseline', healthyBaseline().scores, 'athlete-2');
+    expect(() => compareToBaseline(otherAthlete, unchangedCheck())).toThrow(InvalidComparisonError);
   });
 
   it('refuses to treat a sideline check as if it were a baseline', () => {
     const notABaseline = sitting('check', healthyBaseline().scores, ATHLETE, BASELINE_TIME);
-
     expect(() => compareToBaseline(notABaseline, unchangedCheck())).toThrow(InvalidComparisonError);
-  });
-
-  /*
-    The dangerous one. A coach checks an athlete who has no baseline, gets the "no baseline"
-    error, and records a baseline right there — on the athlete who may already be concussed.
-    Re-opening the earlier check would then compare an impaired athlete against himself
-    impaired, find almost no difference, and render the most reassuring screen in the app.
-    The engine has to refuse.
-  */
-  it('refuses a baseline recorded AFTER the check it would be compared against', () => {
-    const check = sitting('check', unchangedCheck().scores, ATHLETE, CHECK_TIME);
-    const baselineTakenLater = sitting(
-      'baseline',
-      healthyBaseline().scores,
-      ATHLETE,
-      CHECK_TIME + 60_000, // recorded a minute after the hit
-    );
-
-    expect(() => compareToBaseline(baselineTakenLater, check)).toThrow(InvalidComparisonError);
-    expect(() => compareToBaseline(baselineTakenLater, check)).toThrow(/before the hit/i);
-  });
-
-  it('refuses a baseline recorded at the same moment as the check', () => {
-    const check = sitting('check', unchangedCheck().scores, ATHLETE, CHECK_TIME);
-    const sameMoment = sitting('baseline', healthyBaseline().scores, ATHLETE, CHECK_TIME);
-
-    expect(() => compareToBaseline(sameMoment, check)).toThrow(InvalidComparisonError);
-  });
-
-  it('still accepts a baseline recorded even one millisecond before the check', () => {
-    const check = sitting('check', unchangedCheck().scores, ATHLETE, CHECK_TIME);
-    const justBefore = sitting('baseline', healthyBaseline().scores, ATHLETE, CHECK_TIME - 1);
-
-    expect(() => compareToBaseline(justBefore, check)).not.toThrow();
-  });
-
-  it('never turns a flagged result into a reassuring one via a later baseline', () => {
-    // Same impaired athlete measured twice. If the engine allowed this, the two sittings
-    // would look almost identical and it would report "no significant change".
-    const impaired = () =>
-      scores({
-        reaction: { trialsMs: [], medianMs: 480, falseStarts: 0 },
-        scan: { elapsedMs: 34_000, errors: 5 },
-        symptom: { itemScores: [], total: 14 },
-      });
-
-    const check = sitting('check', impaired(), ATHLETE, CHECK_TIME);
-    const postImpactBaseline = sitting('baseline', impaired(), ATHLETE, CHECK_TIME + 120_000);
-
-    // It must throw rather than return { flagged: false }.
-    expect(() => compareToBaseline(postImpactBaseline, check)).toThrow(InvalidComparisonError);
   });
 });
 
-/* ── 8. The table and the headline must never disagree ───────────────────────────── */
+/* ── 6. The table and the headline must never disagree ────────────────────────────── */
 
 describe('breakdown rows stay consistent with the engine verdict', () => {
-  const cases: { name: string; check: () => TestResult }[] = [
-    { name: 'unchanged', check: unchangedCheck },
-    {
-      name: 'reaction flagged',
-      check: () => {
-        const c = unchangedCheck();
-        c.scores.reaction = { trialsMs: [], medianMs: 310 + REACTION_SLOWER_MS, falseStarts: 0 };
-        return c;
-      },
-    },
-    {
-      name: 'scan errors flagged',
-      check: () => {
-        const c = unchangedCheck();
-        c.scores.scan = { elapsedMs: 19_000, errors: 1 + SCAN_EXTRA_ERRORS };
-        return c;
-      },
-    },
+  const cases: { name: string; baseline: () => TestResult; check: () => TestResult }[] = [
+    { name: 'unchanged', baseline: healthyBaseline, check: unchangedCheck },
     {
       name: 'symptoms flagged',
-      check: () => {
-        const c = unchangedCheck();
-        c.scores.symptom = { itemScores: [], total: SYMPTOM_INCREASE + 2 };
-        return c;
-      },
+      baseline: healthyBaseline,
+      check: () => sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE + 2), digitSpan: digits(6) })),
     },
     {
-      name: 'module missing',
-      check: () => {
-        const c = unchangedCheck();
-        c.scores.scan = null;
-        return c;
-      },
+      name: 'digit span collapsed (unjudgeable)',
+      baseline: healthyBaseline,
+      check: () => sitting('check', scores({ symptom: symptom(0), digitSpan: digits(0) })),
+    },
+    {
+      name: 'digit span missing from the check',
+      baseline: healthyBaseline,
+      check: () => sitting('check', scores({ symptom: symptom(0) })),
     },
   ];
 
   for (const testCase of cases) {
-    it(`agrees for: ${testCase.name}`, () => {
-      const baseline = healthyBaseline();
+    it(`agrees with compareToBaseline — ${testCase.name}`, () => {
+      const baseline = testCase.baseline();
       const check = testCase.check();
 
       const outcome = compareToBaseline(baseline, check);
       const rows = buildBreakdown(baseline, check);
 
-      for (const moduleName of ['reaction', 'scan', 'symptom'] as const) {
-        const anyRowFlagged = rows
-          .filter((row) => row.module === moduleName)
-          .some((row) => row.flagged);
+      // If any row flags, the headline must flag, and vice versa. This is the drift these two
+      // files can produce, and the whole reason this describe block exists.
+      expect(rows.some((row) => row.flagged)).toBe(outcome.flagged);
+    });
 
-        expect(anyRowFlagged).toBe(outcome.modules[moduleName]);
-      }
+    it(`marks the same measurements unevaluated as the engine — ${testCase.name}`, () => {
+      const baseline = testCase.baseline();
+      const check = testCase.check();
+
+      const outcome = compareToBaseline(baseline, check);
+      const rows = buildBreakdown(baseline, check);
+
+      // Both files decide this from the same thresholds. If one says "unjudged" and the other
+      // renders a calm row, the screen would contradict itself.
+      expect(rows.some((row) => row.unevaluated)).toBe(outcome.unevaluated.length > 0);
     });
   }
+
+  it('never marks a row both flagged and unevaluated', () => {
+    // A null threshold cannot flag, so these two are mutually exclusive by construction. If both
+    // were ever true the screen would have to pick one and would pick wrong.
+    const rows = buildBreakdown(healthyBaseline(), unchangedCheck());
+
+    for (const row of rows) {
+      expect(row.flagged && row.unevaluated).toBe(false);
+    }
+  });
+
+  it('marks an uncompared row as neither flagged nor unevaluated', () => {
+    const check = sitting('check', scores({ symptom: symptom(0) }));
+    const rows = buildBreakdown(healthyBaseline(), check);
+    const uncompared = rows.filter((row) => !row.compared);
+
+    expect(uncompared.length).toBeGreaterThan(0);
+    for (const row of uncompared) {
+      expect(row.flagged).toBe(false);
+      expect(row.unevaluated).toBe(false);
+    }
+  });
+
+  it('shows a "no tested cut-off" threshold column for unjudged rows', () => {
+    const rows = buildBreakdown(healthyBaseline(), unchangedCheck());
+    const digitRow = rows.find((row) => row.label.startsWith('Numbers backwards'));
+
+    expect(digitRow?.unevaluated).toBe(true);
+    expect(digitRow?.thresholdText).toMatch(/no tested cut-off/i);
+  });
 });

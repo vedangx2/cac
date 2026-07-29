@@ -43,9 +43,12 @@ const ATHLETE = 'athlete-1';
 
 function emptyScores(): ModuleScores {
   return {
-    symptom: null,
-    reaction: { trialsMs: [300], medianMs: 300, falseStarts: 0 },
-    scan: null,
+    symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
+    wordLearning: null,
+    wordRecognition: null,
+    digitSpan: null,
+    patternSpan: null,
+    goNoGo: null,
     balance: null,
   };
 }

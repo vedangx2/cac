@@ -31,8 +31,19 @@ import {
 function scores(): ModuleScores {
   return {
     symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
-    reaction: { trialsMs: [300, 310, 320, 305, 315], medianMs: 310, falseStarts: 0 },
-    scan: { elapsedMs: 20_000, errors: 1 },
+    wordLearning: { formId: 'words-a', hits: 9, falseAlarms: 1, correct: 18 },
+    wordRecognition: { formId: 'words-a', hits: 8, falseAlarms: 1, correct: 17 },
+    digitSpan: {
+      formId: 'digits-a',
+      trialsCorrect: [true, true, true, true, true, false, false, false, false],
+      correct: 5,
+    },
+    patternSpan: {
+      formId: 'pattern-a',
+      trialsCorrect: [true, true, true, true, false, false, false, false, false],
+      correct: 4,
+    },
+    goNoGo: null,
     balance: null,
   };
 }
@@ -156,7 +167,15 @@ describe('normaliseTestResult changes nothing except the version field', () => {
     const normalised = normaliseTestResult(legacyRecord());
 
     expect(normalised.scores.balance).toBeNull();
-    expect(Object.keys(normalised.scores).sort()).toEqual(['balance', 'reaction', 'scan', 'symptom']);
+    expect(Object.keys(normalised.scores).sort()).toEqual([
+      'balance',
+      'digitSpan',
+      'goNoGo',
+      'patternSpan',
+      'symptom',
+      'wordLearning',
+      'wordRecognition',
+    ]);
   });
 });
 

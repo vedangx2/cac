@@ -9,6 +9,14 @@ export {
   InvalidComparisonError,
   SchemaVersionMismatchError,
 } from './compare';
-export { buildBreakdown, type ComparisonRow } from './breakdown';
+export { buildBreakdown, type BreakdownModule, type ComparisonRow } from './breakdown';
 export { resolveComparedBaselineId } from './resolveBaseline';
+export {
+  type ChangeWords,
+  type Direction,
+  type MeasurementKey,
+  MEASUREMENT_DIRECTIONS,
+  worseningAmount,
+  worseningFor,
+} from './direction';
 export * from './thresholds';

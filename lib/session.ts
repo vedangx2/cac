@@ -36,33 +36,64 @@ export type BatterySession = {
 };
 
 /** Which module a given test screen fills in. */
-export type BatteryStep = 'symptom' | 'reaction' | 'scan';
+export type BatteryStep =
+  | 'symptom'
+  | 'wordLearning'
+  | 'digitSpan'
+  | 'patternSpan'
+  | 'wordRecognition';
 
 /**
  * The order of the battery, defined in exactly one place so no screen can disagree about
  * what comes next.
  *
- * WHY this order: the symptom checklist first, while the athlete is still sitting still and
- * before two timed tasks can tire or frustrate them. Then reaction (short), then the number
- * scan (longest and most demanding).
+ * ═══════════════════════════════════════════════════════════════════════════════════
+ * THE BATTERY IS BEING REBUILT. Modules are added here as each one lands.
+ * ═══════════════════════════════════════════════════════════════════════════════════
+ * The original three-module battery (symptom + reaction + scan) has been replaced. Reaction and
+ * number scan are gone and their screens were deleted. What is listed here is what has actually
+ * been built and can honestly be run — nothing is listed in advance of its screen existing.
+ *
+ * WHY THE ORDER MATTERS once the word module lands: the two word screens are one module split in
+ * half on purpose. `wordLearning` shows the words and tests them immediately; `wordRecognition`
+ * asks again at the END of the battery, after the two span tasks have come in between. That gap
+ * IS the measurement — it is what makes the second score a test of what was retained rather than
+ * a second look at the same screen. So nothing may be appended after `wordRecognition`, and the
+ * span tasks must stay between the pair.
+ *
+ * GO/NO-GO IS DELIBERATELY ABSENT. A student is writing that module by hand. It is not listed
+ * here and there is no route stub, because a stub that wrote plausible-looking scores would be
+ * fabricated data.
  */
-export const BATTERY_STEPS: BatteryStep[] = ['symptom', 'reaction', 'scan'];
+export const BATTERY_STEPS: BatteryStep[] = ['symptom'];
 
 export const STEP_PATHS: Record<BatteryStep, string> = {
   symptom: '/tests/symptom',
-  reaction: '/tests/reaction',
-  scan: '/tests/scan',
+  wordLearning: '/tests/words',
+  digitSpan: '/tests/digits',
+  patternSpan: '/tests/pattern',
+  wordRecognition: '/tests/words/recall',
 };
 
 export const STEP_LABELS: Record<BatteryStep, string> = {
   symptom: 'Symptom checklist',
-  reaction: 'Reaction time',
-  scan: 'Number scan',
+  wordLearning: 'Word learning',
+  digitSpan: 'Numbers backwards',
+  patternSpan: 'Tapped patterns',
+  wordRecognition: 'Word recall',
 };
 
 /** An empty score sheet. Every module starts null and gets filled in as tests complete. */
 function emptyScores(): ModuleScores {
-  return { symptom: null, reaction: null, scan: null, balance: null };
+  return {
+    symptom: null,
+    wordLearning: null,
+    wordRecognition: null,
+    digitSpan: null,
+    patternSpan: null,
+    goNoGo: null,
+    balance: null,
+  };
 }
 
 /** Begin a new sitting for an athlete and store it. Overwrites any previous session. */

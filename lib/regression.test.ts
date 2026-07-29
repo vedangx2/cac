@@ -39,8 +39,26 @@ function source(relativePath: string): string {
   return readFileSync(join(REPO, relativePath), 'utf8');
 }
 
-const SCAN_SRC = source(join('app', 'tests', 'scan', 'page.tsx'));
-const REACTION_SRC = source(join('app', 'tests', 'reaction', 'page.tsx'));
+/*
+  THE BATTERY REBUILD MOVED WHAT THESE GUARDS CAN WATCH.
+
+  app/tests/scan/page.tsx and app/tests/reaction/page.tsx were deleted when the battery was
+  replaced. Guards #1 and #2 below read those files, so this file had to change in the same
+  commit as the deletion or it would have failed at import and taken guards #3 and #4 — which are
+  still perfectly valid — down with it.
+
+  #2 SURVIVES INTACT, re-pointed. app/tools/noise-floor/page.tsx runs the same 5-trial protocol
+  and carries the identical fix (synchronous stamp before requestAnimationFrame, plus the
+  implausible-trial discard). The bug being guarded against is a property of that timing code, not
+  of the deleted route, so the guard follows the code to its new home and there is NO gap in
+  coverage.
+
+  #1 HAS NO SUBJECT RIGHT NOW. The "judge a tap against a ref, not React state" bug belongs to a
+  screen that counts taps as they arrive, and no such screen exists between the scan's deletion
+  and pattern span landing. It is written up below rather than silently dropped, and it must be
+  re-established against app/tests/pattern when that screen is built. See SESSION-REPORT.md.
+*/
+const NOISE_FLOOR_SRC = source(join('app', 'tools', 'noise-floor', 'page.tsx'));
 const RESULTS_SRC = source(join('app', 'results', '[id]', 'page.tsx'));
 
 /* ── Small fixtures for the behavioural (engine) assertions ───────────────────────── */
@@ -52,17 +70,32 @@ const CHECK_TIME = BASELINE_TIME + 7 * 24 * 60 * 60 * 1000;
 function scores(partial: Partial<ModuleScores> = {}): ModuleScores {
   return {
     symptom: partial.symptom ?? null,
-    reaction: partial.reaction ?? null,
-    scan: partial.scan ?? null,
+    wordLearning: partial.wordLearning ?? null,
+    wordRecognition: partial.wordRecognition ?? null,
+    digitSpan: partial.digitSpan ?? null,
+    patternSpan: partial.patternSpan ?? null,
+    goNoGo: partial.goNoGo ?? null,
     balance: partial.balance ?? null,
   };
 }
 
+/*
+  A sitting where every measured module is identical between baseline and check.
+
+  Symptom is included deliberately and is not incidental: it is currently the ONLY module with a
+  real threshold, so it is the only one that can produce a genuine "compared and found no
+  significant change" verdict. Guard #4 below needs that state to exist in order to prove it is
+  not rendered green — a fixture made only of null-threshold modules would land in the
+  "unevaluated" state instead and the guard would be testing the wrong screen.
+*/
 const IDENTICAL_MODULES = (): ModuleScores =>
   scores({
-    reaction: { trialsMs: [300, 310, 320, 305, 315], medianMs: 310, falseStarts: 0 },
-    scan: { elapsedMs: 20_000, errors: 1 },
     symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
+    digitSpan: {
+      formId: 'digits-a',
+      trialsCorrect: [true, true, true, true, true, false, false, false, false],
+      correct: 5,
+    },
   });
 
 function baseline(): TestResult {
@@ -99,18 +132,28 @@ function identicalCheck(): TestResult {
    — fails these assertions.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
-describe('#1 number scan — rapid taps are not miscounted as errors (structural guard)', () => {
-  it('keeps the current target in a ref (updated synchronously), not only in React state', () => {
-    expect(SCAN_SRC).toMatch(/const nextTargetRef = useRef\(/);
-    expect(SCAN_SRC).toMatch(/nextTargetRef\.current = value/); // setTarget writes it synchronously
-  });
+describe.todo(
+  '#1 rapid taps are not miscounted — RE-ESTABLISH against app/tests/pattern when it is built',
+  /*
+    NOT SKIPPED BECAUSE IT FAILS. Skipped because its subject was deleted and its replacement does
+    not exist yet, and a `todo` says that out loud in the test output every single run instead of
+    letting the gap disappear quietly.
 
-  it('judges each tap against that ref, so taps arriving before a re-render see the real target', () => {
-    // The exact line the fix depends on. If a change reverts to reading the state variable
-    // (`const target = nextTarget`), this fails — which is the regression we are guarding.
-    expect(SCAN_SRC).toMatch(/const target = nextTargetRef\.current;/);
-  });
-});
+    THE BUG, so whoever builds pattern span knows what to protect against: the number scan's tap
+    handler read "which number are we looking for" from React state. State only updates on the next
+    render, so two correct taps arriving in the same frame were both judged against the OLD target
+    and the second was counted as an error. An athlete tapping fast and correctly was scored as
+    making mistakes.
+
+    WHY PATTERN SPAN HAS EXACTLY THIS PROBLEM: it judges each tap against the next expected cell in
+    a remembered sequence. Someone reproducing a six-cell pattern taps quickly and confidently —
+    that is what a correct answer looks like — so several taps will land inside one frame. Reading
+    the expected cell from React state would fail the fast, correct athlete and pass the slow one.
+
+    THE FIX to assert: keep the expected position in a ref written synchronously, and have the tap
+    handler read the ref. Then re-point these assertions at app/tests/pattern/page.tsx.
+  */
+);
 
 /* ═══════════════════════════════════════════════════════════════════════════════════
    #2 — Reaction pad recovers if requestAnimationFrame never fires (backgrounded tab).
@@ -126,17 +169,19 @@ describe('#1 number scan — rapid taps are not miscounted as errors (structural
    STRUCTURAL GUARD (see the note at the top of this file).
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
-describe('#2 reaction pad — recovers when requestAnimationFrame never fires (structural guard)', () => {
+describe('#2 timed pad — recovers when requestAnimationFrame never fires (structural guard)', () => {
+  // Re-pointed from the deleted app/tests/reaction to app/tools/noise-floor, which runs the same
+  // protocol with the same fix. The guard is about the timing code, not about which route hosts it.
   it('stamps the green time synchronously BEFORE requestAnimationFrame, not only inside it', () => {
     // Old code only assigned greenAt inside the rAF callback. This pattern — the assignment
     // immediately followed by the rAF call — only matches when the synchronous stamp is present.
-    expect(REACTION_SRC).toMatch(
+    expect(NOISE_FLOOR_SRC).toMatch(
       /greenAtRef\.current = performance\.now\(\);\s*requestAnimationFrame\(/,
     );
   });
 
   it('throws out an implausibly long trial and repeats it instead of recording garbage', () => {
-    expect(REACTION_SRC).toMatch(/if \(ms > MAX_PLAUSIBLE_REACTION_MS\)/);
+    expect(NOISE_FLOOR_SRC).toMatch(/if \(ms > MAX_PLAUSIBLE_REACTION_MS\)/);
   });
 });
 

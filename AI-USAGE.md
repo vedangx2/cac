@@ -190,3 +190,44 @@ against a written brief. Each step below was a separate commit.
   the file itself so it cannot be separated from the data by forwarding. `lib/export.test.ts`
   (24 tests). Nothing consumes the form pools yet. Tests 111 → 188. No dependency was added, no
   threshold value was set, and no safety copy was changed.
+
+- **2026-07-29, step 4 — The breaking step: new battery, new engine.** AI replaced the
+  three-module data contract with a seven-key one (`lib/types.ts`): symptom, wordLearning,
+  wordRecognition, digitSpan, patternSpan, goNoGo, balance. It deleted `app/tests/reaction` and
+  `app/tests/scan`, cut `BATTERY_STEPS` to `['symptom']`, and disabled "Record a baseline" and
+  "Start sideline check" behind a plain notice explaining that the battery is being rebuilt and
+  has no tested cut-offs yet.
+
+  **The four "a baseline must predate the check" guards were ported FIRST**, into their own
+  `lib/engine/ordering.test.ts`, and verified green against the untouched engine before
+  `compare.ts` was edited — so the rewrite had to satisfy the original expectations rather than a
+  fresh set written to fit whatever it produced. The guard itself was confirmed **byte-identical**
+  to the `v1-three-module` tag by diff after the rewrite.
+
+  AI wrote `lib/engine/direction.ts`, which is the safety core of this step. The old battery got
+  worse by getting *bigger* in every measurement, so the engine could hard-code one subtraction.
+  The new battery mixes directions — digit span, pattern span and the word scores are counts of
+  things done *right*, so they get worse by getting *smaller*. A single reversed sign would make
+  an athlete who declined read as improved, which is the exact outcome this project exists to
+  prevent. Direction is now declared once per measurement in one table, every comparison goes
+  through one function that normalises to "positive means worse", and
+  `lib/engine/direction.test.ts` checks every measurement in both directions plus the table's
+  completeness.
+
+  **All new thresholds are `number | null = null` with `TODO(NEEDS_SOURCE)`.** No value was
+  estimated, tuned or inferred. That created a real hazard AI had to design around: a null
+  threshold means a measurement never sets its flag, which is indistinguishable from having been
+  checked and found unremarkable — so an athlete could complete four tests, have three go unjudged,
+  and see the calmest screen in the app. `FlagOutcome` therefore gained an `unevaluated` list, the
+  engine reports every unjudged measurement while still showing the size of the change, the
+  breakdown marks those rows "Not judged", and the results screen has a new state that explicitly
+  says no verdict was available and that this is *not* a "no change" result. No green, no
+  checkmark, and every path still ends in seeing a medical professional.
+
+  `lib/regression.test.ts` was handled in the same commit as the deletion, since it read the
+  deleted pages at module load and would otherwise have taken the whole file down. Guard #2 (the
+  requestAnimationFrame soft-lock) **survives intact, re-pointed** at `app/tools/noise-floor`,
+  which carries the identical fix — no gap in coverage. Guard #1 (judge a tap against a ref, not
+  React state) has no subject until pattern span exists, so it is a `describe.todo` that announces
+  itself on every run, with the bug and the required fix written out for whoever builds that
+  screen. Tests 188 → 211. Two of the original 69 are parked in that todo; the other 67 survive.

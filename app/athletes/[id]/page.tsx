@@ -147,6 +147,41 @@ export default function AthleteDetailPage() {
         </div>
       )}
 
+      {/*
+        ═══════════════════════════════════════════════════════════════════════════════
+        THE BATTERY IS TURNED OFF WHILE IT IS BEING REBUILT.
+        ═══════════════════════════════════════════════════════════════════════════════
+        Both buttons below are disabled. This is not a bug and it is not a placeholder to be
+        quietly removed by the next person who finds it inconvenient.
+
+        Three separate reasons, each sufficient on its own:
+          1. The battery is mid-rebuild — reaction time and number scan have been removed and
+             their replacements are still landing. A sitting recorded right now would measure a
+             different set of tests from one recorded next week, and the two would not be
+             comparable.
+          2. Every threshold for the new modules is null. The engine can compare the numbers but
+             has no tested cut-off to judge them against, so it cannot answer the only question
+             this app exists to answer.
+          3. Nothing here has been validated against collected data yet.
+
+        Re-enable ONLY when the battery is complete (including go/no-go) and thresholds have been
+        set from real collected measurements. Until then this app must not be pointed at a real
+        athlete who has taken a real hit.
+      */}
+      <div className="mb-8">
+        <Notice tone="flag" title="Testing is turned off while the battery is rebuilt">
+          The tests in this app are being replaced, and the new ones do not have tested cut-offs
+          yet. Recording a baseline or running a sideline check is disabled until that work is
+          finished, because a result now could not be compared against anything meaningful.
+          <br />
+          <br />
+          <strong>
+            If {athlete.name} may have hit their head, do not wait for this app — have them seen by
+            a medical professional.
+          </strong>
+        </Notice>
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         {/* ── Actions ────────────────────────────────────────────────────────────── */}
         <section aria-labelledby="actions-heading">
@@ -180,9 +215,13 @@ export default function AthleteDetailPage() {
                   </Notice>
                 </div>
               )}
-              <Button className="mt-4 w-full sm:w-auto" onClick={() => begin('baseline')}>
+              {/* Disabled while the battery is rebuilt — see the notice above this grid. */}
+              <Button className="mt-4 w-full sm:w-auto" onClick={() => begin('baseline')} disabled>
                 {baseline ? 'Record new baseline' : 'Record baseline'}
               </Button>
+              <p className="mt-2 text-sm font-semibold text-ink-soft">
+                Unavailable while the battery is being rebuilt.
+              </p>
             </Card>
 
             <Card>
@@ -208,13 +247,18 @@ export default function AthleteDetailPage() {
                 </div>
               )}
 
+              {/* Disabled while the battery is rebuilt — see the notice above this grid. */}
               <Button
                 variant={baseline ? 'signal' : 'neutral'}
                 className="mt-4 w-full sm:w-auto"
                 onClick={() => begin('check')}
+                disabled
               >
                 Start sideline check
               </Button>
+              <p className="mt-2 text-sm font-semibold text-ink-soft">
+                Unavailable while the battery is being rebuilt.
+              </p>
             </Card>
           </div>
         </section>

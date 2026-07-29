@@ -37,8 +37,15 @@ const CHECK_TIME = BASELINE_TIME + 7 * 24 * 60 * 60 * 1000;
 function identicalScores(): ModuleScores {
   return {
     symptom: { itemScores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], total: 0 },
-    reaction: { trialsMs: [300, 310, 320, 305, 315], medianMs: 310, falseStarts: 0 },
-    scan: { elapsedMs: 20_000, errors: 1 },
+    wordLearning: null,
+    wordRecognition: null,
+    digitSpan: {
+      formId: 'digits-a',
+      trialsCorrect: [true, true, true, true, true, true, false, false, false],
+      correct: 6,
+    },
+    patternSpan: null,
+    goNoGo: null,
     balance: null,
   };
 }
