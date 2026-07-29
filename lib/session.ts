@@ -1,12 +1,12 @@
 // lib/session.ts
 //
-// The "battery session" — the thing that turns three separate test screens into ONE saved
+// The "battery session" — the thing that turns several separate test screens into ONE saved
 // TestResult.
 //
-// The problem this solves: the routes are /tests/symptom, /tests/reaction and /tests/scan,
-// three separate pages. But a baseline (or a sideline check) is a single TestResult
-// containing all three module scores. So we need somewhere to accumulate scores as the
-// athlete moves from screen to screen, before anything is written to the real database.
+// The problem this solves: each module is its own page (see STEP_PATHS below). But a baseline
+// (or a sideline check) is a single TestResult containing every module's scores. So we need
+// somewhere to accumulate scores as the athlete moves from screen to screen, before anything
+// is written to the real database.
 //
 // WHERE WE KEEP IT: sessionStorage, not IndexedDB and not React state.
 //   • Not React state — that dies the moment you navigate to the next test screen.

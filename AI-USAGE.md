@@ -290,3 +290,21 @@ against a written brief. Each step below was a separate commit.
   `patternSpan` was appended to `BATTERY_STEPS` between digit span and the delayed word screen. Lit
   cells are a bright neutral panel, never green, and there is still no per-trial right/wrong
   feedback. Tests 244 → 272.
+
+- **2026-07-29, step 6 — Reconcile.** AI fixed the copy and dead links on `app/page.tsx` (the hero
+  button and two test cards pointed at `/tests/reaction` and `/tests/scan`, both deleted), replaced
+  "The three tests" with the real battery, named go/no-go **without linking it** since no route
+  exists, and added a notice on the landing screen saying recording is turned off — said up front
+  rather than left for someone to discover after creating an athlete and tapping a disabled button.
+  It corrected the stale `lib/session.ts` header comment, bumped `CACHE_NAME` in `public/sw.js` from
+  v1 to v2 so the activate handler clears every old cache, and updated `CLAUDE.md`: the data
+  contract block (seven keys, `schemaVersion`, `unevaluated`, plus notes on why `unevaluated` is a
+  safety field and why direction lives in one file), the tests section, and the P0 scope line —
+  which now names threshold collection as part of P0 rather than optional polish, and records that
+  export was promoted out of P1 because it gates the threshold plan. AI also drafted the new
+  **ownership section**, clearly marked as proposed wording rather than settled: what is
+  student-owned and must not be AI-written (`app/tests/gonogo`, threshold *values*), what needs
+  agreement first (`lib/types.ts`, `lib/schema.ts`, `direction.ts`, the engine's refusal rules, the
+  results screen, the root-layout footer, `CLAUDE.md` itself), what is free to edit, and that the
+  two AI-generated stimulus pools may be replaced wholesale. The baseline and check buttons were
+  left **disabled**, as instructed.

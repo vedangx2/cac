@@ -85,10 +85,14 @@ session sees it without opening the file:
 
 ```ts
 type ModuleScores = {
-  symptom:  { itemScores: number[]; total: number } | null;   // 10 items, 0-3 each
-  reaction: { trialsMs: number[]; medianMs: number; falseStarts: number } | null;
-  scan:     { elapsedMs: number; errors: number } | null;
-  balance:  { swayScore: number } | null;                     // stays null for now
+  symptom:         { itemScores: number[]; total: number } | null;  // 10 items, 0-3 each
+  wordLearning:    { formId: string; hits: number; falseAlarms: number; correct: number } | null;
+  wordRecognition: { formId: string; hits: number; falseAlarms: number; correct: number } | null;
+  digitSpan:       { formId: string; trialsCorrect: boolean[]; correct: number } | null;
+  patternSpan:     { formId: string; trialsCorrect: boolean[]; correct: number } | null;
+  goNoGo:          { formId: string; medianMs: number;
+                     commissionErrors: number; omissionErrors: number } | null;  // NOT BUILT
+  balance:         { swayScore: number } | null;                    // stays null for now
 };
 
 type TestResult = {
@@ -97,6 +101,11 @@ type TestResult = {
   takenAt: number;              // Date.now()
   kind: 'baseline' | 'check';
   scores: ModuleScores;
+  schemaVersion: number;        // which ModuleScores shape this record was measured under.
+                                // REQUIRED. Records come off disk without it, so the type only
+                                // fits after lib/schema.ts normalises them — that is what makes
+                                // the compiler, not our diligence, guarantee every read path
+                                // normalises. The engine REFUSES to compare across versions.
   comparedToBaselineId?: string; // set on 'check' records at save time; pins which baseline
                                  // this check was scored against, so re-baselining can't
                                  // silently rewrite an old check's result. Absent on legacy
@@ -112,19 +121,50 @@ type Athlete = {
 
 type FlagOutcome = {
   flagged: boolean;             // true if ANY module flagged
-  modules: { reaction: boolean; scan: boolean; symptom: boolean; balance: boolean };
+  modules: {
+    symptom: boolean; wordLearning: boolean; wordRecognition: boolean;
+    digitSpan: boolean; patternSpan: boolean; goNoGo: boolean; balance: boolean;
+  };
   explanations: string[];       // plain language, shown to the user
+  unevaluated: string[];        // measurements compared but with NO threshold set, so no verdict
+                                // was formed. NOT the same as "no change" — see below.
 };
 ```
+
+### `unevaluated` is a safety field, not bookkeeping
+
+Most thresholds for the new battery are deliberately `null` until we have collected real data.
+A measurement with no threshold never sets its flag — which is **indistinguishable from having
+been checked and found unremarkable.** Without this field an athlete could complete four tests,
+have three go unjudged entirely, and be shown the calmest screen in the app.
+
+So the engine reports them, the breakdown marks those rows "Not judged", and the results screen
+has its own state that says no verdict was available. **"We did not look" must never render as
+"we looked and it was fine."**
+
+### Direction lives in `lib/engine/direction.ts`
+
+The old battery got worse by getting *bigger*, every measurement. The new one mixes directions:
+digit span, pattern span and the word scores are counts of things done **right**, so they get
+worse by getting **smaller**. One reversed sign would make an athlete who declined read as
+improved. Direction is declared once per measurement in one table, and every comparison
+normalises through one function to "positive means worse". Do not do the subtraction by hand
+anywhere else.
 
 ---
 
 ## Scope — hold this line
 
-- **P0 (ship this):** athlete profiles, the three tests (symptom, reaction, scan), the
-  comparison engine, the result screen.
-- **P1 (only after P0 is polished):** balance test via motion sensors, history view, export
-  to a file.
+- **P0 (ship this):** athlete profiles, the test battery (symptom, word learning + delayed
+  recall, numbers backwards, tapped patterns, and go/no-go once it is written), the comparison
+  engine, the result screen, and **thresholds derived from collected data**. The last item is
+  not optional polish — without it the engine can compare but cannot judge, which is the state
+  the app is in today.
+- **P1 (only after P0 is polished):** balance test via motion sensors, history view.
+- **Done, promoted out of P1:** **export to a file.** Thresholds have to come from collected
+  measurements, that data lives in IndexedDB on individual phones, and there was no way to get
+  it off them — so the JSON export (`lib/export.ts`) gates the whole threshold plan rather than
+  being a convenience.
 - **P2 (do NOT build):** dashboards, notifications, accounts, return-to-play, any "cleared"
   logic.
 
@@ -134,19 +174,46 @@ is scored.
 
 ---
 
-## The three tests (what each one measures and produces)
+## The battery (what each module measures and produces)
 
-- **Reaction time** (`/tests/reaction`): tap-when-it-turns-green, 5 trials, report the
-  **median** ms. Concussion can slow reaction time. Timing accuracy is the whole point —
-  use `performance.now()`, `pointerdown`, and do not re-render React between "green" and the
-  tap. Produces `ModuleScores.reaction`.
-- **Number scan** (`/tests/scan`): tap numbers 1–15 in order as fast as possible; measures
-  time + errors. Inspired by rapid-number-naming screening in general — **do not** reproduce
-  the King-Devick test or any trademarked layout; this is our own version. Produces
-  `ModuleScores.scan`.
+Reaction time and number scan were **removed** in the 2026-07-29 rebuild and their screens
+deleted. The 5-trial reaction protocol survives as a measurement tool only, at
+`/tools/noise-floor` — it is not part of the battery and writes nothing.
+
 - **Symptom checklist** (`/tests/symptom`): 10 common symptoms, each rated 0–3, total out of
   30. Use plain common symptom names; **do not** reproduce a specific copyrighted instrument
   (e.g. SCAT/its exact wording and scoring). Produces `ModuleScores.symptom`.
+- **Word learning** (`/tests/words`): study 10 words at a **fixed** exposure, then pick them out
+  of a 20-word grid. Produces `ModuleScores.wordLearning`.
+- **Numbers backwards** (`/tests/digits`): 9 fixed trials at lengths 3,3,4,4,5,5,6,6,7; type each
+  sequence back in reverse. Scored as trials reproduced **exactly**, out of 9. No partial credit
+  inside a trial. Produces `ModuleScores.digitSpan`.
+- **Tapped patterns** (`/tests/pattern`): 9 fixed trials at lengths 2,2,3,3,4,4,5,5,6 on a 3×3
+  grid; tap the cells back in the same order. Same scoring rule as digit span. Produces
+  `ModuleScores.patternSpan`.
+- **Word recall** (`/tests/words/recall`): the **same** 20-word grid again, at the very end.
+  Produces `ModuleScores.wordRecognition`.
+- **Go / no-go**: **NOT BUILT.** A student is writing `app/tests/gonogo` by hand. It is absent
+  from `BATTERY_STEPS` and there is deliberately **no route stub** — a stub that wrote
+  plausible-looking scores would be fabricated data. The stimulus pool exists at
+  `lib/forms/goNo.ts`; nothing consumes it yet.
+
+### Two ordering rules that are not stylistic
+
+1. **The word module is one module across two screens.** `wordLearning` says whether the words
+   went in; `wordRecognition` says whether they stayed. **The gap between them is the
+   measurement**, so the span tasks must stay between the pair and **nothing may be appended to
+   `BATTERY_STEPS` after `wordRecognition`.**
+2. **Forms alternate between sittings.** Each memory module has six interchangeable forms
+   (`lib/forms/`) because showing an athlete the same ten words twice makes the later score
+   partly a memory of the earlier one — and that practice effect inflates it, making a
+   struggling athlete look unchanged.
+
+### Recording is currently DISABLED
+
+"Record a baseline" and "Start sideline check" are disabled behind a plain notice. They stay off
+until go/no-go exists **and** thresholds have been set from collected data. This battery does not
+go in front of a real athlete before then.
 
 ---
 
@@ -163,6 +230,54 @@ returns a `FlagOutcome`. Rules:
   "no flag."
 - `explanations[]` must be readable by a parent, e.g.
   "Reaction time was 62ms slower than this athlete's baseline."
+
+---
+
+## Who owns what
+
+> **PROPOSED WORDING — not settled.** This section was drafted by an AI session because no
+> ownership document existed and one was asked for. Change anything here that does not match how
+> you actually want to work; it is a starting point, not a ruling.
+
+The point of this section is narrow: to stop two people (or a person and an AI session) editing
+the same file with different intentions, and to make it obvious which files carry consequences
+if they are changed carelessly.
+
+### Student-owned — an AI session must not write these
+
+| Path | Why |
+|---|---|
+| `app/tests/gonogo/**` | A student is writing this module by hand. It does not exist yet. **No AI session may create it, including as a stub** — a stub that wrote plausible-looking scores would be fabricated data. |
+| `lib/engine/thresholds.ts` — *the values* | Every number here has to come from collected data. An AI session may add a new threshold **as `null` with `TODO(NEEDS_SOURCE)`** and may edit the comments, but must never fill in, estimate or tune a value. |
+| `AI-USAGE.md` — *the students' own entries* | The disclosure log. AI appends its own dated entries and never edits or deletes a human-written one. |
+
+### Needs agreement before editing — say so first, in writing
+
+These are the files where a careless change is either dangerous or breaks stored data. Anyone —
+human or AI — should flag the intended change and get a yes before making it.
+
+| Path | What is at stake |
+|---|---|
+| `lib/types.ts` | The data contract. Change a shape and every stored record on every phone becomes a different shape from the code reading it. Requires a `schemaVersion` bump in `lib/schema.ts`, which makes existing baselines unreadable and forces athletes to re-record. |
+| `lib/schema.ts` | `CURRENT_SCHEMA_VERSION` decides which stored records the app will still compare. Bumping it needlessly throws away valid baselines; failing to bump it when the shape changed is worse — it lets old records be compared field-by-field against fields they do not contain. |
+| `lib/engine/direction.ts` | Which way each measurement gets worse. A reversed sign makes a declining athlete read as improved. |
+| `lib/engine/compare.ts` — *rules 1–7* | The refusals. Especially **rule 6** (a baseline must predate the check) and **rule 5** (no baseline is an error, never a pass). |
+| `app/results/[id]/page.tsx` | Every safety-copy rule lands here: no green, no checkmark, no clearance, every path ends in referral. |
+| `app/layout.tsx` — *the footer* | The persistent "not a medical device" line. It lives in the root layout so it cannot be forgotten on a screen. |
+| `CLAUDE.md` | This file. It is the tie-breaker when code and intent disagree, so changing it changes what "correct" means. |
+
+### Free to edit, with the usual care
+
+`app/**` screens other than the results screen, `components/**`, `lib/modules/**`,
+`lib/forms/patternGrids.ts`, `lib/forms/goNo.ts`, `lib/format.ts`, styling, and all test files.
+
+### The stimulus pools are a special case
+
+`lib/forms/wordLists.ts` and `lib/forms/digitSequences.ts` are **AI-generated stand-ins**, clearly
+marked as such at the top of each file. They were generated only because the files were expected
+to be in the repo and were not. **Replace them wholesale whenever you like** — nothing reads the
+stimuli themselves, only the exported shape, and `lib/forms/select.test.ts` will check a
+replacement against the same construction rules.
 
 ---
 

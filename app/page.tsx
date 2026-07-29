@@ -9,13 +9,13 @@ const STEPS = [
     number: '1',
     title: 'Record a baseline',
     body:
-      'While the athlete is well, they take three short tests. This is their personal reference point — how they perform normally.',
+      'While the athlete is well, they work through a short battery of tests. This is their personal reference point — how they perform normally.',
   },
   {
     number: '2',
     title: 'Run a sideline check',
     body:
-      'After a possible head impact, they take the exact same three tests again, right there on the sideline.',
+      'After a possible head impact, they take the exact same tests again, right there on the sideline.',
   },
   {
     number: '3',
@@ -46,9 +46,26 @@ export default function HomePage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/athletes">Get started</ButtonLink>
-            <ButtonLink href="/tests/reaction" variant="neutral">
+            {/* Points at a test that exists. /tests/reaction was deleted in the battery rebuild. */}
+            <ButtonLink href="/tests/symptom" variant="neutral">
               Try a test first
             </ButtonLink>
+          </div>
+
+          {/*
+            THE BATTERY IS MID-REBUILD AND RECORDING IS TURNED OFF.
+            Said here, on the first screen, rather than left for someone to discover after they
+            have created an athlete and tapped a disabled button. See app/athletes/[id]/page.tsx.
+          */}
+          <div className="mt-6">
+            <Notice tone="flag" title="Recording is turned off right now">
+              The tests in this app are being rebuilt, and the new ones do not have tested cut-offs
+              yet. You can try every test below, but baselines and sideline checks cannot be
+              recorded until that work is finished and real data has been collected.{' '}
+              <strong>
+                This app is not ready to be used on an athlete who may have hit their head.
+              </strong>
+            </Notice>
           </div>
         </div>
 
@@ -97,29 +114,44 @@ export default function HomePage() {
       {/* ── The tests ─────────────────────────────────────────────────────────────── */}
       <section className="mt-14" aria-labelledby="tests-heading">
         <h2 id="tests-heading" className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-          The three tests
+          The tests
         </h2>
         <p className="mt-2 max-w-2xl text-base text-ink-soft">
-          Each one takes well under a minute. You can try any of them right now without saving
+          The whole battery takes a few minutes. You can try any of them right now without saving
           anything.
         </p>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
           <TestCard
             href="/tests/symptom"
             title="Symptom checklist"
             body="Ten common symptoms, each rated from none to severe."
           />
           <TestCard
-            href="/tests/reaction"
-            title="Reaction time"
-            body="Tap the moment the pad turns green. Five trials, reported as the median."
+            href="/tests/words"
+            title="Word learning"
+            body="Study ten words, then pick them out of twenty. You are asked again at the end, so the same words are tested twice — once straight away and once after a delay."
           />
           <TestCard
-            href="/tests/scan"
-            title="Number scan"
-            body="Tap 1 to 15 in order as fast as you can. Measures time and mistakes."
+            href="/tests/digits"
+            title="Numbers backwards"
+            body="Watch a run of numbers, then type them back in reverse order. Nine rounds, getting longer."
+          />
+          <TestCard
+            href="/tests/pattern"
+            title="Tapped patterns"
+            body="Squares light up one after another; tap them back in the same order. Nine rounds, getting longer."
           />
         </div>
+
+        {/*
+          Go/no-go is named here without a link on purpose. It is part of the planned battery and a
+          student is writing it by hand; there is no route yet, and a stub that produced
+          plausible-looking scores would be fabricated data.
+        */}
+        <p className="mt-4 max-w-2xl text-base text-ink-soft">
+          One more test — a go / no-go task, measuring how well someone can hold back a response —
+          is still being written and is not part of the battery yet.
+        </p>
       </section>
 
       {/* ── Privacy ───────────────────────────────────────────────────────────────── */}
