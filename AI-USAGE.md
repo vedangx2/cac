@@ -146,3 +146,47 @@ against a written brief. Each step below was a separate commit.
   `lib/engine/schemaGuard.test.ts` (13 tests) using fixtures, since the guard cannot fire in the
   app today — every record and the app itself are both version 1. Tests 98 → 111. No threshold
   value and no clinical claim was added.
+
+- **2026-07-29, step 3 — Form pools, form selection, and JSON export.**
+
+  **Disclosure that matters most in this entry:** `lib/forms/wordLists.ts` and
+  `lib/forms/digitSequences.ts` are **AI-GENERATED STIMULUS CONTENT that the students did not
+  write.** The brief said both files were already in the repo and told the session not to edit
+  them; they were not there — not in the working tree, not in any commit on any branch, not in
+  the `v1-three-module` tag, not in a stash, and nowhere on the machine. Rather than leave the
+  word-learning and digit-span modules unbuildable, AI generated both pools to the exact shape
+  the brief specified, marked them at the top of each file as replaceable stand-ins, and made
+  every construction rule machine-checkable so a student-written replacement can be validated
+  against the same rules. AI also wrote `lib/forms/patternGrids.ts` and `lib/forms/goNo.ts`,
+  which it was asked to author.
+
+  **`app/tests/gonogo` does not exist and was not created.** A student is writing the go/no-go
+  module by hand. `lib/forms/goNo.ts` is the stimulus pool ONLY — trial lists, no behaviour, no
+  route, no scoring. No stub route was created, because a stub that wrote plausible-looking
+  scores would be fabricated data.
+
+  All four pools were written from scratch against documented construction rules; no stimuli,
+  wording, ratios or scoring were taken from SCAT5, the SAC, ImPACT, King-Devick or any other
+  published assessment. The rules exist so one form is as hard as another — words that rhyme
+  with a distractor, digit sequences containing a countable run, or grid patterns tracing a
+  straight line are all easier than their siblings, and an athlete who happened to get one would
+  score higher for reasons unrelated to their head. AI wrote `lib/forms/index.ts` with
+  `pickForm` (deterministic selection from a seed) and `pickFormBySitting` (which steps through
+  the pool rather than re-hashing, so consecutive sittings for one athlete can never land on the
+  same form — repeating a word list would let practice inflate the later score, making a
+  struggling athlete look unchanged). `lib/forms/select.test.ts` (57 tests) enforces every
+  documented rule; it caught a real violation in AI's own hand-written pattern pool
+  (`pattern-c` opened on the grid's anti-diagonal), which was fixed.
+
+  **Export.** AI wrote `lib/export.ts` and a download button on the athlete detail screen. Every
+  threshold in the app is a placeholder guess, the only honest way to replace one is with
+  collected measurements, and those measurements were previously unreachable inside IndexedDB on
+  individual phones — so this gates the entire threshold plan rather than being a convenience.
+  The export copies stored records out verbatim: it computes nothing, summarises nothing, and
+  deliberately does not drop records from an older battery version (the engine refuses to
+  *compare* across versions, but old sittings are still real data). It uploads nothing — there
+  is no server. It is **not anonymised**: the athlete's name is included because a folder of
+  files named after opaque ids is useless for collection, and a warning saying so is embedded in
+  the file itself so it cannot be separated from the data by forwarding. `lib/export.test.ts`
+  (24 tests). Nothing consumes the form pools yet. Tests 111 → 188. No dependency was added, no
+  threshold value was set, and no safety copy was changed.

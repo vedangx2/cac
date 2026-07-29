@@ -16,6 +16,7 @@ import { Button, ButtonLink, Card, Notice, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete, getResultsFor } from '@/lib/storage';
 import { isCurrentSchema } from '@/lib/schema';
+import { buildAthleteExport, downloadJson, exportFilename, serialiseExport } from '@/lib/export';
 import { BATTERY_STEPS, STEP_PATHS, startSession } from '@/lib/session';
 import type { Athlete, TestResult } from '@/lib/types';
 import { completedModules, formatDateTime } from '@/lib/format';
@@ -55,6 +56,19 @@ export default function AthleteDetailPage() {
     if (!athlete) return;
     startSession(athlete.id, athlete.name, kind);
     router.push(STEP_PATHS[BATTERY_STEPS[0]]);
+  };
+
+  /**
+   * Download this athlete's raw records as JSON.
+   *
+   * Reads the clock here rather than inside the export builder so that the builder stays pure
+   * and testable, and so the filename and the timestamp inside the file are the same moment.
+   */
+  const exportResults = () => {
+    if (!athlete) return;
+    const now = Date.now();
+    const data = buildAthleteExport(athlete, results, now);
+    downloadJson(exportFilename(athlete.name, now), serialiseExport(data));
   };
 
   if (loading) {
@@ -246,6 +260,35 @@ export default function AthleteDetailPage() {
                 <p className="mt-1 text-sm text-ink-soft">
                   {completedModules(baseline.scores).join(' · ') || 'No tests recorded'}
                 </p>
+              </Card>
+            </div>
+          )}
+
+          {/* ── Export ─────────────────────────────────────────────────────────────
+              Every threshold in this app is a placeholder guess, and the only way to
+              replace a guess is with collected measurements. Those measurements live in
+              this phone's own storage and nothing is ever sent anywhere, so without this
+              button there is no way to look at a single number we have recorded.
+          */}
+          {results.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-sm font-black uppercase tracking-widest text-ink-soft">
+                Export raw records
+              </h3>
+              <Card className="mt-2">
+                <p className="text-base leading-relaxed text-ink-soft">
+                  Saves {athlete.name}&apos;s {results.length}{' '}
+                  {results.length === 1 ? 'sitting' : 'sittings'} to a JSON file on this device,
+                  exactly as stored. Nothing is uploaded — the app has no server to send it to.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                  <strong className="text-ink">The file includes {athlete.name}&apos;s name</strong>{' '}
+                  and is not anonymised, so treat it as personal data once it leaves this phone.
+                  It is not a medical record and contains no diagnosis.
+                </p>
+                <Button variant="neutral" className="mt-4 w-full sm:w-auto" onClick={exportResults}>
+                  Download JSON
+                </Button>
               </Card>
             </div>
           )}
