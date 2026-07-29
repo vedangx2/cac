@@ -65,7 +65,7 @@ export type BatteryStep =
  * here and there is no route stub, because a stub that wrote plausible-looking scores would be
  * fabricated data.
  */
-export const BATTERY_STEPS: BatteryStep[] = ['symptom'];
+export const BATTERY_STEPS: BatteryStep[] = ['symptom', 'wordLearning', 'wordRecognition'];
 
 export const STEP_PATHS: Record<BatteryStep, string> = {
   symptom: '/tests/symptom',

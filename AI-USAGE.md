@@ -231,3 +231,23 @@ against a written brief. Each step below was a separate commit.
   React state) has no subject until pattern span exists, so it is a `describe.todo` that announces
   itself on every run, with the bug and the required fix written out for whoever builds that
   screen. Tests 188 → 211. Two of the original 69 are parked in that todo; the other 67 survive.
+
+- **2026-07-29, step 5a — Word learning and delayed recognition.** AI built `/tests/words` (study
+  ten words one at a time, then pick them out of a twenty-word grid) and `/tests/words/recall`
+  (the same question again at the end of the battery), plus the shared pure logic in
+  `lib/modules/words.ts` and 13 tests for it. They ship as one module because neither half means
+  much alone: the first says whether the words went in, the second whether they stayed, and a low
+  score on both is a different finding from a good score then a low one. The gap between them is
+  the measurement, so nothing may be appended to `BATTERY_STEPS` after `wordRecognition`.
+  Study exposure is FIXED rather than self-paced: if the athlete controlled the pace they could
+  study for thirty seconds at baseline and four at the check, and the drop would measure their
+  patience instead of their memory. The recall screen reads the form id back out of the recorded
+  score rather than re-deriving it, and REFUSES to run if that id is missing or unknown — testing
+  a different ten words than the athlete studied would score every target as a false alarm and
+  produce a near-zero for reasons unconnected to their head. Selected tiles are marked with a
+  heavy border, never a green fill and never a tick. Scoring is plain arithmetic (hits plus
+  correct rejections) with hits and false alarms also stored raw; no corrected-recognition formula
+  was invented. The logic was placed in `lib/` rather than beside the screens because
+  `vitest.config.ts` only collects `lib/**/*.test.ts` — AI initially wrote the test under `app/`
+  where it silently did not run, and moved it to follow the project's existing convention. Tests
+  211 → 224.
