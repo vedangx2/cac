@@ -29,6 +29,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ModuleScores, TestResult } from './types';
+import { CURRENT_SCHEMA_VERSION } from './schema';
 import { MissingBaselineError, buildBreakdown, compareToBaseline } from './engine';
 
 /* ── Reading source files, for the structural / copy guards ───────────────────────── */
@@ -65,10 +66,24 @@ const IDENTICAL_MODULES = (): ModuleScores =>
   });
 
 function baseline(): TestResult {
-  return { id: 'b1', athleteId: ATHLETE, takenAt: BASELINE_TIME, kind: 'baseline', scores: IDENTICAL_MODULES() };
+  return {
+    id: 'b1',
+    athleteId: ATHLETE,
+    takenAt: BASELINE_TIME,
+    kind: 'baseline',
+    scores: IDENTICAL_MODULES(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+  };
 }
 function identicalCheck(): TestResult {
-  return { id: 'c1', athleteId: ATHLETE, takenAt: CHECK_TIME, kind: 'check', scores: IDENTICAL_MODULES() };
+  return {
+    id: 'c1',
+    athleteId: ATHLETE,
+    takenAt: CHECK_TIME,
+    kind: 'check',
+    scores: IDENTICAL_MODULES(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════════

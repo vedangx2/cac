@@ -9,6 +9,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { ModuleScores, TestResult } from '../types';
+import { CURRENT_SCHEMA_VERSION } from '../schema';
 import { InvalidComparisonError, MissingBaselineError, compareToBaseline } from './compare';
 import { buildBreakdown } from './breakdown';
 import {
@@ -48,6 +49,10 @@ function sitting(
     takenAt,
     kind,
     scores: moduleScores,
+    // Both sittings in every test below are written under the current shape. Mismatched
+    // versions are a separate concern with their own tests — see lib/schema.test.ts and the
+    // version-guard tests — and are deliberately not mixed into the comparison tests here.
+    schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 }
 

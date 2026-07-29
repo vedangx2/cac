@@ -37,6 +37,20 @@
 // client components). openDb() throws a clear error if that rule is broken.
 
 import type { Athlete, TestResult } from './types';
+import { type StoredTestResult, normaliseTestResult, normaliseTestResults } from './schema';
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// A RULE FOR THIS FILE: every result that leaves here is normalised first.
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Records come off disk as StoredTestResult — the real shape, which may predate
+// `schemaVersion` and therefore not carry it. They must pass through normaliseTestResult()
+// before anything else in the app sees them, so that no consumer ever has to wonder whether
+// the version field is there.
+//
+// This is enforced by the compiler rather than by discipline: the raw read is typed
+// StoredTestResult, which does not fit a TestResult return, so a read path that forgets to
+// normalise does not build. If you add another function that returns results, that is the
+// error you will hit, and normalising is the fix.
 
 const DB_NAME = 'concussion-screen';
 const DB_VERSION = 1; // bump this only when the schema below changes, and migrate in onupgradeneeded
@@ -158,9 +172,10 @@ export async function saveResult(result: TestResult): Promise<void> {
 export async function getResult(id: string): Promise<TestResult | null> {
   const db = await openDb();
   const tx = db.transaction(RESULTS_STORE, 'readonly');
-  const result: TestResult | undefined = await promisifyRequest(tx.objectStore(RESULTS_STORE).get(id));
+  const result: StoredTestResult | undefined = await promisifyRequest(tx.objectStore(RESULTS_STORE).get(id));
   db.close();
-  return result ?? null;
+  // READ PATH 1 of 2 — normalised. See the rule at the top of this file.
+  return result ? normaliseTestResult(result) : null;
 }
 
 /**
@@ -171,9 +186,10 @@ export async function getResultsFor(athleteId: string): Promise<TestResult[]> {
   const db = await openDb();
   const tx = db.transaction(RESULTS_STORE, 'readonly');
   const index = tx.objectStore(RESULTS_STORE).index(RESULTS_BY_ATHLETE_INDEX);
-  const results: TestResult[] = await promisifyRequest(index.getAll(athleteId));
+  const results: StoredTestResult[] = await promisifyRequest(index.getAll(athleteId));
   db.close();
-  return results;
+  // READ PATH 2 of 2 — normalised. See the rule at the top of this file.
+  return normaliseTestResults(results);
 }
 
 /**

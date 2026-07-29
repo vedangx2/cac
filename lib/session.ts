@@ -22,6 +22,7 @@
 
 import type { ModuleScores, TestResult } from './types';
 import { getAthletes, saveAthlete, saveResult } from './storage';
+import { CURRENT_SCHEMA_VERSION } from './schema';
 
 const SESSION_KEY = 'active-battery-session';
 
@@ -145,6 +146,11 @@ export async function finishSession(session: BatterySession): Promise<TestResult
     takenAt: Date.now(),
     kind: session.kind,
     scores: session.scores,
+
+    // Stamp the shape this record was measured under, at the moment it is written. A record
+    // must carry the version of the battery that produced it, not the version of whatever
+    // build happens to read it later — that is the whole point. See lib/schema.ts.
+    schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 
   // Pin a CHECK to the baseline that is on file at this exact moment.

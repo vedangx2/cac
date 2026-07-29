@@ -106,3 +106,23 @@ against a written brief. Each step below was a separate commit.
   concussion test and says nothing about anyone's health. The plausible-reaction limit is a
   deliberate local copy of the engine constant rather than an import, for that same isolation
   reason; the comment in the file says so.
+
+- **2026-07-29, step 1 — Record versioning plumbing, no behaviour change.** AI added one
+  required field, `TestResult.schemaVersion`, and a new file `lib/schema.ts` holding the
+  version constants and a normaliser. The reason: a stored sitting's `scores` object has the
+  shape of whatever the battery measured at the time, so once the battery changes, an old
+  record and a new one are both valid but not comparable — the modules one of them never
+  measured read as `null`, which every consumer correctly skips, producing a comparison that
+  ran on almost nothing and still rendered a calm-looking screen. Records are now stamped with
+  their version on write (`lib/session.ts`) and normalised on read (`lib/storage.ts`), where
+  the normaliser fills the field in for records saved before it existed. The normaliser
+  deliberately does not migrate or relabel anything — relabelling an old record as current
+  would be the exact bug being prevented. AI made the field required rather than optional so
+  the compiler, not human diligence, guarantees no read path skips normalisation: a raw read
+  is typed `StoredTestResult` and will not fit a `TestResult` return. Both read paths in
+  storage.ts (`getResult`, `getResultsFor`) are covered. AI added `lib/schema.test.ts` (26
+  tests) covering the missing-field, present-field, future-version and malformed-version cases
+  plus a structural guard that every result-returning read in storage.ts calls the normaliser,
+  and 3 tests to `lib/session.test.ts` for the write-side stamp. All 69 pre-existing tests
+  still pass unchanged in behaviour; five test fixture factories gained the new required
+  field. No threshold value, no safety copy, and no app behaviour was changed.

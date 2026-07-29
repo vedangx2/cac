@@ -17,6 +17,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Athlete, ModuleScores, TestResult } from './types';
+import { CURRENT_SCHEMA_VERSION } from './schema';
 
 /* ── An in-memory stand-in for lib/storage ────────────────────────────────────────── */
 
@@ -139,5 +140,45 @@ describe('finishSession pins a check to the baseline on file at save time', () =
     // The check is appended to checkIds and the baseline pointer is left alone.
     expect(athletes.get(ATHLETE)?.checkIds).toContain(check.id);
     expect(athletes.get(ATHLETE)?.baselineId).toBe('b1');
+  });
+});
+
+/* ── The schema stamp ─────────────────────────────────────────────────────────────── */
+
+describe('finishSession stamps the schema version on every record it writes', () => {
+  // The write half of record versioning. lib/schema.test.ts covers the read half — filling
+  // the field in for records that predate it. This covers the half that has to happen at save
+  // time, because a record's version describes the battery that PRODUCED it and nothing read
+  // later can reconstruct that. If this stamp stopped happening, every new sitting would come
+  // back off disk labelled "legacy" by the normaliser, and once the current version moves past
+  // 1 the guard would start refusing records this very build had just written.
+
+  it('stamps a baseline with the current version', async () => {
+    putAthlete(null);
+
+    const result = await finishSession(session('baseline'));
+
+    expect(result.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(saved[0]?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
+  it('stamps a check with the current version', async () => {
+    putAthlete('b1');
+
+    const result = await finishSession(session('check'));
+
+    expect(result.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(saved[0]?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
+  it('writes a real version number, never undefined', async () => {
+    // Guards the specific slip of adding the field to the returned object but not to the one
+    // that goes to storage, which would be invisible until months-old records were read back.
+    putAthlete('b1');
+
+    await finishSession(session('check'));
+
+    expect(saved[0]?.schemaVersion).toBeTypeOf('number');
+    expect(saved[0]?.schemaVersion).toBeGreaterThan(0);
   });
 });

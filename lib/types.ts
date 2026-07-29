@@ -52,6 +52,31 @@ export type TestResult = {
   scores: ModuleScores;
 
   /**
+   * Which version of the ModuleScores shape this record was saved under.
+   *
+   * WHY THIS EXISTS: `scores` is the one field in here whose SHAPE changes when the battery
+   * changes. A record saved when the battery was symptom + reaction + scan holds different
+   * keys from one saved after those modules are replaced. Both are perfectly valid records —
+   * they just are not comparable with each other, because the fields one of them is missing
+   * are not fields the other measured.
+   *
+   * Without a version stamp there is no way to tell them apart at read time. The engine
+   * would compare a new check against an old baseline, find `null` where it expected a
+   * module, quietly skip it, and report on whatever few fields happened to overlap. That is
+   * the specific failure this app cannot have: a comparison that ran on almost nothing and
+   * still rendered a calm-looking screen.
+   *
+   * So: every record carries the version it was written under, the engine refuses to compare
+   * two records whose versions differ, and it says plainly that it refused. See lib/schema.ts
+   * for the normaliser that puts this field on records saved before it existed.
+   *
+   * It is REQUIRED, not optional, on purpose. Records come off disk without it, so the type
+   * only fits after `normaliseTestResult` has run — which makes the compiler, rather than
+   * our own diligence, the thing that guarantees no read path skips normalisation.
+   */
+  schemaVersion: number;
+
+  /**
    * Which baseline this sitting was compared against, pinned at save time.
    *
    * WHY THIS EXISTS: an Athlete holds exactly ONE `baselineId`, and recording a new baseline

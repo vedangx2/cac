@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Athlete, ModuleScores, TestResult } from '../types';
+import { CURRENT_SCHEMA_VERSION } from '../schema';
 import { InvalidComparisonError, compareToBaseline } from './compare';
 import { resolveComparedBaselineId } from './resolveBaseline';
 import { REACTION_SLOWER_MS } from './thresholds';
@@ -38,7 +39,14 @@ function reaction(medianMs: number): NonNullable<ModuleScores['reaction']> {
 }
 
 function baselineSitting(id: string, takenAt: number, medianMs: number): TestResult {
-  return { id, athleteId: ATHLETE, takenAt, kind: 'baseline', scores: scores({ reaction: reaction(medianMs) }) };
+  return {
+    id,
+    athleteId: ATHLETE,
+    takenAt,
+    kind: 'baseline',
+    scores: scores({ reaction: reaction(medianMs) }),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+  };
 }
 
 function checkSitting(
@@ -54,6 +62,7 @@ function checkSitting(
     kind: 'check',
     scores: scores({ reaction: reaction(medianMs) }),
     comparedToBaselineId,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 }
 
