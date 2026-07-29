@@ -251,3 +251,17 @@ against a written brief. Each step below was a separate commit.
   `vitest.config.ts` only collects `lib/**/*.test.ts` — AI initially wrote the test under `app/`
   where it silently did not run, and moved it to follow the project's existing convention. Tests
   211 → 224.
+
+- **2026-07-29, step 5b — Digit span backward.** AI built `/tests/digits` plus the pure logic in
+  `lib/modules/digits.ts` and 20 tests. Nine fixed trials at lengths 3,3,4,4,5,5,6,6,7, scored as
+  how many were reproduced exactly out of nine, with no partial credit inside a trial. Fixed-trial
+  rather than a staircase (an approved decision) because a staircase's stopping point depends on
+  the athlete's own answers, so two sittings end up different lengths and are awkward to compare —
+  and this app exists to compare one athlete's sitting against their own earlier one. All-or-nothing
+  scoring is the honest choice: any per-digit part-marking would be a weighting AI invented, and it
+  would then be doing real work in a comparison we ask people to trust. The screen deliberately
+  gives NO per-trial right/wrong feedback, for two reasons — a "correct" affordance would need a
+  green flash or a tick, which is exactly how a no-green rule erodes, and an athlete who knows they
+  have failed three in a row starts guessing, which stops the remaining trials measuring anything.
+  `digitSpan` was appended to `BATTERY_STEPS` between the two word screens, since the gap between
+  the word pair is what makes the delayed score meaningful. Tests 224 → 244.
