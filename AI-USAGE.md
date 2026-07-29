@@ -82,3 +82,27 @@ Each entry below corresponds to one build phase.
   stand-in for `lib/storage` and no new dependencies. It also corrected the file name cited in the
   entry above, which named the helper function as though it were the file. No threshold values, no
   safety copy, no clinical claims, and no product behaviour were changed in this session.
+
+---
+
+## 2026-07-29 — Battery rebuild (one entry per step)
+
+This session rebuilt the test battery around a new set of modules. It ran autonomously
+against a written brief. Each step below was a separate commit.
+
+- **2026-07-29, step 0 — Standalone noise-floor instrument.** AI wrote
+  `app/tools/noise-floor/page.tsx`, a new page that runs the same 5-trial reaction protocol
+  the battery's reaction test ran, and prints the five raw trial times, the median and the
+  false-start count in large type so they can be copied onto paper. Its purpose is to measure
+  how much a healthy person's reaction time varies between sittings, which is the number the
+  project needs before any real flagging threshold can be chosen. AI reproduced the original
+  timing handling exactly (`performance.now()`, natively-attached `pointerdown`, a synchronous
+  clock stamp plus a `requestAnimationFrame` refinement, no React re-render between the green
+  stimulus and the tap, and discarding any trial slower than the plausible-reaction limit).
+  The page deliberately imports none of `lib/types.ts`, `lib/engine/**` or `lib/session.ts`,
+  writes to no storage at all, and is not linked from the athlete flow — so that the battery
+  rebuild happening in the later steps cannot change how it measures. It carries the root
+  layout's safety footer and is labelled on screen as a measurement tool that is not a
+  concussion test and says nothing about anyone's health. The plausible-reaction limit is a
+  deliberate local copy of the engine constant rather than an import, for that same isolation
+  reason; the comment in the file says so.
