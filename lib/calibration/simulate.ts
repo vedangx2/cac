@@ -243,8 +243,22 @@ export function defaultThresholdCandidates(
     return Array.from({ length: ceiling }, (_, index) => index + 1);
   }
 
-  const worsenings = samples.healthy.map((s) => s.worsening[measurement]);
-  const widest = worsenings.length ? Math.max(...worsenings) : 100;
+  // A plain loop, NOT Math.max(...worsenings).
+  //
+  // Spreading an array into a call puts one stack slot per element, so it throws RangeError once
+  // the array is large enough. Measured on the Node build this repo uses, that limit is around
+  // 125,000 elements; the dev page caps a run at 50,000 pairs, so the spread version was NOT
+  // actually failing today. It was within a factor of about two and a half of failing, on a
+  // limit that depends on the JS engine and the stack the browser happens to give the tab. A
+  // loop has no such limit and costs nothing, so the margin is not worth keeping.
+  let widest = 0;
+  for (const sample of samples.healthy) {
+    const value = sample.worsening[measurement];
+    if (value > widest) widest = value;
+  }
+  // No samples, or every simulated athlete came out better than baseline. Either way there is no
+  // observed worsening to size the axis from, so fall back to a plain range.
+  if (widest <= 0) widest = 100;
   // Round the top of the range up to a whole step so the axis reads in tidy numbers.
   const step = Math.max(5, Math.ceil(widest / 20 / 5) * 5);
   const top = Math.max(step * 20, Math.ceil(widest / step) * step);

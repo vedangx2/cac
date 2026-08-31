@@ -142,17 +142,15 @@ export default function AthletesPage() {
                         Delete {athlete.name} and all of their recorded results? This cannot be
                         undone.
                       </p>
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                         <Button
                           variant="primary"
-                          className="!min-h-12 !px-4 !text-body"
                           onClick={() => void removeAthlete(athlete.id)}
                         >
                           Delete permanently
                         </Button>
                         <Button
                           variant="secondary"
-                          className="!min-h-12 !px-4 !text-body"
                           onClick={() => setConfirmingDelete(null)}
                         >
                           Keep

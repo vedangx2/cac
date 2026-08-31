@@ -570,3 +570,41 @@ describe('the harness never writes a threshold', () => {
     expect(realIds).not.toContain(SIMULATED_FORM_ID);
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   Found by the branch review
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('the sweep range survives a large run', () => {
+  it('picks candidates without spreading every sample into a call', () => {
+    // What this guards: the sweep range used to be `Math.max(...worsenings)`, which puts one
+    // stack slot per sample and throws RangeError on a large enough array. On this Node build
+    // the limit is around 125,000, so at the page's 50,000-pair cap it was not failing — it was
+    // within about 2.5x of a limit that varies by engine and by the stack a browser hands the
+    // tab. This test runs a large sample set so the loop version stays a loop.
+    const samples = generateSamples({
+      profiles: PLACEHOLDER_PROFILES,
+      degradations: {},
+      pairs: 30_000,
+      seed: 1,
+    });
+
+    expect(samples.healthy.length).toBe(30_000);
+    const candidates = defaultThresholdCandidates(samples, 'goNoGoMedianMs');
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates.every((value) => Number.isFinite(value))).toBe(true);
+  });
+
+  it('falls back to a plain range when nobody got worse', () => {
+    const empty = {
+      healthy: [],
+      impaired: [],
+      refusedByEngine: 0,
+      crossCheckDisagreements: 0,
+      seed: 1,
+    };
+    const candidates = defaultThresholdCandidates(empty, 'goNoGoMedianMs');
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates[0]).toBeGreaterThan(0);
+  });
+});

@@ -111,6 +111,17 @@ export default function GoNoGoPage() {
   const outcomesRef = useRef<TrialOutcome[]>([]);
   /** How many times the CURRENT trial has been discarded and repeated. */
   const repeatsRef = useRef(0);
+  /**
+   * Which stimulus the clock is currently timing. Incremented every time one is shown.
+   *
+   * WHY A COUNTER AND NOT JUST A ZERO CHECK: a requestAnimationFrame callback can arrive late.
+   * If one from trial N fired while trial N+1 was already showing, a bare "is the stamp live?"
+   * test would pass and the callback would overwrite N+1's start time with the current moment —
+   * making N+1's response look far faster than it was, quite possibly fast enough to be thrown
+   * out as an anticipation. Tagging each stimulus means a late callback can only ever refine the
+   * stimulus it belongs to.
+   */
+  const stimulusTokenRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Handles on the DOM we paint directly. ──────────────────────────────────────── */
@@ -260,11 +271,14 @@ export default function GoNoGoPage() {
       // relied on rAF alone, stimulusAt would stay 0, every tap would measure against nothing,
       // and the pad would silently stop responding with no way out — a soft-lock. This way the
       // worst case is being one frame (~16ms) early, and the normal case is frame-accurate.
+      const token = (stimulusTokenRef.current += 1);
       stimulusAtRef.current = performance.now();
       requestAnimationFrame(() => {
-        // Only refine a stamp that is still live. Without this guard a late rAF callback firing
-        // after the trial has already been answered would move the start time of the NEXT trial.
-        if (stimulusAtRef.current !== 0) stimulusAtRef.current = performance.now();
+        // Only refine THIS stimulus, and only while it is still live. A late callback from an
+        // earlier trial fails the token test and is ignored.
+        if (stimulusTokenRef.current === token && stimulusAtRef.current !== 0) {
+          stimulusAtRef.current = performance.now();
+        }
       });
 
       timerRef.current = setTimeout(closeWindow, GO_NO_STIMULUS_WINDOW_MS);
