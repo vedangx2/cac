@@ -190,7 +190,10 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
       <p className={`text-title font-black ${styles.title}`}>Practice run — nothing is saved</p>
       <p className={`mt-2 text-body ${styles.body}`}>
         No athlete is attached to this run.{' '}
-        <Link href="/athletes" className={`font-bold underline underline-offset-4 ${styles.link}`}>
+        <Link
+          href="/athletes"
+          className={`inline-flex min-h-14 items-center font-bold underline underline-offset-4 ${styles.link}`}
+        >
           Pick an athlete
         </Link>{' '}
         to record a real baseline or sideline check.

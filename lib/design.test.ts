@@ -285,4 +285,36 @@ describe('anything you tap in a test module is big enough to hit', () => {
   it('the digit keypad keys are at least 56px tall', () => {
     expect(sourceOf('app/tests/digits/page.tsx')).toMatch(/min-h-16/);
   });
+
+  it('the links in the chrome and the practice banner are 56px tall too', () => {
+    // Found by the design audit at 21px and 49px. They are on every module screen and they are
+    // tappable, so they are held to the same floor as everything else.
+    const layout = readFileSync(join(REPO, 'app', 'layout.tsx'), 'utf8');
+    const battery = readFileSync(join(REPO, 'components', 'battery.tsx'), 'utf8');
+
+    expect(layout).toMatch(/inline-flex min-h-14 items-center[^"]*Sideline|Sideline/);
+    expect((layout.match(/inline-flex min-h-14 items-center/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(battery).toMatch(/inline-flex min-h-14 items-center/);
+  });
+});
+
+describe('there is exactly one font family', () => {
+  it('declares the same stack on the root and on the body', () => {
+    // Tailwind's reset puts its own stack on <html>. Only <body> is ever visible, so this was
+    // true by inheritance rather than by intent — and anything mounted on the root would have
+    // rendered in a different face.
+    const stack = /font-family:\s*ui-sans-serif, system-ui/;
+    const htmlBlock = GLOBALS.slice(GLOBALS.indexOf('html {'), GLOBALS.indexOf('body {'));
+    const bodyBlock = GLOBALS.slice(GLOBALS.indexOf('body {'));
+
+    expect(htmlBlock).toMatch(stack);
+    expect(bodyBlock).toMatch(stack);
+  });
+
+  it('names no second family anywhere in the stylesheet', () => {
+    const families = [...GLOBALS.matchAll(/font-family:\s*([^;]+);/g)].map((m) =>
+      m[1].trim().split(',')[0].trim(),
+    );
+    expect([...new Set(families)]).toEqual(['ui-sans-serif']);
+  });
 });

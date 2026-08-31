@@ -118,6 +118,15 @@
 
 @layer base {
   html {
+    /*
+      ONE FAMILY, declared on the root as well as on body.
+
+      Tailwind's own reset puts a different stack on <html>, and although only <body> and its
+      descendants are ever visible, that left two font stacks in the document and made "one font
+      family" true by inheritance rather than by intent. Anything that ever escaped body — a
+      portal, a dialog mounted on the root — would have rendered in a different face.
+    */
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     /* Never let a stray wide element cause sideways scrolling on a phone. */
     overflow-x: hidden;
     /* Stop iOS from silently inflating type in landscape. */

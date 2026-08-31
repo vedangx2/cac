@@ -55,7 +55,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             aria-label="Main"
             className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-8"
           >
-            <Link href="/" className="text-meta font-black uppercase tracking-widest">
+            <Link
+              href="/"
+              className="inline-flex min-h-14 items-center text-meta font-black uppercase tracking-widest"
+            >
               Sideline&nbsp;Screen
             </Link>
             <Link
