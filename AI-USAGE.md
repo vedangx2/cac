@@ -353,3 +353,34 @@ against a written brief. Each step below was a separate commit.
   score. No threshold value was set: `GO_NO_GO_SLOWER_MS`, `GO_NO_GO_MORE_COMMISSION_ERRORS` and
   `GO_NO_GO_MORE_OMISSION_ERRORS` are all still `null` with `TODO(NEEDS_SOURCE)`, and recording a
   baseline or check is still disabled. Tests 272 → 307.
+
+- **2026-08-31, task 2 — Threshold calibration harness. AI-written in full.** AI wrote
+  `lib/calibration/` (`random.ts`, `profiles.ts`, `generate.ts`, `simulate.ts`, `parse.ts`,
+  `index.ts`), 50 tests in `lib/calibration/calibration.test.ts`, and the dev-only page at
+  `app/tools/calibration`. Nothing in it was written by a human, and nothing in it writes a
+  threshold: every value in `lib/engine/thresholds.ts` is still `null` with `TODO(NEEDS_SOURCE)`,
+  and a test asserts that after a full simulation run.
+
+  It generates synthetic athletes from a noise profile, applies a degradation the human supplies,
+  and pushes every pair through the **real** comparison engine — `compareToBaseline` for the
+  refusal rules and `worseningFor` for the direction-aware subtraction, both imported rather than
+  copied. Two things the harness adds itself, because the engine cannot supply them, are disclosed
+  in `SESSION-REPORT.md`: the candidate threshold (the engine's thresholds are all null, so it has
+  no cut-off to be asked about) and the whole-screen flag rule (the engine hard-codes flag-on-any,
+  and comparing rules was the point). Both are kept honest by a cross-check that runs on every
+  pair of every run: symptom is the one measurement with a real threshold, so the harness's verdict
+  is compared against the engine's on all of them, and the page refuses to look confident if they
+  ever disagree.
+
+  AI chose the statistical shapes and says so plainly: binomial for the count-based measurements
+  (a bell curve produces 9.7 out of 9), Poisson for the error tallies, normal for the response
+  time, and a deliberate split between between-athlete and within-athlete spread because only the
+  second one drives the false-positive rate. AI wrote no effect size anywhere — a measurement with
+  no degradation supplied reports its miss rate as "not answerable" rather than 0%.
+
+  The placeholder profile is invented round numbers, labelled `PLACEHOLDER — invented round
+  numbers, not measurements of anybody` in the one place the string lives, and the page states on
+  every screenful that the output is a simulation and not evidence about concussion. The page is
+  gated out of production builds and linked from nowhere. First run on real pasted data already
+  produced a finding worth acting on and recorded in the report: flag-on-any raised a false alarm
+  on 30% of healthy simulated athletes against 3% for flag-on-two. Tests 307 → 357.
