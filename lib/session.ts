@@ -41,6 +41,7 @@ export type BatteryStep =
   | 'wordLearning'
   | 'digitSpan'
   | 'patternSpan'
+  | 'goNoGo'
   | 'wordRecognition';
 
 /**
@@ -61,15 +62,18 @@ export type BatteryStep =
  * a second look at the same screen. So nothing may be appended after `wordRecognition`, and the
  * span tasks must stay between the pair.
  *
- * GO/NO-GO IS DELIBERATELY ABSENT. A student is writing that module by hand. It is not listed
- * here and there is no route stub, because a stub that wrote plausible-looking scores would be
- * fabricated data.
+ * GO/NO-GO NOW EXISTS and sits between the span tasks and the delayed word screen. It went in
+ * THERE rather than at the end for the reason above: appending it after `wordRecognition` would
+ * have been the one move the ordering rule forbids. Sitting inside the pair it also lengthens the
+ * gap between the two word screens, which makes the delayed score a slightly better test of what
+ * was retained rather than a second look at the same grid.
  */
 export const BATTERY_STEPS: BatteryStep[] = [
   'symptom',
   'wordLearning',
   'digitSpan',
   'patternSpan',
+  'goNoGo',
   'wordRecognition',
 ];
 
@@ -78,6 +82,7 @@ export const STEP_PATHS: Record<BatteryStep, string> = {
   wordLearning: '/tests/words',
   digitSpan: '/tests/digits',
   patternSpan: '/tests/pattern',
+  goNoGo: '/tests/gonogo',
   wordRecognition: '/tests/words/recall',
 };
 
@@ -86,6 +91,7 @@ export const STEP_LABELS: Record<BatteryStep, string> = {
   wordLearning: 'Word learning',
   digitSpan: 'Numbers backwards',
   patternSpan: 'Tapped patterns',
+  goNoGo: 'Go / no-go',
   wordRecognition: 'Word recall',
 };
 

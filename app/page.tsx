@@ -59,9 +59,10 @@ export default function HomePage() {
           */}
           <div className="mt-6">
             <Notice tone="flag" title="Recording is turned off right now">
-              The tests in this app are being rebuilt, and the new ones do not have tested cut-offs
-              yet. You can try every test below, but baselines and sideline checks cannot be
-              recorded until that work is finished and real data has been collected.{' '}
+              The tests below are all built now, but none of them has a tested cut-off yet — so the
+              app can measure a change and still has no basis for saying whether that change
+              matters. You can try every test, but baselines and sideline checks cannot be recorded
+              until real data has been collected and those cut-offs set.{' '}
               <strong>
                 This app is not ready to be used on an athlete who may have hit their head.
               </strong>
@@ -141,17 +142,12 @@ export default function HomePage() {
             title="Tapped patterns"
             body="Squares light up one after another; tap them back in the same order. Nine rounds, getting longer."
           />
+          <TestCard
+            href="/tests/gonogo"
+            title="Go / no-go"
+            body="Tap the moment the signal says TAP, and do nothing when it says HOLD. Thirty short trials measuring both how fast you move and how well you hold back."
+          />
         </div>
-
-        {/*
-          Go/no-go is named here without a link on purpose. It is part of the planned battery and a
-          student is writing it by hand; there is no route yet, and a stub that produced
-          plausible-looking scores would be fabricated data.
-        */}
-        <p className="mt-4 max-w-2xl text-base text-ink-soft">
-          One more test — a go / no-go task, measuring how well someone can hold back a response —
-          is still being written and is not part of the battery yet.
-        </p>
       </section>
 
       {/* ── Privacy ───────────────────────────────────────────────────────────────── */}

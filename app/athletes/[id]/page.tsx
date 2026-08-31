@@ -155,10 +155,10 @@ export default function AthleteDetailPage() {
         quietly removed by the next person who finds it inconvenient.
 
         Three separate reasons, each sufficient on its own:
-          1. The battery is mid-rebuild — reaction time and number scan have been removed and
-             their replacements are still landing. A sitting recorded right now would measure a
-             different set of tests from one recorded next week, and the two would not be
-             comparable.
+          1. The battery has only just been completed. A sitting recorded now would measure a
+             different set of tests from one recorded a few weeks ago, and the two would not be
+             comparable. (This is the reason with the shortest life left — the other two are the
+             ones that matter.)
           2. Every threshold for the new modules is null. The engine can compare the numbers but
              has no tested cut-off to judge them against, so it cannot answer the only question
              this app exists to answer.
@@ -169,10 +169,11 @@ export default function AthleteDetailPage() {
         athlete who has taken a real hit.
       */}
       <div className="mb-8">
-        <Notice tone="flag" title="Testing is turned off while the battery is rebuilt">
-          The tests in this app are being replaced, and the new ones do not have tested cut-offs
-          yet. Recording a baseline or running a sideline check is disabled until that work is
-          finished, because a result now could not be compared against anything meaningful.
+        <Notice tone="flag" title="Testing is turned off — the tests have no tested cut-offs yet">
+          Every test in this app has now been built, but none of them has a cut-off telling us how
+          big a change is big enough to matter. Recording a baseline or running a sideline check is
+          disabled until those are set from real collected data, because a result now could be
+          measured but not judged.
           <br />
           <br />
           <strong>
@@ -220,7 +221,7 @@ export default function AthleteDetailPage() {
                 {baseline ? 'Record new baseline' : 'Record baseline'}
               </Button>
               <p className="mt-2 text-sm font-semibold text-ink-soft">
-                Unavailable while the battery is being rebuilt.
+                Unavailable until the tests have tested cut-offs.
               </p>
             </Card>
 
@@ -257,7 +258,7 @@ export default function AthleteDetailPage() {
                 Start sideline check
               </Button>
               <p className="mt-2 text-sm font-semibold text-ink-soft">
-                Unavailable while the battery is being rebuilt.
+                Unavailable until the tests have tested cut-offs.
               </p>
             </Card>
           </div>

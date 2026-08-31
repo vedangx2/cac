@@ -308,3 +308,48 @@ against a written brief. Each step below was a separate commit.
   results screen, the root-layout footer, `CLAUDE.md` itself), what is free to edit, and that the
   two AI-generated stimulus pools may be replaced wholesale. The baseline and check buttons were
   left **disabled**, as instructed.
+
+- **2026-08-31, task 0 — gstack section in CLAUDE.md.** AI appended a short `## gstack` section
+  listing the available skills and recording that `/ship` and `/document-release` must not be run
+  in this repo, because `/document-release` rewrites `CLAUDE.md` automatically and that file holds
+  the safety rules governing the whole project. Committed on its own. This was the only edit to
+  `CLAUDE.md` in the session; everything else that file needs is listed in `SESSION-REPORT.md`
+  instead of being changed.
+
+- **2026-08-31, task 1 — Go / no-go module. WRITTEN BY AI, not by the student.** This is the
+  module `CLAUDE.md` had reserved as student-owned and off-limits to AI sessions. The human
+  running this session directed AI to build it, with the timing requirements spelled out; that
+  instruction supersedes the earlier ownership note, and the note in `CLAUDE.md` is now out of
+  date. **It has not been corrected, because this session was told to make exactly one edit to
+  `CLAUDE.md`** — the correction is listed in `SESSION-REPORT.md` for a human to make.
+
+  AI wrote, in full: `app/tests/gonogo/page.tsx` (the screen), `lib/modules/gonogo.ts` (the pacing
+  constants, the anticipation and stale-timer rules, and the scoring), `lib/modules/gonogo.test.ts`
+  (35 tests), `docs/GONOGO-WALKTHROUGH.md` (a line-by-line explanation written for someone who
+  knows Java and Python but not TypeScript or React), and two new structural regression guards
+  (#5 and #6) in `lib/regression.test.ts`. AI also added `goNoGo` to `BATTERY_STEPS` between the
+  span tasks and the delayed word screen — not at the end, because the ordering rule forbids
+  appending anything after `wordRecognition` — plus its path and label, a test card on the home
+  page, and updated the copy on the home and athlete screens that said go/no-go was still being
+  written. NOT written by AI: `lib/forms/goNo.ts`, the stimulus pool, which already existed; the
+  module reads it and never generates a trial of its own.
+
+  The four timing rules were implemented as specified: the stimulus time is stamped synchronously
+  before `requestAnimationFrame` (rAF never fires in a backgrounded tab, which soft-locked the old
+  reaction pad); no React re-render happens between stimulus and response, and every judgement
+  reads a ref rather than state (stale state produced 14 phantom errors on the old scan); an
+  anticipation is discarded and the trial repeated rather than recorded or counted as an error;
+  and a go trial with no response is an omission. AI added two rules that were not asked for and
+  are judgement calls, both written up in `SESSION-REPORT.md`: a window-closing timer that fires
+  far too late is treated as a throttled tab and the trial repeated rather than recorded as an
+  omission the athlete never had a chance at, and a trial may only be repeated three times before
+  the whole run is abandoned with nothing saved, so a face-down phone cannot loop forever.
+
+  Two things AI deliberately did not do. `goTrialsMs` — the raw per-trial response times — is
+  computed and shown on screen but NOT saved, because `ModuleScores.goNoGo` has no field for it
+  and adding one would require a `schemaVersion` bump that makes every baseline already on a phone
+  unreadable; widening the contract is proposed in the report instead. And a run where no go trial
+  got a response returns null rather than a manufactured median, so a test nobody took produces no
+  score. No threshold value was set: `GO_NO_GO_SLOWER_MS`, `GO_NO_GO_MORE_COMMISSION_ERRORS` and
+  `GO_NO_GO_MORE_OMISSION_ERRORS` are all still `null` with `TODO(NEEDS_SOURCE)`, and recording a
+  baseline or check is still disabled. Tests 272 → 307.

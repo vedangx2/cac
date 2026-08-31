@@ -6,13 +6,14 @@
 // This file is the STIMULUS POOL for go/no-go, and nothing else. It holds trial lists and no
 // behaviour.
 //
-// THE GO/NO-GO MODULE ITSELF IS NOT BUILT AND MUST NOT BE BUILT BY AN AI SESSION. A student
-// is writing `app/tests/gonogo` by hand. Until it exists, `goNoGo` is deliberately absent from
-// BATTERY_STEPS and there is deliberately NO route stub — a stub that wrote plausible-looking
-// scores would be fabricated data, which this project forbids outright.
+// THE MODULE THAT CONSUMES THIS POOL now exists at `app/tests/gonogo`, and `goNoGo` is in
+// BATTERY_STEPS between the span tasks and the delayed word screen. The behaviour lives there;
+// this file still holds no behaviour at all.
 //
-// So: this pool exists so the module has something to consume the day it is written. Nothing
-// imports it yet. That is expected, not an oversight.
+// The division of labour has not changed and should not: the module decides what happens on a
+// trial, this file decides only WHICH TRIALS THERE ARE. The screen never generates a trial of its
+// own, because a run assembled on the spot could not be traced back from a saved score, and two
+// sittings by the same athlete would not be comparable.
 //
 // ═════════════════════════════════════════════════════════════════════════════════════
 // WHAT GO/NO-GO MEASURES, SO THE POOL MAKES SENSE

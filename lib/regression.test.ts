@@ -61,6 +61,7 @@ function source(relativePath: string): string {
 const NOISE_FLOOR_SRC = source(join('app', 'tools', 'noise-floor', 'page.tsx'));
 const PATTERN_SRC = source(join('app', 'tests', 'pattern', 'page.tsx'));
 const RESULTS_SRC = source(join('app', 'results', '[id]', 'page.tsx'));
+const GONOGO_SRC = source(join('app', 'tests', 'gonogo', 'page.tsx'));
 
 /* ── Small fixtures for the behavioural (engine) assertions ───────────────────────── */
 
@@ -295,5 +296,86 @@ describe('#4 identical check — a "no change" result, never a clearance', () =>
 
   it('states in words that this does not rule out a concussion (copy guard)', () => {
     expect(RESULTS_SRC).toContain('does not rule out a concussion');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #5 — Go/no-go stamps the stimulus time SYNCHRONOUSLY, before requestAnimationFrame.
+
+   The same bug as #2, in the module that inherited the timing. The deleted reaction pad stamped
+   its clock ONLY inside requestAnimationFrame; browsers stop firing rAF for a tab that is not
+   visible, so backgrounding the phone at that instant meant the stamp never happened, every tap
+   measured against zero, and the pad soft-locked with no way out.
+
+   Go/no-go shows thirty stimuli instead of five, so it has thirty chances to hit it. The fix is
+   the same: stamp the moment the stimulus is requested, and let rAF only REFINE it.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#5 go/no-go — the stimulus time is stamped before requestAnimationFrame (structural guard)', () => {
+  it('stamps synchronously and only then asks rAF to refine it', () => {
+    // The assignment immediately followed by the rAF call. Deleting the synchronous line — which
+    // is the mutation this guard exists for — leaves rAF as the only stamp and fails this.
+    expect(GONOGO_SRC).toMatch(
+      /stimulusAtRef\.current = performance\.now\(\);\s*requestAnimationFrame\(/,
+    );
+  });
+
+  it('measures the response against that stamp, not against page load', () => {
+    expect(GONOGO_SRC).toMatch(/performance\.now\(\) - stimulusAtRef\.current/);
+  });
+
+  it('refuses to record a response when no stimulus time was ever set', () => {
+    // The safety net. If a future change breaks the stamp, a tap must produce nothing rather than
+    // a measurement taken against zero — which would look like an enormous, entirely fake, delay.
+    expect(GONOGO_SRC).toMatch(/if \(stimulusAtRef\.current === 0\) return;/);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #6 — Go/no-go judges every tap against refs, never against React state.
+
+   The number scan's original bug, in the screen that now has the most to lose from it. React
+   state only updates on the next render; a tap judged against stale state is judged against the
+   PREVIOUS trial. In go/no-go that does not merely miscount — it can score a tap that arrived
+   during a no-go trial as a go response, turning a commission error into a reaction time.
+
+   So the phase, the stimulus time and the trial index all live in refs, and the tap handler
+   reads them. React state is written exactly once, when the run ends.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#6 go/no-go — taps are judged against refs, not React state (structural guard)', () => {
+  it('keeps the pad phase in a ref and reads it in the tap handler', () => {
+    expect(GONOGO_SRC).toMatch(/const phaseRef = useRef<PadPhase>\(/);
+    expect(GONOGO_SRC).toMatch(/const phase = phaseRef\.current;/);
+  });
+
+  it('keeps the stimulus time and the trial position in refs too', () => {
+    expect(GONOGO_SRC).toMatch(/const stimulusAtRef = useRef\(/);
+    expect(GONOGO_SRC).toMatch(/const trialIndexRef = useRef\(/);
+    expect(GONOGO_SRC).toMatch(/const outcomesRef = useRef<TrialOutcome\[\]>\(/);
+  });
+
+  it('attaches the tap listener natively rather than through React', () => {
+    // A React synthetic handler would put React's own work between the tap and the clock read.
+    expect(GONOGO_SRC).toMatch(/addEventListener\('pointerdown'/);
+  });
+
+  it('records a tap during a no-go trial as a commission error', () => {
+    // Deleting this — the commission mutation — makes an athlete who could not hold back look
+    // like an athlete who held back perfectly.
+    expect(GONOGO_SRC).toMatch(/kind: 'nogo-commission'/);
+  });
+
+  it('discards an anticipation and repeats the trial instead of recording it', () => {
+    expect(GONOGO_SRC).toMatch(/judged\.kind === 'anticipation'/);
+    expect(GONOGO_SRC).toMatch(/discardAndRepeat\(/);
+  });
+
+  it('counts a go trial with no response as an omission', () => {
+    expect(GONOGO_SRC).toMatch(/kind: 'go-omission'/);
   });
 });
