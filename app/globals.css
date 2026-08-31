@@ -5,61 +5,115 @@
   DESIGN SYSTEM — "sideline instrument"
   ─────────────────────────────────────────────────────────────────────────────────────
 
-  The design position, and why:
+  THE CONTEXT THIS IS DESIGNED FOR, which decides everything below:
+  outdoors, in daylight, on a phone, one-handed, by a teenager who has just taken a hit
+  and is rattled and in a hurry, possibly with an adult watching over their shoulder.
+  Nobody is admiring this. They want to finish it.
 
-  This app is read OUTDOORS, in daylight, one-handed, by someone in a hurry and possibly
-  rattled. So we split the interface into two worlds:
+  So the interface is two worlds and nothing in between:
 
-    1. THE APP IS A DOCUMENT (light).  Rosters, results, forms — anything you READ — sits on
-       a near-white surface with near-black type. In bright sun a phone screen is fighting
-       ambient glare, and a light background at full brightness gives the highest real-world
-       luminance contrast. This is the clipboard on the sideline.
+    1. SCREENS YOU READ ARE A DOCUMENT (light).  Roster, results, instructions — anything
+       you take in with your eyes rather than your hands. Near-black type on near-white.
+       In bright sun a phone is fighting ambient glare, and a light background at full
+       brightness gives the highest real-world luminance contrast. This is the clipboard.
 
-    2. THE TESTS ARE INSTRUMENTS (dark).  The reaction pad and the number grid sit on
-       near-black. A dark surround removes every competing bright element so the stimulus —
-       a red/green pad, a white numeral — is the only thing your eye can land on. This is
-       the timing gate, not the clipboard.
+    2. SCREENS YOU PERFORM ARE INSTRUMENTS (dark).  All six test modules. Near-black
+       surround so the stimulus is the only bright thing your eye can land on. The page
+       chrome is dark too, for the same reason: a white navigation bar above a dark test
+       screen is the brightest object on the display, and it must not be.
 
-  Only two accent colors carry meaning, so nothing is ambiguous:
-    • SIGNAL BLUE  = "you can act here" (buttons, links, focus rings)
-    • FLAG RED     = "this is serious" (a flagged screening result, destructive actions)
+  ─────────────────────────────────────────────────────────────────────────────────────
+  THE COLOUR RULE — ONE ACCENT, ONE MEANING
+  ─────────────────────────────────────────────────────────────────────────────────────
+  There is exactly ONE accent colour in this app:
 
-  There is deliberately NO success/OK green in the app chrome. A green UI state would imply
-  "cleared," which this app must never say. See CLAUDE.md → THE HARD RULE.
+      RED  =  this screening found a change worth a human looking at.
 
-  (The one green in this codebase is the reaction pad's GO stimulus. That is a physical
-  target to tap, not a verdict about anyone's health — see the note in the reaction test.)
+  It appears on the results screen and NOWHERE ELSE. Not on buttons, not on links, not on
+  errors, not on warnings, not on a destructive action, not on a "wait" state. The moment
+  red also means "delete" or "heads up", it stops meaning "flagged", and the one screen
+  where it has to land hardest is the one that loses.
+
+  Everything that used to be blue is now ink or paper. Everything that used to be a red
+  warning is now a heavy ink panel, which on a white page is at least as loud and costs
+  the accent nothing.
+
+  THERE IS NO SUCCESS GREEN AND NO SUCCESS STATE. This app has nothing to report that a
+  green would be right for. See CLAUDE.md → THE HARD RULE.
+
+  The single green in the codebase is the GO stimulus on the two timed pads. That is a
+  physical target to hit, on screen for under two seconds, and it never appears on a
+  results screen. It says nothing about anybody's health. Do not "fix" it.
+
+  ─────────────────────────────────────────────────────────────────────────────────────
+  WHY THE NAMESPACES ARE RESET TO `initial`
+  ─────────────────────────────────────────────────────────────────────────────────────
+  `--color-*: initial` and `--text-*: initial` delete Tailwind's built-in palettes and
+  type steps. That is deliberate and load-bearing: it means the ONLY colours and the ONLY
+  font sizes that exist are the ones defined below. A stray `text-blue-500`, `bg-white` or
+  `text-xs` is not a style slip that survives review — it fails the build.
+
+  The count is the point. Ten colours, five sizes, and the compiler enforces both.
 */
 
 @theme {
-  /* ---- App chrome: the light "field document" ---- */
-  --color-paper: #ffffff;
-  --color-surface: #f1f3f4;
-  --color-line: #ccd4d9;
-  --color-line-strong: #9aa7b0;
-  --color-ink: #0b0f12;
-  --color-ink-soft: #4b565d;
+  /* ═══ COLOUR — exactly ten, and every one has a job ════════════════════════════ */
+  --color-*: initial;
 
-  /* ---- Instruments: the dark test screens ---- */
-  --color-instrument: #0a0d10;
-  --color-instrument-panel: #161c21;
-  --color-instrument-line: #2b343b;
-  --color-instrument-ink: #f3f5f6;
-  --color-instrument-ink-soft: #9dabb4;
+  /* -- The document surface (screens you read) -- */
+  /* 1 */ --color-paper: #ffffff; /* cards, and the light page itself */
+  /* 2 */ --color-surface: #eef1f2; /* the page behind the cards, so cards have an edge */
+  /* 3 */ --color-ink: #0a0e11; /* all primary text on light; primary buttons */
+  /* 4 */ --color-ink-soft: #46525a; /* secondary text on light. 8.0:1 on paper */
 
-  /* ---- Meaning ---- */
-  --color-signal: #0b5fff;
-  --color-signal-deep: #0846c2;
-  --color-flag: #ce1126;
-  --color-flag-deep: #8c0a19;
+  /* -- The instrument surface (screens you perform) -- */
+  /* 5 */ --color-instrument: #080b0d; /* the dark page, and the app chrome */
+  /* 6 */ --color-instrument-panel: #161c21; /* a raised panel on the dark page */
+  /* 7 */ --color-instrument-ink: #f4f6f7; /* primary text on dark. 18.0:1 */
+  /* 8 */ --color-instrument-ink-soft: #a9b6be; /* secondary text on dark. 8.3:1 on panel */
 
-  /* ---- Reaction pad stimulus (physical targets, not verdicts) ---- */
-  --color-pad-wait: #c8102e;
-  --color-pad-go: #00a651;
+  /* -- Meaning -- */
+  /* 9 */ --color-flag: #c8102e; /* THE accent. Flagged, and nothing else, ever. */
 
-  /* Type scale leans large — this is read at arm's length, in a hurry. */
-  --text-hero: 2.75rem;
-  --text-hero--line-height: 1.05;
+  /* -- Stimulus (a target to hit, not a verdict) -- */
+  /* 10 */ --color-pad-go: #00a651; /* the GO signal on the two timed pads */
+
+  /*
+    Borders are not their own colours. They are ink or instrument-ink at low opacity, so a
+    divider can never drift away from the text it sits beside, and the palette stays at ten.
+  */
+
+  /* ═══ TYPE — exactly five sizes ═════════════════════════════════════════════════
+     One family (the system UI stack, set on body below), five sizes, no more.
+
+       stimulus  64px — the thing you react to. The pad word, a digit, a score readout.
+       display   32px — the name of the screen you are on.
+       title     22px — a heading inside a screen.
+       body      17px — every sentence in the app. Never smaller, on any viewport.
+       meta      16px — uppercase tracked labels only, never a sentence.
+
+     `meta` is one step below body and is still 16px, because the floor for readable text
+     on a phone held at arm's length in the sun is 16px and a "small print" size would be
+     used for exactly the thing somebody needs to read while rattled.
+     ══════════════════════════════════════════════════════════════════════════════ */
+  --text-*: initial;
+
+  --text-stimulus: 4rem;
+  --text-stimulus--line-height: 1;
+  --text-stimulus--letter-spacing: -0.02em;
+
+  --text-display: 2rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.01em;
+
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.25;
+
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.5;
+
+  --text-meta: 1rem;
+  --text-meta--line-height: 1.3;
 }
 
 @layer base {
@@ -73,7 +127,10 @@
   body {
     background-color: var(--color-surface);
     color: var(--color-ink);
+    /* ONE family. The system UI stack, so it renders in the native face on every phone. */
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: var(--text-body);
+    line-height: 1.5;
     /* Removes the ~300ms double-tap-to-zoom delay, which would otherwise make every
        button in the app feel sluggish on a phone. */
     touch-action: manipulation;
@@ -82,18 +139,20 @@
   /*
     ACCESSIBILITY FLOOR — visible keyboard focus.
     :focus-visible only fires for keyboard/AT users, so mouse and touch users never see a
-    ring, but a keyboard user can always tell exactly where they are. The ring is drawn with
-    outline (not box-shadow) so it survives on top of any background, light or dark.
+    ring, but a keyboard user can always tell exactly where they are. Drawn with outline
+    (not box-shadow) so it survives on top of any background.
+
+    The ring is INK, not an accent. A focus ring is not a flag.
   */
   :focus-visible {
-    outline: 3px solid var(--color-signal);
+    outline: 3px solid var(--color-ink);
     outline-offset: 3px;
     border-radius: 4px;
   }
 
-  /* On the dark instrument screens a blue ring is hard to see, so it goes white there. */
+  /* On the dark instrument screens an ink ring is invisible, so it goes near-white there. */
   .instrument :focus-visible {
-    outline-color: #ffffff;
+    outline-color: var(--color-instrument-ink);
   }
 
   /*
@@ -102,17 +161,13 @@
     invisible, which would leave a keyboard user with no idea which rating they were on — so
     the ring is drawn on the label whenever the input inside it has keyboard focus.
 
-    It is a box-shadow rather than an outline, for two reasons. The ring has to read against
-    two very different backgrounds: the white card (for unselected ratings) and the solid blue
-    chip (for the selected one). Two stacked shadows give a white separator ring first and the
-    blue ring outside it, so there is always contrast either way. It also keeps the indicator
-    under our control instead of relying on the browser's automatic focus ring, whose colour
-    the browser picks for itself.
+    Two stacked shadows: a dark separator first, then the near-white ring outside it, so the
+    indicator reads against both the unselected panel and the selected near-white chip.
   */
   label:has(input:focus-visible) {
     box-shadow:
-      0 0 0 3px #ffffff,
-      0 0 0 6px var(--color-signal);
+      0 0 0 3px var(--color-instrument),
+      0 0 0 6px var(--color-instrument-ink);
   }
 
   /* Timing numbers must not jitter as digits change. Tabular figures keep every digit the
@@ -126,8 +181,12 @@
 /*
   ACCESSIBILITY FLOOR — respect reduced motion.
   Someone who has just taken a hit to the head may be motion-sensitive, which makes this
-  more than a nicety here. We keep transitions functional but effectively instant.
-  NOTE: we never animate anything load-bearing, so removing motion never hides information.
+  more than a nicety here.
+
+  There is no decorative animation anywhere in this app to switch off. The only motion is a
+  colour change on a control you touched and the stimulus appearing on a test pad, and the
+  stimulus is a state change rather than an animation — it is not affected by this rule and
+  must never become one, because a test whose stimulus fades in would measure the fade.
 */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -139,10 +198,3 @@
     scroll-behavior: auto !important;
   }
 }
-
-/*
-  Note: the number grid's wrong-tap feedback is deliberately NOT a CSS animation. The
-  reduced-motion rule above would switch an animation off, and that would silently remove the
-  only signal telling someone they tapped the wrong number. Instead the grid holds a red
-  background for a moment using ordinary state, so the feedback survives for every user.
-*/

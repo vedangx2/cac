@@ -89,7 +89,7 @@ export default function AthletesPage() {
           {loading && <p className="text-ink-soft">Loading athletes…</p>}
 
           {storageError && (
-            <Notice tone="flag" title="Could not open on-device storage">
+            <Notice tone="loud" title="Could not open on-device storage">
               This browser blocked access to its local database, which can happen in private
               browsing. Athletes cannot be saved until that is allowed.
             </Notice>
@@ -110,11 +110,11 @@ export default function AthletesPage() {
                     <div className="min-w-0">
                       <Link
                         href={`/athletes/${athlete.id}`}
-                        className="text-xl font-bold text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:decoration-signal"
+                        className="text-title font-bold text-ink underline decoration-ink/40 decoration-2 underline-offset-4 hover:decoration-ink"
                       >
                         {athlete.name}
                       </Link>
-                      <p className="mt-1 text-sm text-ink-soft">
+                      <p className="mt-1 text-meta text-ink-soft">
                         {athlete.baselineId ? 'Baseline recorded' : 'No baseline yet'}
                         {' · '}
                         {athlete.checkIds.length}{' '}
@@ -125,7 +125,7 @@ export default function AthletesPage() {
                     <div className="mt-4 flex shrink-0 gap-2 sm:mt-0">
                       <ButtonLink
                         href={`/athletes/${athlete.id}`}
-                        className="!min-h-12 !px-4 !text-base"
+                        className="!min-h-12 !px-4 !text-body"
                       >
                         Open
                       </ButtonLink>
@@ -137,22 +137,22 @@ export default function AthletesPage() {
                     server-side copy to restore from — so it asks first, inline.
                   */}
                   {confirmingDelete === athlete.id ? (
-                    <div className="mt-4 rounded-lg border-2 border-flag p-3">
-                      <p className="text-sm font-semibold text-ink">
+                    <div className="mt-4 rounded-xl border-2 border-ink p-4">
+                      <p className="text-meta font-semibold text-ink">
                         Delete {athlete.name} and all of their recorded results? This cannot be
                         undone.
                       </p>
                       <div className="mt-3 flex gap-2">
                         <Button
-                          variant="flag"
-                          className="!min-h-12 !px-4 !text-base"
+                          variant="primary"
+                          className="!min-h-12 !px-4 !text-body"
                           onClick={() => void removeAthlete(athlete.id)}
                         >
                           Delete permanently
                         </Button>
                         <Button
-                          variant="neutral"
-                          className="!min-h-12 !px-4 !text-base"
+                          variant="secondary"
+                          className="!min-h-12 !px-4 !text-body"
                           onClick={() => setConfirmingDelete(null)}
                         >
                           Keep
@@ -163,7 +163,7 @@ export default function AthletesPage() {
                     <button
                       type="button"
                       onClick={() => setConfirmingDelete(athlete.id)}
-                      className="mt-3 text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-flag"
+                      className="mt-3 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
                     >
                       Delete {athlete.name}
                     </button>
@@ -177,11 +177,11 @@ export default function AthletesPage() {
         {/* ── Add an athlete ─────────────────────────────────────────────────────── */}
         <section aria-labelledby="add-heading" className="lg:sticky lg:top-6">
           <Card>
-            <h2 id="add-heading" className="text-xl font-bold text-ink">
+            <h2 id="add-heading" className="text-title font-bold text-ink">
               Add an athlete
             </h2>
             <form onSubmit={addAthlete} className="mt-4">
-              <label htmlFor="athlete-name" className="block text-sm font-bold text-ink">
+              <label htmlFor="athlete-name" className="block text-meta font-bold text-ink">
                 Name
               </label>
               <input
@@ -197,10 +197,10 @@ export default function AthletesPage() {
                 // The placeholder uses the full ink-soft colour rather than a faded version of
                 // it: at 60% opacity it fell to roughly 2.9:1 against white, below the 4.5:1
                 // contrast floor, which matters most in the bright sunlight this gets used in.
-                className="mt-2 min-h-14 w-full rounded-xl border-2 border-line bg-paper px-4 text-lg text-ink placeholder:text-ink-soft focus:border-signal"
+                className="mt-2 min-h-14 w-full rounded-xl border-2 border-ink/15 bg-paper px-4 text-title text-ink placeholder:text-ink-soft focus:border-ink"
               />
               {error && (
-                <p role="alert" className="mt-2 text-sm font-semibold text-flag">
+                <p role="alert" className="mt-2 text-meta font-bold text-ink">
                   {error}
                 </p>
               )}
@@ -209,7 +209,7 @@ export default function AthletesPage() {
               </Button>
             </form>
 
-            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+            <p className="mt-4 text-meta text-ink-soft">
               Names are stored only in this browser. Use whatever your team already uses — a
               first name and last initial is plenty.
             </p>

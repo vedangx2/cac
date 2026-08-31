@@ -80,21 +80,27 @@ export default function WordRecallPage() {
           <SittingLabel session={battery.session} />
         </InstrumentHeader>
 
-        <div role="alert" className="rounded-2xl border-4 border-flag bg-instrument-panel p-6">
-          <p className="text-2xl font-black sm:text-3xl">This part cannot be run</p>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
+        {/*
+          A refusal, not a flag. This is a solid reversed panel rather than a red-bordered one:
+          red in this app means "this screening found a change worth looking at" and belongs to
+          the results screen alone. A refusal is different news, and borrowing the accent for it
+          would blunt the accent on the one screen where it has to land hardest.
+        */}
+        <div role="alert" className="rounded-xl bg-instrument-ink p-4 text-instrument sm:p-6">
+          <p className="text-display font-black">This part cannot be run</p>
+          <p className="mt-3 text-body">
             {recordedFormId
               ? 'The word list used earlier in this sitting is not one this version of the app has any more, so there is no way to ask about the right words.'
               : 'The first word screen was not completed in this sitting, so there is nothing to ask about yet.'}
           </p>
-          <p className="mt-3 text-base font-bold leading-relaxed sm:text-lg">
+          <p className="mt-3 text-body font-bold">
             Rather than test a different set of words and record a score that means nothing, this
             screen is stopping. Nothing has been saved for this part.
           </p>
           <div className="mt-6">
             <Link
               href="/athletes"
-              className="font-semibold underline underline-offset-4 text-instrument-ink"
+              className="inline-flex min-h-14 items-center font-bold underline underline-offset-4"
             >
               Back to athletes
             </Link>
@@ -106,23 +112,18 @@ export default function WordRecallPage() {
 
   return (
     <InstrumentShell>
-      {battery.loaded && battery.mode === 'practice' && <PracticeBanner />}
+      {battery.loaded && battery.practice && <PracticeBanner />}
 
-      <InstrumentHeader title="Word recall" step={battery.loaded ? battery.stepLabel : ''}>
+      <InstrumentHeader
+        title="Word recall"
+        step={battery.loaded ? battery.stepLabel : undefined}
+        instruction="Tap every word you were shown at the very start — tap again to un-pick."
+      >
         <SittingLabel session={battery.session} />
-        <p className="mt-2">
-          Last part. These are the words from the very beginning, mixed in with words you were
-          never shown.
-        </p>
       </InstrumentHeader>
 
       {!finalScore && form && (
         <div>
-          <p className="mb-4 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
-            Tap every word you were shown at the start. Tap again to un-pick. If you are not sure,
-            leave it — a guess is still an answer.
-          </p>
-
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {grid.map((tile) => {
               const picked = selected.has(tile.word);
@@ -133,10 +134,10 @@ export default function WordRecallPage() {
                   onClick={() => toggle(tile.word)}
                   aria-pressed={picked}
                   // Heavy border for "picked" — never a green fill, never a tick. See CLAUDE.md.
-                  className={`min-h-16 rounded-xl border-2 px-3 py-4 text-lg font-bold transition-colors ${
+                  className={`min-h-16 rounded-xl border-2 px-3 py-4 text-title font-bold transition-colors ${
                     picked
                       ? 'border-instrument-ink bg-instrument-ink text-instrument'
-                      : 'border-instrument-line bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
+                      : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
                   }`}
                 >
                   {tile.word}
@@ -146,10 +147,10 @@ export default function WordRecallPage() {
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button onClick={submit} disabled={battery.saving}>
+            <Button variant="instrument" onClick={submit} disabled={battery.saving}>
               {battery.saving ? 'Saving…' : 'Finish'}
             </Button>
-            <p className="text-sm text-instrument-ink-soft">
+            <p className="text-meta text-instrument-ink-soft">
               {selected.size} {selected.size === 1 ? 'word' : 'words'} picked
             </p>
           </div>
@@ -157,14 +158,14 @@ export default function WordRecallPage() {
       )}
 
       {finalScore && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+        <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
+          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
-          <p className="tabular mt-2 text-4xl font-black sm:text-5xl">
+          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
             {finalScore.correct} out of {MAX_WORD_CORRECT}
           </p>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft">
+          <p className="mt-3 text-body text-instrument-ink-soft">
             {finalScore.hits} of the {WORDS_PER_FORM} shown words picked, and{' '}
             {finalScore.falseAlarms}{' '}
             {finalScore.falseAlarms === 1 ? 'word' : 'words'} picked that were not shown. This is a

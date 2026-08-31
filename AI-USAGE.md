@@ -384,3 +384,26 @@ against a written brief. Each step below was a separate commit.
   gated out of production builds and linked from nowhere. First run on real pasted data already
   produced a finding worth acting on and recorded in the report: flag-on-any raised a false alarm
   on 30% of healthy simulated athletes against 3% for flag-on-two. Tests 307 → 357.
+
+- **2026-08-31, task 3 — Design pass across all six modules. AI-written.** AI rewrote the design
+  system in `app/globals.css` and `components/ui.tsx`, moved the symptom checklist onto the dark
+  instrument surface so all six modules match, replaced every module's instruction paragraph with
+  one line, made the app chrome dark on every screen, and swept tokens, type sizes and spacing
+  across `app/**` and `components/**`. AI also wrote `lib/design.test.ts` — 38 tests that hold the
+  rules in place rather than leaving them in a document nobody re-reads.
+
+  The two changes worth arguing about, both AI's calls and both logged in `SESSION-REPORT.md`:
+  **red now means one thing.** It used to carry four meanings (flagged, refused, errored,
+  switched-off), and it now appears only on the results screen's flagged states. Refusals, errors
+  and warnings became a heavy ink panel, which on a white page is at least as loud and costs the
+  accent nothing. That required touching `app/results/[id]/page.tsx`, which `CLAUDE.md` lists as
+  needing agreement first — **no copy on that screen was changed, only colour classes**, and the
+  copy guards in `lib/regression.test.ts` still pass. **And the symptom checklist went dark**,
+  reversing a documented earlier decision: making it a light document was defensible on its own
+  and wrong in sequence, since it flashed white for one screen out of six mid-run.
+
+  Blue was deleted outright. Tailwind's built-in palette and type steps are reset to `initial`, so
+  the ten colours and five type sizes are the only ones that exist and a stray `text-blue-500` or
+  `text-xs` cannot survive. Lowest measured contrast ratio across every foreground/background pair
+  in the app is 5.88:1, above the 4.5:1 AA floor. No green was added, no success state exists, and
+  the go stimulus stays green because it is a target to hit rather than a verdict. Tests 357 → 395.

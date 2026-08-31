@@ -30,8 +30,17 @@ type BatteryState = {
   session: BatterySession | null;
   /** 'battery' = part of a real baseline/check. 'practice' = standalone, nothing is saved. */
   mode: 'battery' | 'practice';
-  /** e.g. "Step 2 of 3", or "Practice" when there's no sitting in progress. */
+  /**
+   * Where this module sits in the battery, e.g. "Step 5 of 6".
+   *
+   * ALWAYS the position, even in practice mode. It used to say "Practice" instead, which
+   * meant the one thing every test screen is required to show — where you are in the run —
+   * was missing on exactly the screens somebody is most likely to be seeing for the first
+   * time. Practice is announced by its own banner; it is not a position.
+   */
   stepLabel: string;
+  /** True when nothing is being recorded. Drives the banner, not the position. */
+  practice: boolean;
   /** Call when the test produces its scores. Saves and moves the athlete along. */
   complete: (value: ModuleScores[BatteryStep]) => Promise<void>;
   /** True once a practice run has finished (so the screen can offer a retry). */
@@ -122,7 +131,8 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
     loaded,
     session,
     mode: session ? 'battery' : 'practice',
-    stepLabel: session ? stepPosition(step) : 'Practice',
+    stepLabel: stepPosition(step),
+    practice: !session,
     complete,
     practiceDone,
     resetPractice: () => setPracticeDone(false),
@@ -131,16 +141,23 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
   };
 }
 
-/** Shown when the final save failed. Never let a failed save look like a successful one. */
+/**
+ * Shown when the final save failed. Never let a failed save look like a successful one.
+ *
+ * A solid reversed panel rather than a red-bordered one. Red in this app means "flagged" and
+ * belongs to the results screen alone; a failed save is a different kind of bad news and
+ * borrowing the accent for it would blunt the accent. On either surface, a solid block of
+ * reversed type is the loudest object on the screen.
+ */
 export function SaveErrorNotice({ message, tone = 'dark' }: { message: string; tone?: 'dark' | 'light' }) {
   const box =
     tone === 'dark'
-      ? 'border-flag bg-instrument-panel text-instrument-ink'
-      : 'border-flag bg-paper text-ink';
+      ? 'bg-instrument-ink text-instrument'
+      : 'bg-ink text-paper';
   return (
-    <div role="alert" className={`mt-6 rounded-lg border-l-4 border-y border-r p-4 ${box}`}>
-      <p className="font-bold">Not saved</p>
-      <p className="mt-1 text-sm leading-relaxed">{message}</p>
+    <div role="alert" className={`mt-6 rounded-xl p-4 ${box}`}>
+      <p className="text-title font-black">Not saved</p>
+      <p className="mt-2 text-body">{message}</p>
     </div>
   );
 }
@@ -156,25 +173,24 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
   const styles =
     tone === 'dark'
       ? {
-          box: 'border-instrument-line bg-instrument-panel',
+          box: 'border-2 border-instrument-ink-soft bg-instrument-panel',
           title: 'text-instrument-ink',
           body: 'text-instrument-ink-soft',
           link: 'text-instrument-ink',
         }
       : {
-          box: 'border-line-strong bg-paper',
+          box: 'border-2 border-ink/30 bg-paper',
           title: 'text-ink',
           body: 'text-ink-soft',
-          link: 'text-signal',
+          link: 'text-ink',
         };
 
   return (
-    <div className={`mb-6 rounded-lg border-l-4 border-y border-r p-4 ${styles.box}`}>
-      <p className={`font-bold ${styles.title}`}>Practice run — nothing is being saved</p>
-      <p className={`mt-1 text-sm leading-relaxed ${styles.body}`}>
-        You reached this test directly, so there is no athlete attached to it. Try it as many
-        times as you like.{' '}
-        <Link href="/athletes" className={`font-semibold underline underline-offset-4 ${styles.link}`}>
+    <div className={`mb-6 rounded-xl p-4 ${styles.box}`}>
+      <p className={`text-title font-black ${styles.title}`}>Practice run — nothing is saved</p>
+      <p className={`mt-2 text-body ${styles.body}`}>
+        No athlete is attached to this run.{' '}
+        <Link href="/athletes" className={`font-bold underline underline-offset-4 ${styles.link}`}>
           Pick an athlete
         </Link>{' '}
         to record a real baseline or sideline check.
@@ -195,7 +211,7 @@ export function SittingLabel({
   const soft = tone === 'dark' ? 'text-instrument-ink-soft' : 'text-ink-soft';
   const strong = tone === 'dark' ? 'text-instrument-ink' : 'text-ink';
   return (
-    <p className={`text-sm font-semibold ${soft}`}>
+    <p className={`text-meta font-bold ${soft}`}>
       {session.kind === 'baseline' ? 'Recording baseline' : 'Sideline check'} ·{' '}
       <span className={strong}>{session.athleteName}</span>
     </p>

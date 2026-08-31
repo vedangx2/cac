@@ -74,7 +74,7 @@ export default function AthleteDetailPage() {
   if (loading) {
     return (
       <PageShell>
-        <p className="text-lg text-ink-soft">Loading athlete…</p>
+        <p className="text-title text-ink-soft">Loading athlete…</p>
       </PageShell>
     );
   }
@@ -82,7 +82,7 @@ export default function AthleteDetailPage() {
   if (!athlete) {
     return (
       <PageShell>
-        <h1 className="text-3xl font-bold text-ink">Athlete not found</h1>
+        <h1 className="text-display font-bold text-ink">Athlete not found</h1>
         <p className="mt-3 text-ink-soft">
           This athlete isn&apos;t saved in this browser. Data lives only on the device that
           recorded it.
@@ -111,12 +111,12 @@ export default function AthleteDetailPage() {
       <header className="mb-8">
         <Link
           href="/athletes"
-          className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+          className="mb-4 inline-flex items-center gap-1 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
         >
           <span aria-hidden="true">←</span> All athletes
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{athlete.name}</h1>
-        <p className="mt-2 text-base text-ink-soft">
+        <h1 className="text-display font-bold tracking-tight text-ink sm:text-display">{athlete.name}</h1>
+        <p className="mt-2 text-body text-ink-soft">
           {baseline
             ? `Baseline recorded ${formatDateTime(baseline.takenAt)}`
             : 'No baseline recorded yet'}
@@ -134,7 +134,7 @@ export default function AthleteDetailPage() {
 
       {baselineOutOfDate && (
         <div className="mb-6">
-          <Notice tone="flag" title="This baseline was recorded on an older version of the tests">
+          <Notice tone="loud" title="This baseline was recorded on an older version of the tests">
             The tests in this app have changed since {athlete.name}&apos;s baseline was recorded,
             so it measures different things than a check would today. The app will{' '}
             <strong>refuse to compare against it</strong> rather than compare the few parts that
@@ -169,7 +169,7 @@ export default function AthleteDetailPage() {
         athlete who has taken a real hit.
       */}
       <div className="mb-8">
-        <Notice tone="flag" title="Testing is turned off — the tests have no tested cut-offs yet">
+        <Notice tone="loud" title="Testing is turned off — the tests have no tested cut-offs yet">
           Every test in this app has now been built, but none of them has a cut-off telling us how
           big a change is big enough to matter. Recording a baseline or running a sideline check is
           disabled until those are set from real collected data, because a result now could be
@@ -186,16 +186,16 @@ export default function AthleteDetailPage() {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         {/* ── Actions ────────────────────────────────────────────────────────────── */}
         <section aria-labelledby="actions-heading">
-          <h2 id="actions-heading" className="text-xl font-bold text-ink">
+          <h2 id="actions-heading" className="text-title font-bold text-ink">
             Run the tests
           </h2>
 
           <div className="mt-4 space-y-4">
             <Card>
-              <h3 className="text-lg font-bold text-ink">
+              <h3 className="text-title font-bold text-ink">
                 {baseline ? 'Record a new baseline' : 'Record a baseline'}
               </h3>
-              <p className="mt-2 text-base leading-relaxed text-ink-soft">
+              <p className="mt-2 text-body text-ink-soft">
                 Do this while {athlete.name} is well and rested — ideally before the season
                 starts. It is the reference every later check is measured against.
               </p>
@@ -220,14 +220,14 @@ export default function AthleteDetailPage() {
               <Button className="mt-4 w-full sm:w-auto" onClick={() => begin('baseline')} disabled>
                 {baseline ? 'Record new baseline' : 'Record baseline'}
               </Button>
-              <p className="mt-2 text-sm font-semibold text-ink-soft">
+              <p className="mt-2 text-meta font-semibold text-ink-soft">
                 Unavailable until the tests have tested cut-offs.
               </p>
             </Card>
 
             <Card>
-              <h3 className="text-lg font-bold text-ink">Sideline check</h3>
-              <p className="mt-2 text-base leading-relaxed text-ink-soft">
+              <h3 className="text-title font-bold text-ink">Sideline check</h3>
+              <p className="mt-2 text-body text-ink-soft">
                 Run this after a possible head impact. It is the same three tests, compared
                 against {athlete.name}&apos;s own baseline.
               </p>
@@ -239,7 +239,7 @@ export default function AthleteDetailPage() {
                     hurt kid should not be stopped by our app — but they should know, before
                     spending three minutes on tests, that there is nothing to compare against.
                   */}
-                  <Notice tone="flag" title="There is no baseline to compare against">
+                  <Notice tone="loud" title="There is no baseline to compare against">
                     You can still run the tests and the answers will be saved, but the app will
                     not be able to tell you whether anything has changed. If {athlete.name} may
                     have hit their head, have a medical professional evaluate them regardless
@@ -250,14 +250,14 @@ export default function AthleteDetailPage() {
 
               {/* Disabled while the battery is rebuilt — see the notice above this grid. */}
               <Button
-                variant={baseline ? 'signal' : 'neutral'}
+                variant={baseline ? 'primary' : 'secondary'}
                 className="mt-4 w-full sm:w-auto"
                 onClick={() => begin('check')}
                 disabled
               >
                 Start sideline check
               </Button>
-              <p className="mt-2 text-sm font-semibold text-ink-soft">
+              <p className="mt-2 text-meta font-semibold text-ink-soft">
                 Unavailable until the tests have tested cut-offs.
               </p>
             </Card>
@@ -266,7 +266,7 @@ export default function AthleteDetailPage() {
 
         {/* ── History ────────────────────────────────────────────────────────────── */}
         <section aria-labelledby="history-heading">
-          <h2 id="history-heading" className="text-xl font-bold text-ink">
+          <h2 id="history-heading" className="text-title font-bold text-ink">
             Past sideline checks
           </h2>
 
@@ -281,11 +281,11 @@ export default function AthleteDetailPage() {
                     <Card>
                       <Link
                         href={`/results/${check.id}`}
-                        className="text-lg font-bold text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:decoration-signal"
+                        className="text-title font-bold text-ink underline decoration-ink/40 decoration-2 underline-offset-4 hover:decoration-ink"
                       >
                         {formatDateTime(check.takenAt)}
                       </Link>
-                      <p className="mt-1 text-sm text-ink-soft">
+                      <p className="mt-1 text-meta text-ink-soft">
                         {modules.length > 0 ? modules.join(' · ') : 'No tests recorded'}
                       </p>
                     </Card>
@@ -297,12 +297,12 @@ export default function AthleteDetailPage() {
 
           {baseline && (
             <div className="mt-6">
-              <h3 className="text-sm font-black uppercase tracking-widest text-ink-soft">
+              <h3 className="text-meta font-black uppercase tracking-widest text-ink-soft">
                 Current baseline
               </h3>
               <Card className="mt-2">
                 <p className="font-bold text-ink">{formatDateTime(baseline.takenAt)}</p>
-                <p className="mt-1 text-sm text-ink-soft">
+                <p className="mt-1 text-meta text-ink-soft">
                   {completedModules(baseline.scores).join(' · ') || 'No tests recorded'}
                 </p>
               </Card>
@@ -317,21 +317,21 @@ export default function AthleteDetailPage() {
           */}
           {results.length > 0 && (
             <div className="mt-8">
-              <h3 className="text-sm font-black uppercase tracking-widest text-ink-soft">
+              <h3 className="text-meta font-black uppercase tracking-widest text-ink-soft">
                 Export raw records
               </h3>
               <Card className="mt-2">
-                <p className="text-base leading-relaxed text-ink-soft">
+                <p className="text-body text-ink-soft">
                   Saves {athlete.name}&apos;s {results.length}{' '}
                   {results.length === 1 ? 'sitting' : 'sittings'} to a JSON file on this device,
                   exactly as stored. Nothing is uploaded — the app has no server to send it to.
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                <p className="mt-3 text-meta text-ink-soft">
                   <strong className="text-ink">The file includes {athlete.name}&apos;s name</strong>{' '}
                   and is not anonymised, so treat it as personal data once it leaves this phone.
                   It is not a medical record and contains no diagnosis.
                 </p>
-                <Button variant="neutral" className="mt-4 w-full sm:w-auto" onClick={exportResults}>
+                <Button variant="secondary" className="mt-4 w-full sm:w-auto" onClick={exportResults}>
                   Download JSON
                 </Button>
               </Card>

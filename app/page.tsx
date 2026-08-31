@@ -31,14 +31,14 @@ export default function HomePage() {
       {/* ── Hero ──────────────────────────────────────────────────────────────────── */}
       <section className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-12">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-ink-soft">
+          <p className="text-meta font-black uppercase tracking-widest text-ink-soft">
             Sideline concussion screening aid
           </p>
-          <h1 className="mt-3 text-4xl font-black leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            Compare an athlete to <span className="text-signal">themselves</span>, not to
+          <h1 className="mt-3 text-display font-black leading-[1.05] tracking-tight text-ink sm:text-stimulus">
+            Compare an athlete to <span className="text-ink">themselves</span>, not to
             everyone else.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft sm:text-xl">
+          <p className="mt-4 max-w-2xl text-title text-ink-soft sm:text-title">
             A slow reaction time only means something next to how fast that athlete normally
             is. This app records a healthy baseline, then re-runs the same tests after a hard
             hit and shows you exactly what moved.
@@ -47,7 +47,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/athletes">Get started</ButtonLink>
             {/* Points at a test that exists. /tests/reaction was deleted in the battery rebuild. */}
-            <ButtonLink href="/tests/symptom" variant="neutral">
+            <ButtonLink href="/tests/symptom" variant="secondary">
               Try a test first
             </ButtonLink>
           </div>
@@ -58,7 +58,7 @@ export default function HomePage() {
             have created an athlete and tapped a disabled button. See app/athletes/[id]/page.tsx.
           */}
           <div className="mt-6">
-            <Notice tone="flag" title="Recording is turned off right now">
+            <Notice tone="loud" title="Recording is turned off right now">
               The tests below are all built now, but none of them has a tested cut-off yet — so the
               app can measure a change and still has no basis for saying whether that change
               matters. You can try every test, but baselines and sideline checks cannot be recorded
@@ -71,10 +71,10 @@ export default function HomePage() {
         </div>
 
         {/* The hard rule, stated up front rather than buried in a footnote. */}
-        <div className="mt-10 lg:mt-0">
-          <div className="rounded-xl border-4 border-ink bg-ink p-6 text-white">
-            <h2 className="text-xl font-black">What this app will never do</h2>
-            <ul className="mt-4 space-y-3 text-base leading-relaxed">
+        <div className="mt-8 lg:mt-0">
+          <div className="rounded-xl border-4 border-ink bg-ink p-6 text-paper">
+            <h2 className="text-title font-black">What this app will never do</h2>
+            <ul className="mt-4 space-y-3 text-body">
               <li>
                 It will <strong>never tell you someone is fine</strong>, cleared, or safe to
                 play.
@@ -93,19 +93,19 @@ export default function HomePage() {
       </section>
 
       {/* ── How it works ──────────────────────────────────────────────────────────── */}
-      <section className="mt-14" aria-labelledby="how-heading">
-        <h2 id="how-heading" className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+      <section className="mt-16" aria-labelledby="how-heading">
+        <h2 id="how-heading" className="text-display font-bold tracking-tight text-ink sm:text-display">
           How it works
         </h2>
         <ol className="mt-6 grid gap-4 md:grid-cols-3">
           {STEPS.map((step) => (
             <li key={step.number}>
               <Card className="h-full">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-signal text-xl font-black text-white">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-title font-black text-paper">
                   {step.number}
                 </span>
-                <h3 className="mt-4 text-lg font-bold text-ink">{step.title}</h3>
-                <p className="mt-2 text-base leading-relaxed text-ink-soft">{step.body}</p>
+                <h3 className="mt-4 text-title font-bold text-ink">{step.title}</h3>
+                <p className="mt-2 text-body text-ink-soft">{step.body}</p>
               </Card>
             </li>
           ))}
@@ -113,11 +113,11 @@ export default function HomePage() {
       </section>
 
       {/* ── The tests ─────────────────────────────────────────────────────────────── */}
-      <section className="mt-14" aria-labelledby="tests-heading">
-        <h2 id="tests-heading" className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+      <section className="mt-16" aria-labelledby="tests-heading">
+        <h2 id="tests-heading" className="text-display font-bold tracking-tight text-ink sm:text-display">
           The tests
         </h2>
-        <p className="mt-2 max-w-2xl text-base text-ink-soft">
+        <p className="mt-2 max-w-2xl text-body text-ink-soft">
           The whole battery takes a few minutes. You can try any of them right now without saving
           anything.
         </p>
@@ -151,7 +151,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Privacy ───────────────────────────────────────────────────────────────── */}
-      <section className="mt-14" aria-labelledby="privacy-heading">
+      <section className="mt-16" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading" className="sr-only">
           Privacy
         </h2>
@@ -169,15 +169,15 @@ export default function HomePage() {
 function TestCard({ href, title, body }: { href: string; title: string; body: string }) {
   return (
     <Card className="h-full">
-      <h3 className="text-lg font-bold text-ink">
+      <h3 className="text-title font-bold text-ink">
         <Link
           href={href}
-          className="underline decoration-line-strong decoration-2 underline-offset-4 hover:decoration-signal"
+          className="underline decoration-ink/40 decoration-2 underline-offset-4 hover:decoration-ink"
         >
           {title}
         </Link>
       </h3>
-      <p className="mt-2 text-base leading-relaxed text-ink-soft">{body}</p>
+      <p className="mt-2 text-body text-ink-soft">{body}</p>
     </Card>
   );
 }

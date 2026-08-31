@@ -39,7 +39,7 @@
 // chain has not finished by the time it possibly could have. See lib/modules/pattern.ts.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, InstrumentHeader, InstrumentShell } from '@/components/ui';
+import { Button, InstrumentHeader, InstrumentShell, ModuleIntro } from '@/components/ui';
 import { PracticeBanner, SaveErrorNotice, SittingLabel, useBatteryStep } from '@/components/battery';
 import {
   PATTERN_FORMS,
@@ -212,34 +212,27 @@ export default function PatternSpanPage() {
 
   return (
     <InstrumentShell>
-      {battery.loaded && battery.mode === 'practice' && <PracticeBanner />}
+      {battery.loaded && battery.practice && <PracticeBanner />}
 
-      <InstrumentHeader title="Tapped patterns" step={battery.loaded ? battery.stepLabel : ''}>
+      <InstrumentHeader
+        title="Tapped patterns"
+        step={battery.loaded ? battery.stepLabel : undefined}
+        instruction="Watch the squares light up, then tap them back in the same order."
+      >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>
 
       {phase === 'instructions' && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6 sm:p-8">
-          <h2 className="text-xl font-bold sm:text-2xl">Tap the squares in the same order</h2>
-          <div className="mt-4 space-y-3 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
-            <p>
-              Some squares will light up, one after another. Watch the order. When they stop, tap
-              the same squares in the <strong className="text-instrument-ink">same order</strong>.
-            </p>
-            <p>
-              There are {PATTERN_TRIALS_PER_FORM} rounds and they get longer. You will not be told
-              whether each one was right — just do your best and carry on.
-            </p>
-          </div>
-          <Button className="mt-6 w-full sm:w-auto" onClick={() => presentTrial(0)}>
-            Start
-          </Button>
-        </div>
+        <ModuleIntro
+          heading="Tap them back in the same order"
+          detail={`${PATTERN_TRIALS_PER_FORM} rounds, getting longer.`}
+          onStart={() => presentTrial(0)}
+        />
       )}
 
       {(phase === 'presenting' || phase === 'tapping') && (
         <div>
-          <p className="mb-4 text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <p className="mb-4 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Round {trialIndex + 1} of {PATTERN_TRIALS_PER_FORM} ·{' '}
             {phase === 'presenting' ? 'watch' : `your turn — ${tapCount} of ${sequence.length} tapped`}
           </p>
@@ -266,7 +259,7 @@ export default function PatternSpanPage() {
                   className={`aspect-square touch-none rounded-xl border-4 transition-none ${
                     lit
                       ? 'border-instrument-ink bg-instrument-ink'
-                      : 'border-instrument-line bg-instrument-panel'
+                      : 'border-instrument-ink/20 bg-instrument-panel'
                   } ${phase === 'tapping' ? 'cursor-pointer hover:border-instrument-ink-soft' : ''}`}
                 />
               );
@@ -274,7 +267,7 @@ export default function PatternSpanPage() {
           </div>
 
           {phase === 'tapping' && (
-            <p className="mt-5 text-center text-base text-instrument-ink-soft">
+            <p className="mt-4 text-center text-body text-instrument-ink-soft">
               Tap {sequence.length} {sequence.length === 1 ? 'square' : 'squares'}, in order.
             </p>
           )}
@@ -282,19 +275,19 @@ export default function PatternSpanPage() {
       )}
 
       {phase === 'done' && finalScore && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+        <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
+          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
-          <p className="tabular mt-2 text-4xl font-black sm:text-5xl">
+          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
             {finalScore.correct} out of {MAX_PATTERN_CORRECT}
           </p>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft">
+          <p className="mt-3 text-body text-instrument-ink-soft">
             Rounds reproduced exactly. This is a record of what happened, not a judgement about it.
           </p>
 
           {battery.mode === 'practice' && (
-            <Button variant="instrument" className="mt-6" onClick={restart}>
+            <Button variant="instrument-quiet" className="mt-6" onClick={restart}>
               Run practice again
             </Button>
           )}

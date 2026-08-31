@@ -23,7 +23,7 @@
 // The trials simply advance. The total is shown once, at the end, with no verdict attached.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, InstrumentHeader, InstrumentShell } from '@/components/ui';
+import { Button, InstrumentHeader, InstrumentShell, ModuleIntro } from '@/components/ui';
 import { PracticeBanner, SaveErrorNotice, SittingLabel, useBatteryStep } from '@/components/battery';
 import { DIGIT_FORMS, DIGIT_TRIALS_PER_FORM, pickForm } from '@/lib/forms';
 import {
@@ -135,48 +135,37 @@ export default function DigitSpanPage() {
 
   return (
     <InstrumentShell>
-      {battery.loaded && battery.mode === 'practice' && <PracticeBanner />}
+      {battery.loaded && battery.practice && <PracticeBanner />}
 
-      <InstrumentHeader title="Numbers backwards" step={battery.loaded ? battery.stepLabel : ''}>
+      <InstrumentHeader
+        title="Numbers backwards"
+        step={battery.loaded ? battery.stepLabel : undefined}
+        instruction="Watch the numbers, then type them back in reverse order — last one first."
+      >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>
 
       {/* ── Instructions ────────────────────────────────────────────────────────────── */}
       {phase === 'instructions' && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6 sm:p-8">
-          <h2 className="text-xl font-bold sm:text-2xl">Type the numbers backwards</h2>
-          <div className="mt-4 space-y-3 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
-            <p>
-              Numbers will flash up one at a time. When they stop, type them back in{' '}
-              <strong className="text-instrument-ink">reverse order</strong> — last one first.
-            </p>
-            <p>
-              So if you see <span className="tabular font-bold">4 — 1 — 7</span>, you would type{' '}
-              <span className="tabular font-bold">7 1 4</span>.
-            </p>
-            <p>
-              There are {DIGIT_TRIALS_PER_FORM} rounds and they get longer. You will not be told
-              whether each one was right — just do your best and carry on.
-            </p>
-          </div>
-          <Button className="mt-6 w-full sm:w-auto" onClick={() => presentTrial(0)}>
-            Start
-          </Button>
-        </div>
+        <ModuleIntro
+          heading="See 4 — 1 — 7, type 7 1 4"
+          detail={`${DIGIT_TRIALS_PER_FORM} rounds, getting longer.`}
+          onStart={() => presentTrial(0)}
+        />
       )}
 
       {/* ── Presenting the sequence ─────────────────────────────────────────────────── */}
       {phase === 'presenting' && (
         <div
-          className="flex min-h-[18rem] flex-col items-center justify-center rounded-2xl border-4 border-instrument-line bg-instrument-panel p-6 text-center sm:min-h-[22rem]"
+          className="flex min-h-64 flex-col items-center justify-center rounded-2xl border-4 border-instrument-ink/20 bg-instrument-panel p-6 text-center sm:min-h-96"
           aria-live="off"
         >
           {shownDigit >= 0 ? (
-            <span className="tabular text-7xl font-black sm:text-9xl">{sequence[shownDigit]}</span>
+            <span className="tabular text-stimulus font-black">{sequence[shownDigit]}</span>
           ) : (
             <span className="sr-only">next number coming</span>
           )}
-          <span className="mt-8 text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <span className="mt-8 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Round {trialIndex + 1} of {DIGIT_TRIALS_PER_FORM} · watch
           </span>
         </div>
@@ -185,8 +174,8 @@ export default function DigitSpanPage() {
       {/* ── Keypad entry ────────────────────────────────────────────────────────────── */}
       {phase === 'entering' && (
         <div>
-          <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-5">
-            <p className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4">
+            <p className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
               Round {trialIndex + 1} of {DIGIT_TRIALS_PER_FORM} · type them backwards
             </p>
 
@@ -195,7 +184,7 @@ export default function DigitSpanPage() {
               {Array.from({ length: sequence.length }, (_, index) => (
                 <span
                   key={index}
-                  className="tabular flex h-16 w-12 items-center justify-center rounded-lg border-2 border-instrument-line text-3xl font-black sm:h-20 sm:w-16 sm:text-4xl"
+                  className="tabular flex h-16 w-12 items-center justify-center rounded-xl border-2 border-instrument-ink/20 text-display font-black sm:w-16"
                 >
                   {entered[index] ?? ''}
                 </span>
@@ -203,24 +192,28 @@ export default function DigitSpanPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-3">
             {KEYPAD.map((digit) => (
               <button
                 key={digit}
                 type="button"
                 onClick={() => press(digit)}
-                className="tabular min-h-20 rounded-xl border-2 border-instrument-line bg-instrument-panel text-3xl font-black text-instrument-ink hover:border-instrument-ink-soft"
+                className="tabular min-h-16 rounded-xl border-2 border-instrument-ink/20 bg-instrument-panel text-display font-black text-instrument-ink hover:border-instrument-ink-soft"
               >
                 {digit}
               </button>
             ))}
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Button variant="instrument" onClick={backspace} disabled={entered.length === 0}>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <Button variant="instrument-quiet" onClick={backspace} disabled={entered.length === 0}>
               Undo last
             </Button>
-            <Button onClick={submitTrial} disabled={entered.length !== sequence.length || battery.saving}>
+            <Button
+              variant="instrument"
+              onClick={submitTrial}
+              disabled={entered.length !== sequence.length || battery.saving}
+            >
               {trialIndex + 1 >= DIGIT_TRIALS_PER_FORM ? 'Finish' : 'Next round'}
             </Button>
           </div>
@@ -229,23 +222,23 @@ export default function DigitSpanPage() {
 
       {/* ── Finished ────────────────────────────────────────────────────────────────── */}
       {phase === 'done' && finalScore && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+        <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
+          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
           {/*
             Flat statement of the count, no verdict. This screen has no idea what this athlete's
             baseline is, and the engine has no tested cut-off for this measurement yet either.
           */}
-          <p className="tabular mt-2 text-4xl font-black sm:text-5xl">
+          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
             {finalScore.correct} out of {MAX_DIGIT_CORRECT}
           </p>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft">
+          <p className="mt-3 text-body text-instrument-ink-soft">
             Rounds reproduced exactly. This is a record of what happened, not a judgement about it.
           </p>
 
           {battery.mode === 'practice' && (
-            <Button variant="instrument" className="mt-6" onClick={restart}>
+            <Button variant="instrument-quiet" className="mt-6" onClick={restart}>
               Run practice again
             </Button>
           )}

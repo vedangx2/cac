@@ -93,14 +93,14 @@ type PadPhase = 'idle' | 'armed' | 'go' | 'toosoon' | 'done';
 // never make it into the CSS.
 const PAD_BASE =
   'flex w-full touch-none cursor-pointer select-none flex-col items-center justify-center ' +
-  'rounded-2xl border-4 p-6 text-center min-h-[18rem] sm:min-h-[22rem]';
+  'rounded-2xl border-4 p-6 text-center min-h-64 sm:min-h-96';
 
 const PAD_PHASE_CLASSES: Record<PadPhase, string> = {
-  idle: 'border-instrument-line bg-instrument-panel text-instrument-ink',
-  armed: 'border-pad-wait bg-pad-wait text-white',
-  go: 'border-pad-go bg-pad-go text-black',
-  toosoon: 'border-white bg-pad-wait text-white',
-  done: 'border-instrument-line bg-instrument-panel text-instrument-ink',
+  idle: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
+  armed: 'border-instrument-ink-soft bg-instrument-panel text-paper',
+  go: 'border-pad-go bg-pad-go text-instrument',
+  toosoon: 'border-instrument-ink bg-instrument-panel text-paper',
+  done: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
 };
 
 export default function NoiseFloorPage() {
@@ -311,7 +311,7 @@ export default function NoiseFloorPage() {
       */}
       <div className="mb-6 rounded-lg border-l-4 border-y border-r border-instrument-ink-soft bg-instrument-panel p-4">
         <p className="font-bold text-instrument-ink">Measurement tool — not part of the screening battery</p>
-        <p className="mt-1 text-sm leading-relaxed text-instrument-ink-soft">
+        <p className="mt-1 text-meta text-instrument-ink-soft">
           This page exists so we can measure how much a healthy person&apos;s reaction time
           varies between sittings. It is not a concussion test, it is not scored, it is not
           compared against anyone&apos;s baseline, and it says nothing about anyone&apos;s
@@ -339,8 +339,8 @@ export default function NoiseFloorPage() {
         tabIndex={0}
         aria-label="Reaction pad. Press when it turns green."
       >
-        <span ref={padMainRef} className="tabular text-5xl font-black tracking-tight sm:text-7xl" />
-        <span ref={padSubRef} className="mt-4 max-w-md text-base font-semibold opacity-90 sm:text-lg" />
+        <span ref={padMainRef} className="tabular text-stimulus font-black tracking-tight sm:text-stimulus" />
+        <span ref={padSubRef} className="mt-4 max-w-md text-body font-semibold opacity-90 sm:text-title" />
       </div>
 
       {/*
@@ -349,48 +349,48 @@ export default function NoiseFloorPage() {
         lot easier if the digits are legible at arm's length.
       */}
       {finished && (
-        <section className="mt-8 rounded-2xl border border-instrument-line bg-instrument-panel p-5 sm:p-7">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+        <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
+          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Run {runNumber} · write these down
           </h2>
 
-          <ol className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-5">
+          <ol className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-5">
             {trials.map((value, index) => (
               <li
                 key={index}
-                className="rounded-xl border border-instrument-line px-4 py-3 text-center"
+                className="rounded-xl border border-instrument-ink/20 px-4 py-3 text-center"
               >
-                <span className="block text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+                <span className="block text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
                   Trial {index + 1}
                 </span>
-                <span className="tabular mt-1 block text-3xl font-black sm:text-4xl">{value}</span>
+                <span className="tabular mt-1 block text-display font-black sm:text-display">{value}</span>
               </li>
             ))}
           </ol>
 
-          <dl className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border-2 border-instrument-ink-soft px-5 py-4">
-              <dt className="text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <dl className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border-2 border-instrument-ink-soft px-4 py-4">
+              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
                 Median
               </dt>
-              <dd className="tabular mt-1 text-5xl font-black sm:text-6xl">{medianMs} ms</dd>
+              <dd className="tabular mt-1 text-stimulus font-black sm:text-stimulus">{medianMs} ms</dd>
             </div>
-            <div className="rounded-xl border border-instrument-line px-5 py-4">
-              <dt className="text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+            <div className="rounded-xl border border-instrument-ink/20 px-4 py-4">
+              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
                 False starts
               </dt>
-              <dd className="tabular mt-1 text-5xl font-black sm:text-6xl">{falseStarts}</dd>
+              <dd className="tabular mt-1 text-stimulus font-black sm:text-stimulus">{falseStarts}</dd>
             </div>
           </dl>
 
-          <p className="mt-5 text-xs leading-relaxed text-instrument-ink-soft">
+          <p className="mt-4 text-meta text-instrument-ink-soft">
             Trials are shown in the order they happened. Any trial slower than{' '}
             {MAX_PLAUSIBLE_REACTION_MS} ms was discarded and repeated rather than recorded, so
             all five numbers above are genuine reactions. False starts do not consume a trial.
           </p>
 
-          <div className="mt-7">
-            <Button variant="instrument" onClick={runAgain}>
+          <div className="mt-8">
+            <Button variant="instrument-quiet" onClick={runAgain}>
               Run again
             </Button>
           </div>

@@ -85,16 +85,16 @@ type RunState =
 // make it into the CSS.
 const PAD_BASE =
   'flex w-full touch-none cursor-pointer select-none flex-col items-center justify-center ' +
-  'rounded-2xl border-4 p-6 text-center min-h-[18rem] sm:min-h-[22rem]';
+  'rounded-2xl border-4 p-6 text-center min-h-64 sm:min-h-96';
 
 const PAD_PHASE_CLASSES: Record<PadPhase, string> = {
-  idle: 'border-instrument-line bg-instrument-panel text-instrument-ink',
+  idle: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
   // The gap is dim on purpose, so the stimulus arriving is an unmistakable jump in brightness.
-  gap: 'border-instrument-line bg-instrument-panel text-instrument-ink-soft',
-  go: 'border-pad-go bg-pad-go text-black',
+  gap: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink-soft',
+  go: 'border-pad-go bg-pad-go text-instrument',
   nogo: 'border-instrument-ink bg-instrument-ink text-instrument',
   message: 'border-instrument-ink bg-instrument-panel text-instrument-ink',
-  done: 'border-instrument-line bg-instrument-panel text-instrument-ink',
+  done: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
 };
 
 export default function GoNoGoPage() {
@@ -424,22 +424,21 @@ export default function GoNoGoPage() {
 
   return (
     <InstrumentShell>
-      {battery.loaded && battery.mode === 'practice' && <PracticeBanner />}
+      {battery.loaded && battery.practice && <PracticeBanner />}
 
-      <InstrumentHeader title="Go / no-go" step={battery.loaded ? battery.stepLabel : ''}>
+      {/* ONE line of instruction, and it lives in the header with every other module's. */}
+      <InstrumentHeader
+        title="Go / no-go"
+        step={battery.loaded ? battery.stepLabel : undefined}
+        instruction="Tap the moment it says TAP — and do nothing at all when it says HOLD."
+      >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>
-
-      {/* ONE line of instruction, not a paragraph. Read once, on a sideline, in a hurry. */}
-      <p className="mb-4 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
-        Tap the moment it says <strong className="text-instrument-ink">TAP</strong> — and do
-        nothing at all when it says <strong className="text-instrument-ink">HOLD</strong>.
-      </p>
 
       <p
         ref={progressRef}
         aria-live="off"
-        className="tabular mb-3 text-sm font-bold uppercase tracking-widest text-instrument-ink-soft"
+        className="tabular mb-3 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft"
       />
 
       {/*
@@ -454,36 +453,36 @@ export default function GoNoGoPage() {
         tabIndex={0}
         aria-label="Go / no-go pad. Press when it says TAP. Do nothing when it says HOLD."
       >
-        <span ref={padMainRef} className="tabular text-5xl font-black tracking-tight sm:text-7xl" />
-        <span ref={padSubRef} className="mt-4 max-w-md text-base font-semibold opacity-90 sm:text-lg" />
+        <span ref={padMainRef} className="tabular text-stimulus font-black tracking-tight sm:text-stimulus" />
+        <span ref={padSubRef} className="mt-4 max-w-md text-body font-semibold opacity-90 sm:text-title" />
       </div>
 
       {scored && (
-        <section className="mt-8 rounded-2xl border border-instrument-line bg-instrument-panel p-5 sm:p-7">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+        <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
+          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
 
-          <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border-2 border-instrument-ink-soft px-5 py-4">
-              <dt className="text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border-2 border-instrument-ink-soft px-4 py-4">
+              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
                 Median response
               </dt>
-              <dd className="tabular mt-1 text-4xl font-black sm:text-5xl">{scored.medianMs} ms</dd>
+              <dd className="tabular mt-1 text-display font-black sm:text-stimulus">{scored.medianMs} ms</dd>
             </div>
-            <div className="rounded-xl border border-instrument-line px-5 py-4">
-              <dt className="text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+            <div className="rounded-xl border border-instrument-ink/20 px-4 py-4">
+              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
                 Tapped on hold
               </dt>
-              <dd className="tabular mt-1 text-4xl font-black sm:text-5xl">
+              <dd className="tabular mt-1 text-display font-black sm:text-stimulus">
                 {scored.commissionErrors}
               </dd>
             </div>
-            <div className="rounded-xl border border-instrument-line px-5 py-4">
-              <dt className="text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+            <div className="rounded-xl border border-instrument-ink/20 px-4 py-4">
+              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
                 Missed a tap
               </dt>
-              <dd className="tabular mt-1 text-4xl font-black sm:text-5xl">
+              <dd className="tabular mt-1 text-display font-black sm:text-stimulus">
                 {scored.omissionErrors}
               </dd>
             </div>
@@ -497,22 +496,22 @@ export default function GoNoGoPage() {
             screen and write them down.
           */}
           <div className="mt-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-instrument-ink-soft">
+            <h3 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
               Every go-trial response, in order · not saved, write these down
             </h3>
-            <p className="tabular mt-2 text-base leading-relaxed break-words">
+            <p className="tabular mt-2 text-body break-words">
               {scored.goTrialsMs.join(' · ')} ms
             </p>
           </div>
 
-          <p className="mt-5 text-xs leading-relaxed text-instrument-ink-soft">
+          <p className="mt-4 text-meta text-instrument-ink-soft">
             {scored.goTrialsMs.length} of the {GO_NO_TOTAL_TRIALS - GO_NO_NOGO_PER_FORM} go trials
             got a response. Rounds that were tapped too early were discarded and run again rather
             than recorded. This is a record of what happened, not a judgement about it.
           </p>
 
           {battery.mode === 'practice' && (
-            <Button variant="instrument" className="mt-6" onClick={runAgain}>
+            <Button variant="instrument-quiet" className="mt-6" onClick={runAgain}>
               Run practice again
             </Button>
           )}
@@ -520,27 +519,27 @@ export default function GoNoGoPage() {
       )}
 
       {runState?.kind === 'unmeasurable' && (
-        <section className="mt-8 rounded-2xl border border-instrument-line bg-instrument-panel p-5 sm:p-7">
-          <h2 className="text-xl font-bold">Nothing could be measured</h2>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft">
+        <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
+          <h2 className="text-title font-bold">Nothing could be measured</h2>
+          <p className="mt-3 text-body text-instrument-ink-soft">
             No go trial got a response, so there is no response time to report and nothing has
             been recorded for this test. Run it again.
           </p>
-          <Button variant="instrument" className="mt-6" onClick={runAgain}>
+          <Button variant="instrument-quiet" className="mt-6" onClick={runAgain}>
             Run again
           </Button>
         </section>
       )}
 
       {runState?.kind === 'abandoned' && (
-        <section className="mt-8 rounded-2xl border border-instrument-line bg-instrument-panel p-5 sm:p-7">
-          <h2 className="text-xl font-bold">This run was stopped</h2>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft">
+        <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
+          <h2 className="text-title font-bold">This run was stopped</h2>
+          <p className="mt-3 text-body text-instrument-ink-soft">
             The same round had to be repeated {GO_NO_MAX_TRIAL_REPEATS} times — usually because
             the screen was switched away from, or because taps kept arriving before the signal.
             Nothing was recorded. Run it again with the screen on and in front of you.
           </p>
-          <Button variant="instrument" className="mt-6" onClick={runAgain}>
+          <Button variant="instrument-quiet" className="mt-6" onClick={runAgain}>
             Run again
           </Button>
         </section>

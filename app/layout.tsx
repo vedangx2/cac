@@ -12,14 +12,14 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: 'Sideline Screen',
-    // 'default' keeps the iOS status bar legible against our light app chrome.
-    statusBarStyle: 'default',
+    // The app chrome is near-black on every screen now, so the iOS status bar matches it.
+    statusBarStyle: 'black-translucent',
   },
 };
 
 export const viewport: Viewport = {
   // The browser chrome picks up our ink colour, so an installed app looks deliberate.
-  themeColor: '#0b0f12',
+  themeColor: '#080b0d',
   // viewportFit: 'cover' lets the layout reach into the safe areas on notched phones.
   viewportFit: 'cover',
 };
@@ -35,28 +35,40 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-3 focus:font-bold focus:text-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-paper focus:px-4 focus:py-4 focus:font-bold focus:text-ink"
         >
           Skip to main content
         </a>
 
-        <header className="border-b border-line bg-paper">
+        {/*
+          THE CHROME IS DARK ON EVERY SCREEN, and that is a deliberate change.
+
+          It used to be a white bar. On the six test screens — which are near-black so that the
+          stimulus is the only bright thing your eye can land on — a white bar across the top was
+          the brightest object on the display, sitting directly above the thing the athlete is
+          supposed to be watching. Making the chrome dark everywhere costs the document screens
+          nothing (a dark band top and bottom frames the white page) and gives the instrument
+          screens the one property they need.
+        */}
+        <header className="bg-instrument text-instrument-ink">
           <nav
             aria-label="Main"
-            className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-3 sm:px-8"
+            className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-8"
           >
-            <Link href="/" className="font-black tracking-tight text-ink">
+            <Link href="/" className="text-meta font-black uppercase tracking-widest">
               Sideline&nbsp;Screen
             </Link>
-            <div className="flex items-center gap-4 text-sm font-bold">
-              <Link href="/athletes" className="text-ink underline underline-offset-4 hover:text-signal">
-                Athletes
-              </Link>
-            </div>
+            <Link
+              href="/athletes"
+              className="inline-flex min-h-14 items-center text-meta font-bold underline underline-offset-4"
+            >
+              Athletes
+            </Link>
           </nav>
         </header>
 
-        <main id="main" className="flex-1">
+        {/* A flex column so a full-bleed instrument screen can stretch to fill it. */}
+        <main id="main" className="flex flex-1 flex-col">
           {children}
         </main>
 
@@ -66,7 +78,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           never be forgotten on an individual page. See CLAUDE.md → THE HARD RULE.
           Do not remove this or soften its wording.
         */}
-        <footer className="border-t border-line bg-paper px-4 py-4 text-center text-xs leading-relaxed text-ink-soft">
+        <footer className="bg-instrument px-4 py-4 text-center text-meta text-instrument-ink-soft">
           <p className="mx-auto max-w-2xl">
             Student-built screening aid — not a medical device. Always consult a medical
             professional.

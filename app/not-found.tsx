@@ -5,13 +5,13 @@ import { ButtonLink, PageShell } from '@/components/ui';
 export default function NotFound() {
   return (
     <PageShell>
-      <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">Page not found</h1>
-      <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
+      <h1 className="text-display font-bold tracking-tight text-ink sm:text-display">Page not found</h1>
+      <p className="mt-3 max-w-xl text-title text-ink-soft">
         That address doesn&apos;t exist in this app.
       </p>
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <ButtonLink href="/athletes">Go to athletes</ButtonLink>
-        <ButtonLink href="/" variant="neutral">
+        <ButtonLink href="/" variant="secondary">
           Home
         </ButtonLink>
       </div>

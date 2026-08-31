@@ -159,7 +159,7 @@ export default function ResultPage() {
   if (state.status === 'loading') {
     return (
       <PageShell>
-        <p className="text-lg text-ink-soft">Loading result…</p>
+        <p className="text-title text-ink-soft">Loading result…</p>
       </PageShell>
     );
   }
@@ -169,7 +169,7 @@ export default function ResultPage() {
     return (
       <PageShell>
         <PageHeaderLite title="Result not found" />
-        <Notice tone="flag" title="We couldn't find this result">
+        <Notice tone="loud" title="We couldn't find this result">
           It may have been recorded on a different device or in a different browser. Because
           all data is stored privately on the device that recorded it, results do not follow
           you between phones or browsers.
@@ -218,22 +218,28 @@ export default function ResultPage() {
         />
 
         {/*
-          Same visual weight as every other refusal on this screen: heavy flag border, no
+          Same visual weight as every other refusal on this screen: a heavy ink border, no
           green, no checkmark. A version mismatch is a "we have no answer for you" outcome and
           it must look like one. The one thing that differs from the generic refusal is the
           explanation and the next step.
+
+          The border is INK rather than red on purpose. Red in this app now means exactly one
+          thing — this screening found a change worth a human looking at — and it appears only
+          on the flagged headline below and the flagged rows of the table. A refusal is
+          different news; giving it the accent too would blunt the accent on the one panel
+          where it has to land hardest.
         */}
-        <div className="rounded-xl border-4 border-flag bg-paper p-6">
-          <p className="text-2xl font-black text-ink sm:text-3xl">No comparison was possible</p>
+        <div className="rounded-xl border-4 border-ink bg-paper p-6">
+          <p className="text-display font-black text-ink sm:text-display">No comparison was possible</p>
 
           {state.fromFuture ? (
-            <p className="mt-3 text-lg leading-relaxed text-ink">
+            <p className="mt-3 text-title text-ink">
               These test results were recorded by a newer version of this app than the one this
               phone is running, so this copy cannot read their scores properly. Close the app
               completely and reopen it to pick up the newer version, then try again.
             </p>
           ) : (
-            <p className="mt-3 text-lg leading-relaxed text-ink">
+            <p className="mt-3 text-title text-ink">
               The tests in this app changed after{' '}
               {state.staleSide === 'check'
                 ? 'this check was recorded'
@@ -245,10 +251,10 @@ export default function ResultPage() {
             </p>
           )}
 
-          <p className="mt-4 text-lg font-bold leading-relaxed text-ink">
+          <p className="mt-4 text-title font-bold text-ink">
             This is not a result. It does not mean anything was found, and it does not mean
             nothing is wrong. If {name} may have hit their head,{' '}
-            <span className="underline decoration-flag decoration-4 underline-offset-4">
+            <span className="underline decoration-ink decoration-4 underline-offset-4">
               have them seen by a medical professional.
             </span>
           </p>
@@ -273,11 +279,11 @@ export default function ResultPage() {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {state.athlete && (
-            <ButtonLink href={`/athletes/${state.athlete.id}`} variant="neutral">
+            <ButtonLink href={`/athletes/${state.athlete.id}`} variant="secondary">
               Back to {state.athlete.name}
             </ButtonLink>
           )}
-          <ButtonLink href="/athletes" variant="neutral">
+          <ButtonLink href="/athletes" variant="secondary">
             All athletes
           </ButtonLink>
         </div>
@@ -303,13 +309,13 @@ export default function ResultPage() {
           backHref={state.athlete ? `/athletes/${state.athlete.id}` : '/athletes'}
         />
 
-        <div className="rounded-xl border-4 border-flag bg-paper p-6">
-          <p className="text-2xl font-black text-ink sm:text-3xl">No comparison was possible</p>
-          <p className="mt-3 text-lg leading-relaxed text-ink">{state.message}</p>
-          <p className="mt-4 text-lg font-bold leading-relaxed text-ink">
+        <div className="rounded-xl border-4 border-ink bg-paper p-6">
+          <p className="text-display font-black text-ink sm:text-display">No comparison was possible</p>
+          <p className="mt-3 text-title text-ink">{state.message}</p>
+          <p className="mt-4 text-title font-bold text-ink">
             This is not a result. It does not mean anything was found, and it does not mean
             nothing is wrong. If this athlete may have hit their head,{' '}
-            <span className="underline decoration-flag decoration-4 underline-offset-4">
+            <span className="underline decoration-ink decoration-4 underline-offset-4">
               have them seen by a medical professional.
             </span>
           </p>
@@ -333,11 +339,11 @@ export default function ResultPage() {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {state.athlete && (
-            <ButtonLink href={`/athletes/${state.athlete.id}`} variant="neutral">
+            <ButtonLink href={`/athletes/${state.athlete.id}`} variant="secondary">
               Back to {state.athlete.name}
             </ButtonLink>
           )}
-          <ButtonLink href="/athletes" variant="neutral">
+          <ButtonLink href="/athletes" variant="secondary">
             All athletes
           </ButtonLink>
         </div>
@@ -379,9 +385,9 @@ export default function ResultPage() {
       {/* ── THE HEADLINE ──────────────────────────────────────────────────────────── */}
       {nothingCompared ? (
         // Neither sitting has overlapping modules. Loud and distinct from "no change".
-        <section className="rounded-xl border-4 border-flag bg-paper p-6" aria-live="polite">
-          <p className="text-2xl font-black text-ink sm:text-3xl">Nothing could be compared</p>
-          <p className="mt-3 text-lg leading-relaxed text-ink">
+        <section className="rounded-xl border-4 border-ink bg-paper p-6" aria-live="polite">
+          <p className="text-display font-black text-ink sm:text-display">Nothing could be compared</p>
+          <p className="mt-3 text-title text-ink">
             This check and {name}&apos;s baseline have no tests in common, so no comparison was
             made. <strong>This is not a &ldquo;no change&rdquo; result.</strong> Have {name} seen by a
             medical professional.
@@ -389,19 +395,19 @@ export default function ResultPage() {
         </section>
       ) : outcome.flagged ? (
         /*
-          FLAGGED. Deliberately the loudest thing in the app: a heavy red border, the biggest
-          type on the screen, and the action first. Note it says what CHANGED — it does not
+          FLAGGED. Deliberately the loudest thing in the app, and THE ONLY PLACE RED APPEARS:
+          a solid red field, the biggest type on the screen, and the action first. Note it says what CHANGED — it does not
           say the athlete is concussed, because this app cannot know that.
         */
-        <section className="rounded-xl border-4 border-flag bg-flag p-6 text-white" aria-live="polite">
-          <p className="text-sm font-black uppercase tracking-[0.2em]">Flagged</p>
-          <h2 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">
+        <section className="rounded-xl border-4 border-flag bg-flag p-6 text-paper" aria-live="polite">
+          <p className="text-meta font-black uppercase tracking-widest">Flagged</p>
+          <h2 className="mt-2 text-display font-black leading-tight sm:text-stimulus">
             Significant change from {name}&apos;s baseline
           </h2>
-          <p className="mt-4 text-lg font-bold leading-relaxed sm:text-xl">
+          <p className="mt-4 text-title font-bold sm:text-title">
             Stop activity now and have {name} evaluated by a medical professional.
           </p>
-          <p className="mt-3 text-base leading-relaxed opacity-95">
+          <p className="mt-3 text-body opacity-95">
             This screen cannot tell you whether {name} has a concussion. It can only tell you
             that something measured differently than it did when they were well — and that is
             reason enough for a trained person to take a look.
@@ -419,16 +425,16 @@ export default function ResultPage() {
           No green. No checkmark. It does not say "no change detected", because that would claim
           a verdict on measurements that never got one.
         */
-        <section className="rounded-xl border-4 border-flag bg-paper p-6" aria-live="polite">
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-ink-soft">
+        <section className="rounded-xl border-4 border-ink bg-paper p-6" aria-live="polite">
+          <p className="text-meta font-black uppercase tracking-widest text-ink-soft">
             No verdict available
           </p>
-          <h2 className="mt-2 text-2xl font-black leading-tight text-ink sm:text-4xl">
+          <h2 className="mt-2 text-display font-black leading-tight text-ink sm:text-display">
             This screen could not judge {outcome.unevaluated.length === 1 ? 'one of' : 'several of'}{' '}
             {name}&apos;s results.
           </h2>
 
-          <div className="mt-5 space-y-3 text-base leading-relaxed text-ink sm:text-lg">
+          <div className="mt-4 space-y-3 text-body text-ink sm:text-title">
             <p className="font-bold">This is not a &ldquo;no change&rdquo; result.</p>
             <p>
               Some of these tests are too new for us to know how much a healthy athlete&apos;s
@@ -436,7 +442,7 @@ export default function ResultPage() {
               Those measurements were recorded and are shown below, but{' '}
               <strong>nothing was decided about them</strong>. Treat them as unread, not as normal.
             </p>
-            <ul className="ml-5 list-disc space-y-1 text-base">
+            <ul className="ml-4 list-disc space-y-1 text-body">
               {outcome.unevaluated.map((label) => (
                 <li key={label}>{label}</li>
               ))}
@@ -444,7 +450,7 @@ export default function ResultPage() {
             <p className="font-bold">
               Because of that, this screen cannot tell you whether anything has changed. If{' '}
               {name} may have hit their head,{' '}
-              <span className="underline decoration-flag decoration-4 underline-offset-4">
+              <span className="underline decoration-ink decoration-4 underline-offset-4">
                 have them seen by a medical professional.
               </span>
             </p>
@@ -461,15 +467,15 @@ export default function ResultPage() {
           The panel is deliberately the same sober dark neutral as the rest of the app's serious
           surfaces.
         */
-        <section className="rounded-xl border-4 border-ink bg-ink p-6 text-white" aria-live="polite">
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-white/70">
+        <section className="rounded-xl border-4 border-ink bg-ink p-6 text-paper" aria-live="polite">
+          <p className="text-meta font-black uppercase tracking-widest text-paper/70">
             No change detected
           </p>
-          <h2 className="mt-2 text-2xl font-black leading-tight sm:text-4xl">
+          <h2 className="mt-2 text-display font-black leading-tight sm:text-display">
             This screen found no significant change from {name}&apos;s baseline.
           </h2>
 
-          <div className="mt-5 space-y-3 text-base leading-relaxed sm:text-lg">
+          <div className="mt-4 space-y-3 text-body sm:text-title">
             <p className="font-bold">This does not rule out a concussion.</p>
             <p>
               A concussion can be present even when these tests look unchanged, and symptoms
@@ -477,7 +483,7 @@ export default function ResultPage() {
               <strong>see a medical professional if anything feels off</strong> — including
               later today or tomorrow.
             </p>
-            <p className="text-white/80">
+            <p className="text-paper/80">
               This screen is not a clearance to return to play. Only a medical professional
               can make that call.
             </p>
@@ -487,11 +493,11 @@ export default function ResultPage() {
 
       {/* ── Plain-language explanations from the engine ───────────────────────────── */}
       <section className="mt-8">
-        <h2 className="text-xl font-bold text-ink">What we compared</h2>
+        <h2 className="text-title font-bold text-ink">What we compared</h2>
         <ul className="mt-4 space-y-3">
           {outcome.explanations.map((line, index) => (
-            <li key={index} className="flex gap-3 text-base leading-relaxed text-ink sm:text-lg">
-              <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-line-strong" />
+            <li key={index} className="flex gap-3 text-body text-ink sm:text-title">
+              <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-ink/30" />
               <span>{line}</span>
             </li>
           ))}
@@ -500,7 +506,7 @@ export default function ResultPage() {
 
       {/* ── The numbers ───────────────────────────────────────────────────────────── */}
       <section className="mt-8">
-        <h2 className="text-xl font-bold text-ink">Measurement by measurement</h2>
+        <h2 className="text-title font-bold text-ink">Measurement by measurement</h2>
 
         {/*
           Desktop gets a real table — it is genuinely tabular data and side-by-side columns
@@ -516,23 +522,23 @@ export default function ResultPage() {
             </caption>
             <thead>
               <tr className="border-b-2 border-ink">
-                <th scope="col" className="py-3 pr-4 text-sm font-black uppercase tracking-wide">Measurement</th>
-                <th scope="col" className="py-3 pr-4 text-sm font-black uppercase tracking-wide">Baseline</th>
-                <th scope="col" className="py-3 pr-4 text-sm font-black uppercase tracking-wide">This check</th>
-                <th scope="col" className="py-3 pr-4 text-sm font-black uppercase tracking-wide">Change</th>
-                <th scope="col" className="py-3 pr-4 text-sm font-black uppercase tracking-wide">Threshold applied</th>
+                <th scope="col" className="py-3 pr-4 text-meta font-black uppercase tracking-wide">Measurement</th>
+                <th scope="col" className="py-3 pr-4 text-meta font-black uppercase tracking-wide">Baseline</th>
+                <th scope="col" className="py-3 pr-4 text-meta font-black uppercase tracking-wide">This check</th>
+                <th scope="col" className="py-3 pr-4 text-meta font-black uppercase tracking-wide">Change</th>
+                <th scope="col" className="py-3 pr-4 text-meta font-black uppercase tracking-wide">Threshold applied</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
                 <tr
                   key={row.label}
-                  className={`border-b border-line ${row.flagged ? 'bg-flag/10' : ''}`}
+                  className={`border-b border-ink/15 ${row.flagged ? 'bg-flag/10' : ''}`}
                 >
                   <th scope="row" className="py-4 pr-4 font-semibold text-ink">
                     {row.label}
                     {row.flagged && (
-                      <span className="ml-2 rounded bg-flag px-2 py-0.5 text-xs font-black uppercase text-white">
+                      <span className="ml-2 rounded bg-flag px-2 py-1 text-meta font-black uppercase text-paper">
                         Flagged
                       </span>
                     )}
@@ -541,7 +547,7 @@ export default function ResultPage() {
                       would look exactly like a row that was checked and found unremarkable.
                     */}
                     {row.unevaluated && (
-                      <span className="ml-2 rounded border-2 border-ink px-2 py-0.5 text-xs font-black uppercase text-ink">
+                      <span className="ml-2 rounded border-2 border-ink px-2 py-1 text-meta font-black uppercase text-ink">
                         Not judged
                       </span>
                     )}
@@ -551,7 +557,7 @@ export default function ResultPage() {
                   <td className={`tabular py-4 pr-4 font-bold ${row.flagged ? 'text-flag' : 'text-ink-soft'}`}>
                     {row.differenceText}
                   </td>
-                  <td className="py-4 pr-4 text-sm text-ink-soft">{row.thresholdText}</td>
+                  <td className="py-4 pr-4 text-meta text-ink-soft">{row.thresholdText}</td>
                 </tr>
               ))}
             </tbody>
@@ -564,17 +570,17 @@ export default function ResultPage() {
               <div className="flex items-start justify-between gap-3">
                 <p className="font-bold text-ink">{row.label}</p>
                 {row.flagged && (
-                  <span className="shrink-0 rounded bg-flag px-2 py-0.5 text-xs font-black uppercase text-white">
+                  <span className="shrink-0 rounded bg-flag px-2 py-1 text-meta font-black uppercase text-paper">
                     Flagged
                   </span>
                 )}
                 {row.unevaluated && (
-                  <span className="shrink-0 rounded border-2 border-ink px-2 py-0.5 text-xs font-black uppercase text-ink">
+                  <span className="shrink-0 rounded border-2 border-ink px-2 py-1 text-meta font-black uppercase text-ink">
                     Not judged
                   </span>
                 )}
               </div>
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-meta">
                 <dt className="text-ink-soft">Baseline</dt>
                 <dd className="tabular text-right font-semibold text-ink">{row.baselineText}</dd>
                 <dt className="text-ink-soft">This check</dt>
@@ -599,7 +605,7 @@ export default function ResultPage() {
           reviewed by a medical professional, and we don't have one — so we give general
           referral guidance rather than inventing a plausible-looking list.
         */}
-        <Notice tone="flag" title="Whatever this screen says, get a professional opinion">
+        <Notice tone="loud" title="Whatever this screen says, get a professional opinion">
           This app is a screening aid built by high school students. It cannot diagnose a
           concussion and it cannot clear anyone to return to play. If there is any chance{' '}
           {name} hit their head, have a medical professional evaluate them. If you are worried
@@ -611,7 +617,7 @@ export default function ResultPage() {
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         {athlete && <ButtonLink href={`/athletes/${athlete.id}`}>Back to {athlete.name}</ButtonLink>}
-        <ButtonLink href="/athletes" variant="neutral">
+        <ButtonLink href="/athletes" variant="secondary">
           All athletes
         </ButtonLink>
       </div>
@@ -637,13 +643,13 @@ function PageHeaderLite({
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+          className="mb-4 inline-flex items-center gap-1 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
         >
           <span aria-hidden="true">←</span> Back
         </Link>
       )}
-      <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{title}</h1>
-      {subtitle && <p className="mt-2 text-base text-ink-soft">{subtitle}</p>}
+      <h1 className="text-display font-bold tracking-tight text-ink sm:text-display">{title}</h1>
+      {subtitle && <p className="mt-2 text-body text-ink-soft">{subtitle}</p>}
     </header>
   );
 }

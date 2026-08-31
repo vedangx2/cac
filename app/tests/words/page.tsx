@@ -33,7 +33,7 @@
 // nothing currently persists. lib/forms/index.ts already has pickFormBySitting() ready for it.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, InstrumentHeader, InstrumentShell } from '@/components/ui';
+import { Button, InstrumentHeader, InstrumentShell, ModuleIntro } from '@/components/ui';
 import { PracticeBanner, SaveErrorNotice, SittingLabel, useBatteryStep } from '@/components/battery';
 import { WORD_FORMS, WORDS_PER_FORM, pickForm } from '@/lib/forms';
 import {
@@ -129,44 +129,33 @@ export default function WordLearningPage() {
 
   return (
     <InstrumentShell>
-      {battery.loaded && battery.mode === 'practice' && <PracticeBanner />}
+      {battery.loaded && battery.practice && <PracticeBanner />}
 
-      <InstrumentHeader title="Word learning" step={battery.loaded ? battery.stepLabel : ''}>
+      <InstrumentHeader
+        title="Word learning"
+        step={battery.loaded ? battery.stepLabel : undefined}
+        instruction={`Remember ${WORDS_PER_FORM} words — you will be asked about them twice.`}
+      >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>
 
       {/* ── One instruction screen, covering both halves of the module ──────────────── */}
       {phase === 'instructions' && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6 sm:p-8">
-          <h2 className="text-xl font-bold sm:text-2xl">Remember these words</h2>
-          <div className="mt-4 space-y-3 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
-            <p>
-              {WORDS_PER_FORM} words will appear one at a time. Read each one and try to remember
-              it. You cannot go back, so pay attention the first time.
-            </p>
-            <p>
-              Straight afterwards you will see {MAX_WORD_CORRECT} words and pick out the ones you
-              were just shown.
-            </p>
-            <p className="font-semibold text-instrument-ink">
-              You will be asked about these same words once more at the end of the tests, so keep
-              hold of them.
-            </p>
-          </div>
-          <Button className="mt-6 w-full sm:w-auto" onClick={runStudy}>
-            Start
-          </Button>
-        </div>
+        <ModuleIntro
+          heading="Read each word and hold on to it"
+          detail={`${WORDS_PER_FORM} words, one at a time. You cannot go back.`}
+          onStart={runStudy}
+        />
       )}
 
       {/* ── Study phase ─────────────────────────────────────────────────────────────── */}
       {phase === 'studying' && (
         <div
-          className="flex min-h-[18rem] flex-col items-center justify-center rounded-2xl border-4 border-instrument-line bg-instrument-panel p-6 text-center sm:min-h-[22rem]"
+          className="flex min-h-64 flex-col items-center justify-center rounded-2xl border-4 border-instrument-ink/20 bg-instrument-panel p-6 text-center sm:min-h-96"
           aria-live="polite"
         >
           {studyIndex >= 0 ? (
-            <span className="text-5xl font-black tracking-tight sm:text-7xl">
+            <span className="text-stimulus font-black tracking-tight sm:text-stimulus">
               {form.targets[studyIndex]}
             </span>
           ) : (
@@ -174,7 +163,7 @@ export default function WordLearningPage() {
             // jump every time a word leaves the screen.
             <span className="sr-only">next word coming</span>
           )}
-          <span className="mt-8 text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <span className="mt-8 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Word {Math.max(1, studyIndex + 1)} of {WORDS_PER_FORM}
           </span>
         </div>
@@ -183,7 +172,7 @@ export default function WordLearningPage() {
       {/* ── Recognition grid ────────────────────────────────────────────────────────── */}
       {phase === 'choosing' && (
         <div>
-          <p className="mb-4 text-base leading-relaxed text-instrument-ink-soft sm:text-lg">
+          <p className="mb-4 text-body text-instrument-ink-soft sm:text-title">
             Tap every word you were just shown. Tap again to un-pick. There is no time limit.
           </p>
 
@@ -202,10 +191,10 @@ export default function WordLearningPage() {
                     in this app. "Picked" here is a selection state, and it still must not borrow
                     the visual language of "correct".
                   */
-                  className={`min-h-16 rounded-xl border-2 px-3 py-4 text-lg font-bold transition-colors ${
+                  className={`min-h-16 rounded-xl border-2 px-3 py-4 text-title font-bold transition-colors ${
                     picked
                       ? 'border-instrument-ink bg-instrument-ink text-instrument'
-                      : 'border-instrument-line bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
+                      : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
                   }`}
                 >
                   {tile.word}
@@ -215,10 +204,10 @@ export default function WordLearningPage() {
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button onClick={submit} disabled={battery.saving}>
+            <Button variant="instrument" onClick={submit} disabled={battery.saving}>
               {battery.saving ? 'Saving…' : 'Done picking'}
             </Button>
-            <p className="text-sm text-instrument-ink-soft">
+            <p className="text-meta text-instrument-ink-soft">
               {selected.size} {selected.size === 1 ? 'word' : 'words'} picked
             </p>
           </div>
@@ -227,8 +216,8 @@ export default function WordLearningPage() {
 
       {/* ── Finished ────────────────────────────────────────────────────────────────── */}
       {phase === 'done' && finalScore && (
-        <div className="rounded-2xl border border-instrument-line bg-instrument-panel p-6">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-instrument-ink-soft">
+        <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
+          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
           {/*
@@ -237,10 +226,10 @@ export default function WordLearningPage() {
             athlete's baseline is, and even the engine has no tested cut-off for this measurement
             yet. See lib/engine/thresholds.ts.
           */}
-          <p className="tabular mt-2 text-4xl font-black sm:text-5xl">
+          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
             {finalScore.correct} out of {MAX_WORD_CORRECT}
           </p>
-          <p className="mt-3 text-base leading-relaxed text-instrument-ink-soft">
+          <p className="mt-3 text-body text-instrument-ink-soft">
             {finalScore.hits} of the {WORDS_PER_FORM} shown words picked, and{' '}
             {finalScore.falseAlarms}{' '}
             {finalScore.falseAlarms === 1 ? 'word' : 'words'} picked that were not shown. This is a
@@ -248,7 +237,7 @@ export default function WordLearningPage() {
           </p>
 
           {battery.mode === 'practice' && (
-            <Button variant="instrument" className="mt-6" onClick={restart}>
+            <Button variant="instrument-quiet" className="mt-6" onClick={restart}>
               Run practice again
             </Button>
           )}

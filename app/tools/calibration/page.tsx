@@ -201,7 +201,7 @@ function CalibrationTool() {
         First thing on the page, before any number. Anybody who lands here has to understand
         immediately that everything below is arithmetic about invented athletes.
       */}
-      <Notice tone="flag" title="Everything on this page is a simulation">
+      <Notice tone="loud" title="Everything on this page is a simulation">
         The athletes below do not exist. The numbers are generated from a statistical model that
         somebody typed in, run through the real comparison engine, and counted.{' '}
         <strong>
@@ -215,8 +215,8 @@ function CalibrationTool() {
 
       {/* ── How to use it ────────────────────────────────────────────────────────── */}
       <section className="mt-8">
-        <h2 className="text-2xl font-bold tracking-tight text-ink">What to paste</h2>
-        <div className="mt-3 max-w-3xl space-y-3 text-base leading-relaxed text-ink-soft">
+        <h2 className="text-display font-bold tracking-tight text-ink">What to paste</h2>
+        <div className="mt-3 max-w-3xl space-y-3 text-body text-ink-soft">
           <p>
             For each measurement, paste repeated readings from{' '}
             <strong className="text-ink">healthy</strong> people taken days apart — the same thing{' '}
@@ -224,7 +224,7 @@ function CalibrationTool() {
             move on their own is the only thing that decides how often a threshold will flag
             somebody who is fine.
           </p>
-          <ul className="ml-5 list-disc space-y-2">
+          <ul className="ml-4 list-disc space-y-2">
             <li>
               <strong className="text-ink">One number per line</strong> — repeated sittings by the
               same person.
@@ -255,32 +255,32 @@ function CalibrationTool() {
         <Card>
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block">
-              <span className="text-sm font-bold text-ink">Simulated athletes of each kind</span>
+              <span className="text-meta font-bold text-ink">Simulated athletes of each kind</span>
               <input
                 type="number"
                 value={pairsText}
                 onChange={(event) => setPairsText(event.target.value)}
-                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-line-strong bg-paper px-4 text-base text-ink"
+                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-paper px-4 text-body text-ink"
               />
             </label>
             <label className="block">
-              <span className="text-sm font-bold text-ink">Seed</span>
+              <span className="text-meta font-bold text-ink">Seed</span>
               <input
                 type="number"
                 value={seedText}
                 onChange={(event) => setSeedText(event.target.value)}
-                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-line-strong bg-paper px-4 text-base text-ink"
+                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-paper px-4 text-body text-ink"
               />
-              <span className="mt-1 block text-xs text-ink-soft">
+              <span className="mt-1 block text-meta text-ink-soft">
                 Same seed, same numbers. Change it to see whether a result is real or noise.
               </span>
             </label>
             <label className="block">
-              <span className="text-sm font-bold text-ink">Curve for</span>
+              <span className="text-meta font-bold text-ink">Curve for</span>
               <select
                 value={focus}
                 onChange={(event) => setFocus(event.target.value as CalibratedMeasurement)}
-                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-line-strong bg-paper px-4 text-base text-ink"
+                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-paper px-4 text-body text-ink"
               >
                 {CALIBRATED_MEASUREMENTS.map((measurement) => (
                   <option key={measurement} value={measurement}>
@@ -291,7 +291,7 @@ function CalibrationTool() {
             </label>
           </div>
 
-          <Button className="mt-5" onClick={run} disabled={running}>
+          <Button className="mt-4" onClick={run} disabled={running}>
             {running ? 'Running…' : 'Run simulation'}
           </Button>
         </Card>
@@ -299,7 +299,7 @@ function CalibrationTool() {
 
       {/* ── The per-measurement inputs ───────────────────────────────────────────── */}
       <section className="mt-8">
-        <h2 className="text-2xl font-bold tracking-tight text-ink">Your measurements</h2>
+        <h2 className="text-display font-bold tracking-tight text-ink">Your measurements</h2>
         <div className="mt-4 space-y-4">
           {CALIBRATED_MEASUREMENTS.map((measurement) => {
             const shape = MEASUREMENT_SHAPES[measurement];
@@ -309,8 +309,8 @@ function CalibrationTool() {
             return (
               <Card key={measurement}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="text-lg font-bold text-ink">{shape.label}</h3>
-                  <p className="text-sm text-ink-soft">
+                  <h3 className="text-title font-bold text-ink">{shape.label}</h3>
+                  <p className="text-meta text-ink-soft">
                     {shape.unit} ·{' '}
                     {hasData ? (
                       <strong className="text-ink">
@@ -325,7 +325,7 @@ function CalibrationTool() {
 
                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <label className="block">
-                    <span className="text-sm font-bold text-ink">
+                    <span className="text-meta font-bold text-ink">
                       Repeated healthy readings
                     </span>
                     <textarea
@@ -334,13 +334,13 @@ function CalibrationTool() {
                       rows={4}
                       spellCheck={false}
                       placeholder={'412\n398\n431\n405'}
-                      className="tabular mt-2 block w-full rounded-xl border-2 border-line-strong bg-paper p-3 text-base text-ink"
+                      className="tabular mt-2 block w-full rounded-xl border-2 border-ink/30 bg-paper p-3 text-body text-ink"
                     />
                   </label>
 
                   <div className="space-y-4">
                     <label className="block">
-                      <span className="text-sm font-bold text-ink">
+                      <span className="text-meta font-bold text-ink">
                         Degradation to detect ({shape.unit.replace(/^out of \d+$/, 'units')})
                       </span>
                       <input
@@ -348,11 +348,11 @@ function CalibrationTool() {
                         value={inputs[measurement].degradation}
                         onChange={(event) => update(measurement, 'degradation', event.target.value)}
                         placeholder="your choice"
-                        className="mt-2 block min-h-14 w-full rounded-xl border-2 border-line-strong bg-paper px-4 text-base text-ink"
+                        className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-paper px-4 text-body text-ink"
                       />
                     </label>
                     <label className="block">
-                      <span className="text-sm font-bold text-ink">
+                      <span className="text-meta font-bold text-ink">
                         Candidate threshold (for the rule comparison)
                       </span>
                       <input
@@ -360,14 +360,14 @@ function CalibrationTool() {
                         value={inputs[measurement].threshold}
                         onChange={(event) => update(measurement, 'threshold', event.target.value)}
                         placeholder="leave blank = not judged"
-                        className="mt-2 block min-h-14 w-full rounded-xl border-2 border-line-strong bg-paper px-4 text-base text-ink"
+                        className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-paper px-4 text-body text-ink"
                       />
                     </label>
                   </div>
                 </div>
 
                 {hasData && (
-                  <dl className="tabular mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm text-ink-soft">
+                  <dl className="tabular mt-4 flex flex-wrap gap-x-8 gap-y-2 text-meta text-ink-soft">
                     <div>
                       <dt className="inline font-bold text-ink">Mean </dt>
                       <dd className="inline">{series.mean.toFixed(1)}</dd>
@@ -388,7 +388,7 @@ function CalibrationTool() {
                 )}
 
                 {series.problems.length > 0 && (
-                  <ul className="mt-3 space-y-1 text-sm text-ink">
+                  <ul className="mt-3 space-y-1 text-meta text-ink">
                     {series.problems.map((problem) => (
                       <li key={problem}>• {problem}</li>
                     ))}
@@ -402,12 +402,12 @@ function CalibrationTool() {
 
       {/* ── Results ──────────────────────────────────────────────────────────────── */}
       {output && check && (
-        <section className="mt-10">
-          <h2 className="text-2xl font-bold tracking-tight text-ink">Results</h2>
+        <section className="mt-8">
+          <h2 className="text-display font-bold tracking-tight text-ink">Results</h2>
 
           {!check.ok && (
             <div className="mt-4">
-              <Notice tone="flag" title="This run is not trustworthy">
+              <Notice tone="loud" title="This run is not trustworthy">
                 {check.refusedByEngine > 0 && (
                   <p>
                     The engine refused {check.refusedByEngine} of the generated pairs, so those
@@ -427,14 +427,14 @@ function CalibrationTool() {
           )}
 
           <Card className="mt-4">
-            <p className="text-base leading-relaxed text-ink-soft">
+            <p className="text-body text-ink-soft">
               {output.samples.healthy.length.toLocaleString()} healthy athletes and{' '}
               {output.samples.impaired.length.toLocaleString()} impaired athletes, seed{' '}
               {output.samples.seed}. Every pair was run through the real comparison engine, and this
               harness&apos;s symptom verdict matched the engine&apos;s on{' '}
               {check.disagreements === 0 ? 'all of them' : `all but ${check.disagreements}`}.
             </p>
-            <p className="mt-3 text-base leading-relaxed text-ink-soft">
+            <p className="mt-3 text-body text-ink-soft">
               Profiles came from your pasted numbers for{' '}
               <strong className="text-ink">
                 {output.usedRealData.length === 0
@@ -449,28 +449,28 @@ function CalibrationTool() {
           </Card>
 
           {/* The curve */}
-          <h3 className="mt-8 text-xl font-bold text-ink">
+          <h3 className="mt-8 text-title font-bold text-ink">
             {MEASUREMENT_SHAPES[output.focus].label} — the whole tradeoff
           </h3>
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-soft">
+          <p className="mt-2 max-w-3xl text-body text-ink-soft">
             Read down the table, not across to a winner. A lower threshold catches more but flags
             more healthy athletes; a higher one flags fewer and misses more. Where to sit on that
             line is a judgement about consequences, and this page does not make it.
           </p>
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[38rem] border-collapse text-left">
+            <table className="w-full min-w-max border-collapse text-left">
               <thead>
-                <tr className="border-b-2 border-line-strong text-sm uppercase tracking-wide text-ink-soft">
+                <tr className="border-b-2 border-ink/30 text-meta uppercase tracking-wide text-ink-soft">
                   <th className="py-2 pr-4 font-bold">Threshold</th>
                   <th className="py-2 pr-4 font-bold">Flags a healthy athlete</th>
                   <th className="py-2 pr-4 font-bold">Misses an impaired one</th>
                   <th className="py-2 font-bold">Counts</th>
                 </tr>
               </thead>
-              <tbody className="tabular text-base">
+              <tbody className="tabular text-body">
                 {output.curve.map((point) => (
-                  <tr key={point.threshold} className="border-b border-line">
+                  <tr key={point.threshold} className="border-b border-ink/15">
                     <td className="py-2 pr-4 font-bold text-ink">{point.threshold}</td>
                     <td className="py-2 pr-4 text-ink">
                       <span className="inline-flex items-center gap-2">
@@ -489,14 +489,14 @@ function CalibrationTool() {
                         <span className="inline-flex items-center gap-2">
                           <span
                             aria-hidden="true"
-                            className="inline-block h-2 rounded-sm bg-line-strong"
+                            className="inline-block h-2 rounded-sm bg-ink/30"
                             style={{ width: `${Math.max(1, point.falseNegativeRate * 120)}px` }}
                           />
                           {percent(point.falseNegativeRate)}
                         </span>
                       )}
                     </td>
-                    <td className="py-2 text-sm text-ink-soft">
+                    <td className="py-2 text-meta text-ink-soft">
                       {point.healthyFlagged}/{point.healthyTotal} flagged ·{' '}
                       {point.impairedMissed}/{point.impairedTotal} missed
                     </td>
@@ -507,10 +507,10 @@ function CalibrationTool() {
           </div>
 
           {/* The flag rule */}
-          <h3 className="mt-10 text-xl font-bold text-ink">
+          <h3 className="mt-8 text-title font-bold text-ink">
             How the whole screen should decide
           </h3>
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-soft">
+          <p className="mt-2 max-w-3xl text-body text-ink-soft">
             The engine flags if <em>any</em> module flags. With ten measurements that is ten
             separate chances to raise a false alarm on an athlete who is fine. These rows use the
             candidate thresholds you typed above; measurements you left blank are not judged at
@@ -529,17 +529,17 @@ function CalibrationTool() {
           )}
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[38rem] border-collapse text-left">
+            <table className="w-full min-w-max border-collapse text-left">
               <thead>
-                <tr className="border-b-2 border-line-strong text-sm uppercase tracking-wide text-ink-soft">
+                <tr className="border-b-2 border-ink/30 text-meta uppercase tracking-wide text-ink-soft">
                   <th className="py-2 pr-4 font-bold">Rule</th>
                   <th className="py-2 pr-4 font-bold">Flags a healthy athlete</th>
                   <th className="py-2 font-bold">Misses an impaired one</th>
                 </tr>
               </thead>
-              <tbody className="text-base">
+              <tbody className="text-body">
                 {output.rules.map((result) => (
-                  <tr key={result.rule} className="border-b border-line">
+                  <tr key={result.rule} className="border-b border-ink/15">
                     <td className="py-3 pr-4 text-ink">{result.label}</td>
                     <td className="tabular py-3 pr-4 font-bold text-ink">
                       {percent(result.falsePositiveRate)}
