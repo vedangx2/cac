@@ -303,3 +303,10 @@ replacement against the same construction rules.
   athlete list/detail wired to storage).
 - **Phase 3 — Make it real** (full phone flow, PWA install, a real high-contrast outdoor
   design, accessibility floor).
+
+## gstack
+Available skills: /guard, /careful, /freeze, /unfreeze, /review, /qa, /qa-only,
+/investigate, /plan-design-review, /design-review, /browse, /learn.
+DO NOT run /ship or /document-release in this repo. /document-release rewrites
+CLAUDE.md automatically and this file holds the safety rules that govern the
+whole project.
