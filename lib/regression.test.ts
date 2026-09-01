@@ -378,4 +378,47 @@ describe('#6 go/no-go — taps are judged against refs, not React state (structu
   it('counts a go trial with no response as an omission', () => {
     expect(GONOGO_SRC).toMatch(/kind: 'go-omission'/);
   });
+
+  /*
+    THE WHOLE-HANDLER GUARD, added after mutation testing found the line-by-line guards above
+    were not enough.
+
+    A mutation that KEPT the guarded line `const phase = phaseRef.current;` and then judged the
+    OUTCOME against React state instead — `runState?.kind === 'running' ? go-response : commission`
+    — passed every test in this file. That is the same bug wearing a different hat: a tap that
+    landed during a no-go trial gets recorded as a reaction time, the commission error vanishes,
+    and the median is contaminated by the same tap.
+
+    So instead of pinning individual lines, this asserts a property of the entire tap handler:
+    it does not read React state at all. There is exactly one piece of React state on that
+    screen (`runState`), it is written once when a run ENDS, and the handler has no business
+    consulting it.
+  */
+  it('the tap handler reads no React state anywhere in its body (whole-handler guard)', () => {
+    const start = GONOGO_SRC.indexOf('const handlePress = useCallback(');
+    expect(start).toBeGreaterThan(-1);
+    const end = GONOGO_SRC.indexOf('  }, [', start);
+    expect(end).toBeGreaterThan(start);
+    const body = GONOGO_SRC.slice(start, end);
+
+    // The only React state on this screen. The handler must never consult it.
+    expect(body).not.toMatch(/runState/);
+    // And it must still be reading the refs that carry the truth.
+    expect(body).toMatch(/phaseRef\.current/);
+    expect(body).toMatch(/stimulusAtRef\.current/);
+  });
+
+  /*
+    A late requestAnimationFrame callback from trial N must not refine the stamp of trial N+1.
+
+    Found by the branch review, and then found AGAIN by mutation testing: deleting this guard
+    broke nothing, which meant the fix had no test. Without the token, a stale callback moves the
+    next trial's start time forward, making a genuine response look fast enough to be thrown out
+    as an anticipation.
+  */
+  it('only lets a rAF callback refine the stimulus it belongs to', () => {
+    expect(GONOGO_SRC).toMatch(/const stimulusTokenRef = useRef\(/);
+    expect(GONOGO_SRC).toMatch(/const token = \(stimulusTokenRef\.current \+= 1\);/);
+    expect(GONOGO_SRC).toMatch(/stimulusTokenRef\.current === token && stimulusAtRef\.current !== 0/);
+  });
 });
