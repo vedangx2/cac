@@ -444,3 +444,16 @@ against a written brief. Each step below was a separate commit.
   was colour classes only — no copy, no logic, no states — and the copy guards still pass, but it
   happened without agreement because the design brief required red to mean one thing across the
   whole app. Both are judgement calls a human should review rather than accept.
+
+---
+
+### Written by Vedang, not by AI
+
+> **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my
+> direction, after I decided I could not write it myself in the time available. See the task 1
+> entry above for exactly what it wrote and what it did not. I am responsible for understanding
+> and being able to explain it.
+
+*(Recorded verbatim at the author's request; the only change is the cross-reference, which
+pointed at this file from outside it. The same statement heads
+`app/tests/gonogo/page.tsx`. AI does not edit or delete this entry.)*

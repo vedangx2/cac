@@ -2,6 +2,17 @@
 
 // app/tests/gonogo/page.tsx
 //
+// ═════════════════════════════════════════════════════════════════════════════════════
+// PROVENANCE — written by Vedang, not by the AI session that produced the code below
+// ═════════════════════════════════════════════════════════════════════════════════════
+// "Go/no-go was written by Claude Code on 2026-08-31 at my direction, after I decided I could
+//  not write it myself in the time available. See AI-USAGE.md. I am responsible for
+//  understanding and being able to explain it."
+//
+// docs/GONOGO-WALKTHROUGH.md exists for that second sentence: it walks this file top to bottom
+// in plain language, and explains why each part is written the way it is rather than the
+// obvious way.
+//
 // GO / NO-GO — tap fast when the signal says go, and do nothing when it says hold.
 //
 // Thirty trials, eight of them no-go, taken from lib/forms/goNo.ts. THIS SCREEN NEVER GENERATES
