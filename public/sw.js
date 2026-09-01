@@ -19,7 +19,7 @@
  */
 
 // Bump this string to throw away every old cache after a deploy.
-const CACHE_NAME = 'sideline-screen-v2';
+const CACHE_NAME = 'sideline-screen-v3';
 
 self.addEventListener('install', (event) => {
   // Take over as soon as we're installed rather than waiting for every tab to close.
