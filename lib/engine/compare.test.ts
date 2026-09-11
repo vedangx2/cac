@@ -20,7 +20,12 @@ import { CURRENT_SCHEMA_VERSION } from '../schema';
 import { DIGIT_TRIALS_PER_FORM, RECOGNITION_GRID_SIZE } from '../forms';
 import { InvalidComparisonError, MissingBaselineError, compareToBaseline } from './compare';
 import { buildBreakdown } from './breakdown';
-import { DIGIT_SPAN_FEWER_CORRECT, SYMPTOM_INCREASE } from './thresholds';
+import {
+  BALANCE_SWAY_INCREASE,
+  DIGIT_SPAN_FEWER_CORRECT,
+  GO_NO_GO_SLOWER_MS,
+  SYMPTOM_INCREASE,
+} from './thresholds';
 
 /* ── Test data helpers ───────────────────────────────────────────────────────────── */
 
@@ -75,6 +80,14 @@ function digits(correct: number): NonNullable<ModuleScores['digitSpan']> {
 
 function words(correct: number, falseAlarms = 0): NonNullable<ModuleScores['wordLearning']> {
   return { formId: 'words-a', hits: correct - (RECOGNITION_GRID_SIZE / 2 - falseAlarms), falseAlarms, correct };
+}
+
+function goNoGo(medianMs: number): NonNullable<ModuleScores['goNoGo']> {
+  return { formId: 'gono-a', medianMs, commissionErrors: 0, omissionErrors: 0 };
+}
+
+function balance(swayScore: number): NonNullable<ModuleScores['balance']> {
+  return { swayScore };
 }
 
 /** A complete, unremarkable baseline to compare things against. */
@@ -150,6 +163,93 @@ describe('the symptom module, which has a real threshold', () => {
     expect(line).toMatch(/higher/);
     expect(line).toContain(`${SYMPTOM_INCREASE} out of 30`);
     expect(line).toContain('0 out of 30');
+  });
+});
+
+/* ── 2b. The whole-screen flag rule — symptoms alone, or two modules together ─────── */
+
+describe('the whole-screen flag rule (changed 2026-09-10)', () => {
+  // Fixtures with go/no-go and balance present on both sides, because those are the only two
+  // non-symptom modules with a real threshold today — the only way to exercise the rule.
+  const fullBaseline = () =>
+    sitting('baseline', scores({ symptom: symptom(0), goNoGo: goNoGo(300), balance: balance(1) }));
+
+  it('symptom alone is enough — the exception holds', () => {
+    const check = sitting(
+      'check',
+      scores({ symptom: symptom(SYMPTOM_INCREASE), goNoGo: goNoGo(300), balance: balance(1) }),
+    );
+    const outcome = compareToBaseline(fullBaseline(), check);
+
+    expect(outcome.modules.symptom).toBe(true);
+    expect(outcome.flagged).toBe(true);
+  });
+
+  it('one non-symptom module past its cut-off does NOT raise the flag…', () => {
+    const check = sitting(
+      'check',
+      scores({ symptom: symptom(0), goNoGo: goNoGo(300 + GO_NO_GO_SLOWER_MS), balance: balance(1) }),
+    );
+    const outcome = compareToBaseline(fullBaseline(), check);
+
+    // The crossing is recorded — the results screen needs it to render the below-the-rule
+    // state — but one module alone is below the two-module bar.
+    expect(outcome.modules.goNoGo).toBe(true);
+    expect(outcome.flagged).toBe(false);
+  });
+
+  it('…and two non-symptom modules past their cut-offs together do', () => {
+    const check = sitting(
+      'check',
+      scores({
+        symptom: symptom(0),
+        goNoGo: goNoGo(300 + GO_NO_GO_SLOWER_MS),
+        balance: balance(1 + BALANCE_SWAY_INCREASE),
+      }),
+    );
+    const outcome = compareToBaseline(fullBaseline(), check);
+
+    expect(outcome.modules.goNoGo).toBe(true);
+    expect(outcome.modules.balance).toBe(true);
+    expect(outcome.flagged).toBe(true);
+  });
+
+  it('a crossed module plus a crossed symptom flags too, by either half of the rule', () => {
+    const check = sitting(
+      'check',
+      scores({
+        symptom: symptom(SYMPTOM_INCREASE),
+        goNoGo: goNoGo(300 + GO_NO_GO_SLOWER_MS),
+        balance: balance(1),
+      }),
+    );
+    expect(compareToBaseline(fullBaseline(), check).flagged).toBe(true);
+  });
+
+  it('go/no-go response time is judged now, not listed as unevaluated', () => {
+    // The first threshold set from collected data (2026-09-10). Its sibling measurements —
+    // commission and omission errors — still have null thresholds and must stay in the
+    // transitional "not judged" state.
+    const check = sitting(
+      'check',
+      scores({ symptom: symptom(0), goNoGo: goNoGo(300), balance: balance(1) }),
+    );
+    const outcome = compareToBaseline(fullBaseline(), check);
+
+    expect(outcome.unevaluated).not.toContain('Go / no-go response time');
+    expect(outcome.unevaluated).toContain('Times they responded when the signal said stop');
+    expect(outcome.unevaluated).toContain('Times they missed a go signal entirely');
+  });
+
+  it('a slowdown one millisecond under the cut-off does not cross', () => {
+    const check = sitting(
+      'check',
+      scores({ symptom: symptom(0), goNoGo: goNoGo(300 + GO_NO_GO_SLOWER_MS - 1), balance: balance(1) }),
+    );
+    const outcome = compareToBaseline(fullBaseline(), check);
+
+    expect(outcome.modules.goNoGo).toBe(false);
+    expect(outcome.flagged).toBe(false);
   });
 });
 
@@ -262,9 +362,11 @@ describe('a module missing from either sitting', () => {
     expect(outcome.unevaluated).not.toContain('Repeating numbers backwards');
   });
 
-  it('stays quiet about modules that do not exist yet, rather than nagging every screen', () => {
-    // Go/no-go is not built. Saying "go/no-go was not recorded" on every single result would be
-    // noise, so it is silent when absent from both sides.
+  it('stays quiet about a module absent from BOTH sittings, rather than nagging every screen', () => {
+    // Go/no-go is built now, but a sitting can legitimately carry no score for it (a run where
+    // no go trial got a response records nothing — see scoreGoNoGo). When it is absent from
+    // both sides, announcing "not recorded" is noise; absent from one side still gets the
+    // "could not be compared" sentence like everything else.
     const { explanations } = compareToBaseline(healthyBaseline(), unchangedCheck());
 
     expect(explanations.some((l) => l.toLowerCase().includes('go / no-go'))).toBe(false);
@@ -327,6 +429,26 @@ describe('breakdown rows stay consistent with the engine verdict', () => {
       baseline: healthyBaseline,
       check: () => sitting('check', scores({ symptom: symptom(0) })),
     },
+    {
+      name: 'go/no-go crossed alone (below the flag rule)',
+      baseline: () => sitting('baseline', scores({ symptom: symptom(0), goNoGo: goNoGo(300) })),
+      check: () =>
+        sitting('check', scores({ symptom: symptom(0), goNoGo: goNoGo(300 + GO_NO_GO_SLOWER_MS) })),
+    },
+    {
+      name: 'go/no-go and balance crossed together (flagged by the two-module rule)',
+      baseline: () =>
+        sitting('baseline', scores({ symptom: symptom(0), goNoGo: goNoGo(300), balance: balance(1) })),
+      check: () =>
+        sitting(
+          'check',
+          scores({
+            symptom: symptom(0),
+            goNoGo: goNoGo(300 + GO_NO_GO_SLOWER_MS),
+            balance: balance(1 + BALANCE_SWAY_INCREASE),
+          }),
+        ),
+    },
   ];
 
   for (const testCase of cases) {
@@ -337,9 +459,18 @@ describe('breakdown rows stay consistent with the engine verdict', () => {
       const outcome = compareToBaseline(baseline, check);
       const rows = buildBreakdown(baseline, check);
 
-      // If any row flags, the headline must flag, and vice versa. This is the drift these two
-      // files can produce, and the whole reason this describe block exists.
-      expect(rows.some((row) => row.flagged)).toBe(outcome.flagged);
+      // A row crosses its cut-off exactly when the engine records that module as crossed —
+      // this is the drift these two files can produce, and the reason this block exists. The
+      // whole-screen flag is rule 4 applied ON TOP of the crossings (symptoms alone, or two
+      // modules), so since 2026-09-10 a crossed row on an unflagged screen is a legitimate
+      // state with its own headline. What must still hold: the table agrees with the module
+      // record, and the screen can never flag with zero crossed rows.
+      expect(rows.some((row) => row.flagged)).toBe(
+        Object.values(outcome.modules).some(Boolean),
+      );
+      if (outcome.flagged) {
+        expect(rows.some((row) => row.flagged)).toBe(true);
+      }
     });
 
     it(`marks the same measurements unevaluated as the engine — ${testCase.name}`, () => {

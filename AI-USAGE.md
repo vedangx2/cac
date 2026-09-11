@@ -445,6 +445,32 @@ against a written brief. Each step below was a separate commit.
   happened without agreement because the design brief required red to mean one thing across the
   whole app. Both are judgement calls a human should review rather than accept.
 
+## 2026-09-10 — Practice mode, first real threshold, unlock (one entry per task)
+
+This session ran autonomously against a written brief from the project owner. Each task below
+was a separate commit.
+
+- **2026-09-10, task 3 — First collected-data threshold, and the flag-rule change. AI-typed at
+  the owner's direction.** `GO_NO_GO_SLOWER_MS` is now 25 ms. **The value was supplied by the
+  project owner from n=1 self-collected noise-floor data — AI chose nothing about it** and
+  recorded the owner's derivation verbatim in the threshold's comment (2-sigma noise band
+  ~24.6 ms, difference noise ~17.4 ms, expected false alarm ~4% with an averaged baseline,
+  `TODO(NEEDS_SOURCE): not a validated cutoff`). Every other null threshold stays null. The
+  whole-screen flag rule changed from flag-on-any to TWO-OR-MORE modules, with the symptom
+  checklist as the one exception that may flag alone — the owner's decision, informed by the
+  calibration harness's measured comparison (~30% vs ~3% false alarms on simulated athletes);
+  the owner's symptom rationale refers to published work with no citation on file, so it is
+  recorded beside the rule with `TODO(NEEDS_SOURCE)` rather than stated as fact. Because one
+  module can now cross its cut-off without raising the flag, the results screen gained a
+  dedicated "Change found — below the flag rule" headline so a real crossed measurement can
+  never render as "no change detected"; the transitional "No verdict available" state for
+  null-threshold measurements is kept, and the below-the-rule panel repeats its warning when
+  unjudged measurements are present. This touched `app/results/[id]/page.tsx` and comments in
+  `lib/types.ts`, both needs-agreement files — the owner's written brief for this session is
+  that agreement. The calibration harness's "never writes a threshold" test now asserts the
+  thresholds file is byte-for-byte unchanged by a run, instead of asserting null-ness that is
+  no longer true. Tests 402 → 412.
+
 ---
 
 ### Written by Vedang, not by AI

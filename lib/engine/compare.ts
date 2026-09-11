@@ -25,10 +25,15 @@
 //    tests). A module we cannot compare is reported as "not compared" - it never quietly
 //    counts as "no change", because those two things mean very different things.
 //
-// 4. Any single module flagging flags the whole screen.
-//    We deliberately do not require two modules to agree, and we do not average them. This
-//    app is a smoke alarm, not a diagnosis: the cost of one extra "go get checked" is small,
-//    and the cost of missing something is not.
+// 4. Symptoms alone, or any TWO modules together, flag the whole screen.
+//    Changed 2026-09-10 from "any single module", at the project owner's direction. With ten
+//    measurements, flag-on-any is ten separate chances to false-alarm on a healthy athlete —
+//    the calibration harness measured ~30% of healthy simulated athletes flagged under
+//    flag-on-any against ~3% under flag-on-two. The symptom checklist is the one exception
+//    and may flag alone (see MODULES_REQUIRED_TO_FLAG in thresholds.ts for the rationale and
+//    its TODO(NEEDS_SOURCE)). A single non-symptom module past its cut-off does NOT flag the
+//    screen — but it is still recorded in `modules`, and the results screen shows that state
+//    explicitly rather than letting it render as "no change".
 //
 // 5. No baseline is an ERROR, never a pass.
 //    If there is nothing to compare against, the engine throws. It must be impossible for a
@@ -54,6 +59,7 @@ import {
   GO_NO_GO_MORE_COMMISSION_ERRORS,
   GO_NO_GO_MORE_OMISSION_ERRORS,
   GO_NO_GO_SLOWER_MS,
+  MODULES_REQUIRED_TO_FLAG,
   PATTERN_SPAN_FEWER_CORRECT,
   SYMPTOM_INCREASE,
   WORD_LEARNING_FEWER_CORRECT,
@@ -252,8 +258,11 @@ export function compareToBaseline(
     words: ChangeWords;
     /**
      * When true, a measurement missing from BOTH sittings produces no sentence at all.
-     * Used for modules that are not built yet — saying "go/no-go was not recorded" on every
-     * single result screen would be noise, not information.
+     * Used for balance (not built yet) and for go/no-go — the module is built now, but a
+     * sitting can legitimately carry no go/no-go score (a run where no go trial got a
+     * response records nothing, see scoreGoNoGo), and announcing "not recorded" for a module
+     * absent from both sides is noise, not information. Absent from ONE side still gets the
+     * "could not be compared" sentence like everything else.
      */
     silentWhenAbsent?: boolean;
   };
@@ -436,18 +445,20 @@ export function compareToBaseline(
       continue;
     }
 
+    // NOTE the wording: a crossed cut-off marks the MEASUREMENT, and whether the whole screen
+    // flags is rule 4's separate decision below. The sentence must not claim more than that.
     if (worsening >= item.threshold) {
       modules[item.module] = true;
       explanations.push(
         `${item.label} was ${item.formatChange(worsening)} ${item.words.worse} than this ` +
-          `athlete's baseline ${bothValues}. This screen flags a change of ` +
-          `${item.formatChange(item.threshold)} ${item.words.worse} or more.`,
+          `athlete's baseline ${bothValues}. That is at or past the ` +
+          `${item.formatChange(item.threshold)} ${item.words.worse} mark set for this measurement.`,
       );
     } else if (worsening > 0) {
       explanations.push(
         `${item.label} was ${item.formatChange(worsening)} ${item.words.worse} than baseline ` +
           `${bothValues}, which is under the ${item.formatChange(item.threshold)} ` +
-          `${item.words.worse} mark this screen flags at.`,
+          `${item.words.worse} mark set for this measurement.`,
       );
     } else if (worsening < 0) {
       explanations.push(
@@ -459,8 +470,13 @@ export function compareToBaseline(
     }
   }
 
-  // -- Rule 4: any one module is enough. ---------------------------------------------
-  const flagged = Object.values(modules).some(Boolean);
+  // -- Rule 4: symptoms alone, or any two modules together. ---------------------------
+  //
+  // `modules` deliberately keeps every per-module crossing regardless of this rule, so a
+  // change that stayed below the flag bar is still visible to the results screen — which has
+  // its own state for exactly that, because hiding it inside "no change" would be a lie.
+  const flaggedModuleCount = Object.values(modules).filter(Boolean).length;
+  const flagged = modules.symptom || flaggedModuleCount >= MODULES_REQUIRED_TO_FLAG;
 
   return { flagged, modules, explanations, unevaluated };
 }

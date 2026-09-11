@@ -511,10 +511,13 @@ function CalibrationTool() {
             How the whole screen should decide
           </h3>
           <p className="mt-2 max-w-3xl text-body text-ink-soft">
-            The engine flags if <em>any</em> module flags. With ten measurements that is ten
-            separate chances to raise a false alarm on an athlete who is fine. These rows use the
-            candidate thresholds you typed above; measurements you left blank are not judged at
-            all, and a measurement that is not judged can never flag.
+            Since 2026-09-10 the engine flags on symptoms alone, or on two or more modules
+            together — the third row below. It used to flag on <em>any</em> module, which with
+            ten measurements is ten separate chances to raise a false alarm on an athlete who
+            is fine; that comparison is what retired the old rule, and all three rows stay here
+            so it can be re-run against new data. These rows use the candidate thresholds you
+            typed above; measurements you left blank are not judged at all, and a measurement
+            that is not judged can never flag.
           </p>
 
           {output.unjudged.length > 0 && (

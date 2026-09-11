@@ -158,14 +158,19 @@ export type Athlete = {
 /**
  * The engine's answer: did anything look off compared to this athlete's own baseline?
  *
- * `flagged` is true if ANY single module flagged. `modules` says which ones. `explanations`
- * is plain-language text we show the user (readable by a parent, not just a coder).
+ * `modules` marks every module that crossed its OWN cut-off. `flagged` applies the
+ * whole-screen rule on top of that (changed 2026-09-10, see thresholds.ts): the symptom
+ * module alone is enough, and otherwise at least MODULES_REQUIRED_TO_FLAG modules must have
+ * crossed together. A single non-symptom module past its cut-off therefore produces
+ * flagged=false with its entry in `modules` still true — the results screen renders that
+ * state explicitly, never as "no change". `explanations` is plain-language text we show the
+ * user (readable by a parent, not just a coder).
  *
  * Note there is deliberately NO "cleared" / "healthy" / "safe" field anywhere. The absence
  * of a flag is not a clearance — see CLAUDE.md, THE HARD RULE.
  */
 export type FlagOutcome = {
-  flagged: boolean; // true if ANY module flagged
+  flagged: boolean; // symptom crossed, or two or more modules crossed — see thresholds.ts
   modules: {
     symptom: boolean;
     wordLearning: boolean;

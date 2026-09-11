@@ -276,8 +276,9 @@ describe('the harness drives the real engine rather than a copy of it', () => {
   });
 
   it('agrees with the real engine on every simulated pair', () => {
-    // Symptom is the only measurement with a real threshold, so it is the only place our
-    // comparison can be held against the engine's. Every pair in every run is checked.
+    // Symptom is the measurement whose verdict the harness cross-checks against the engine's,
+    // on every pair in every run. (Go/no-go response time also has a real threshold since
+    // 2026-09-10, but the recorded cross-check field is the symptom one.)
     expect(samples.crossCheckDisagreements).toBe(0);
     expect(crossCheck(samples).ok).toBe(true);
   });
@@ -543,10 +544,15 @@ describe('parsing pasted measurements', () => {
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
 describe('the harness never writes a threshold', () => {
-  it('leaves every go/no-go threshold null after a full run', async () => {
+  it('leaves every value in thresholds.ts exactly as it found it, after a full run', async () => {
     // The whole point of the harness is that it produces analysis a human reads. If running it
     // could change a threshold, the "thresholds come from collected data" rule would be gone.
+    //
+    // Until 2026-09-10 this asserted every new-battery threshold was still null. One of them —
+    // GO_NO_GO_SLOWER_MS — now carries a value a HUMAN set from collected data, so the honest
+    // assertion is "a run changes nothing", plus null-ness for the ones nobody has data for.
     const thresholds = await import('../engine/thresholds');
+    const before = { ...thresholds };
 
     generateSamples({
       profiles: PLACEHOLDER_PROFILES,
@@ -555,13 +561,17 @@ describe('the harness never writes a threshold', () => {
       seed: 2,
     });
 
-    expect(thresholds.GO_NO_GO_SLOWER_MS).toBeNull();
+    expect({ ...thresholds }).toEqual(before);
+
+    // The measurements with no collected data behind them stay null.
     expect(thresholds.GO_NO_GO_MORE_COMMISSION_ERRORS).toBeNull();
     expect(thresholds.GO_NO_GO_MORE_OMISSION_ERRORS).toBeNull();
     expect(thresholds.DIGIT_SPAN_FEWER_CORRECT).toBeNull();
     expect(thresholds.PATTERN_SPAN_FEWER_CORRECT).toBeNull();
     expect(thresholds.WORD_LEARNING_FEWER_CORRECT).toBeNull();
+    expect(thresholds.WORD_LEARNING_MORE_FALSE_ALARMS).toBeNull();
     expect(thresholds.WORD_RECOGNITION_FEWER_CORRECT).toBeNull();
+    expect(thresholds.WORD_RECOGNITION_MORE_FALSE_ALARMS).toBeNull();
   });
 
   it('generates simulated data marked as simulated, never as a real form', async () => {

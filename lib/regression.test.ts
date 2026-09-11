@@ -84,11 +84,12 @@ function scores(partial: Partial<ModuleScores> = {}): ModuleScores {
 /*
   A sitting where every measured module is identical between baseline and check.
 
-  Symptom is included deliberately and is not incidental: it is currently the ONLY module with a
-  real threshold, so it is the only one that can produce a genuine "compared and found no
-  significant change" verdict. Guard #4 below needs that state to exist in order to prove it is
-  not rendered green — a fixture made only of null-threshold modules would land in the
-  "unevaluated" state instead and the guard would be testing the wrong screen.
+  Symptom is included deliberately and is not incidental: it has a real threshold (go/no-go's
+  response time gained one on 2026-09-10; every other new-battery threshold is still null), so
+  it can produce a genuine "compared and found no significant change" verdict. Guard #4 below
+  needs that state to exist in order to prove it is not rendered green — a fixture made only of
+  null-threshold modules would land in the "unevaluated" state instead and the guard would be
+  testing the wrong screen.
 */
 const IDENTICAL_MODULES = (): ModuleScores =>
   scores({

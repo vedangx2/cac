@@ -278,23 +278,26 @@ export type ThresholdSet = Partial<Record<CalibratedMeasurement, number>>;
 /**
  * How the whole screen decides to flag, given which modules flagged.
  *
- *  • 'any'              — what the engine does today: one module is enough. A smoke alarm.
+ *  • 'any'              — one module is enough. A smoke alarm. (What the engine did until
+ *                         2026-09-10, when this harness's own comparison retired it.)
  *  • 'two-or-more'      — at least two modules must agree.
- *  • 'symptom-weighted' — symptom alone is enough; anything else needs two.
+ *  • 'symptom-weighted' — symptom alone is enough; anything else needs two. THIS IS WHAT THE
+ *                         ENGINE DOES NOW — see rule 4 in lib/engine/compare.ts and
+ *                         MODULES_REQUIRED_TO_FLAG in thresholds.ts.
  *
- * THE THIRD ONE IS OUR OWN DEFINITION and is not taken from anywhere. It is on the list because
- * symptom is the only module with a real threshold today, so "does treating symptom differently
- * help?" is a question somebody will ask, and it is better answered with a curve than with an
- * opinion.
+ * The third one is our own definition and is not taken from anywhere. It was on the list
+ * because "does treating symptom differently help?" was a question somebody would ask, and it
+ * was better answered with a curve than with an opinion — and it is now the shipped rule, so
+ * keeping all three here lets the comparison that justified it be re-run against new data.
  */
 export type FlagRule = 'any' | 'two-or-more' | 'symptom-weighted';
 
 export const FLAG_RULES: readonly FlagRule[] = ['any', 'two-or-more', 'symptom-weighted'];
 
 export const FLAG_RULE_LABELS: Record<FlagRule, string> = {
-  any: 'Any one module flags (what the engine does today)',
+  any: 'Any one module flags (what the engine did before 2026-09-10)',
   'two-or-more': 'Two or more modules must flag',
-  'symptom-weighted': 'Symptom alone is enough; otherwise two or more',
+  'symptom-weighted': 'Symptom alone is enough; otherwise two or more (what the engine does now)',
 };
 
 /**

@@ -5,11 +5,13 @@
 // component. That way there's exactly one place to read, explain, and tune the sensitivity.
 //
 // ─────────────────────────────────────────────────────────────────────────────────────
-// TODO(NEEDS_SOURCE): These values are OUR OWN PLACEHOLDER GUESSES. They are NOT clinically
-// validated and are not taken from any published concussion protocol. Real thresholds would
-// need to come from actual clinical data / a qualified source, which we do not have. Until
-// then, the results screen must tell the user these thresholds are placeholders, and the app
-// must only ever FLAG and REFER — never diagnose or clear. (See CLAUDE.md, THE HARD RULE.)
+// TODO(NEEDS_SOURCE): NOTHING in this file is clinically validated, and none of it is taken
+// from any published concussion protocol. As of 2026-09-10 the values are of two kinds:
+// placeholder guesses carried over from the original battery (symptom, balance), and one
+// value derived from n=1 self-collected noise-floor data (go/no-go response time). A measured
+// basis from one healthy person is better than a guess and is still not clinical evidence.
+// The results screen must keep saying so, and the app must only ever FLAG and REFER — never
+// diagnose or clear. (See CLAUDE.md, THE HARD RULE.)
 // ─────────────────────────────────────────────────────────────────────────────────────
 //
 // ═════════════════════════════════════════════════════════════════════════════════════
@@ -59,6 +61,26 @@ export const SYMPTOM_INCREASE = 5;
  * PLACEHOLDER — not clinically validated.
  */
 export const BALANCE_SWAY_INCREASE = 1;
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   SET FROM COLLECTED DATA — a measured basis, still NOT clinically validated
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Go/no-go, median response time on correct go trials, in milliseconds.
+ * Flag if the check is at least this many ms SLOWER than the baseline.
+ *
+ * Set 2026-09-10 at the project owner's direction — the first threshold in this file with a
+ * measured basis rather than a guess. The owner's derivation, recorded as given: derived from
+ * n=1 self-collected data, 2-sigma noise band ~24.6ms, difference noise ~17.4ms, expected
+ * false alarm ~4% with an averaged baseline. TODO(NEEDS_SOURCE): not a validated cutoff.
+ *
+ * Read "n=1" literally: this is how much ONE healthy person's median wobbled between sittings,
+ * collected by hand on /tools/noise-floor. It says nothing about how anyone else varies, and
+ * nothing about concussion. It clears the bar this file sets — a value from collected
+ * measurements instead of a plausible-looking guess — and no other bar.
+ */
+export const GO_NO_GO_SLOWER_MS = 25;
 
 /* ═══════════════════════════════════════════════════════════════════════════════════
    MEASURED BUT NOT YET JUDGED — every one of these is null on purpose
@@ -111,14 +133,6 @@ export const DIGIT_SPAN_FEWER_CORRECT: number | null = null;
 export const PATTERN_SPAN_FEWER_CORRECT: number | null = null;
 
 /**
- * Go/no-go, median response time on correct go trials, in milliseconds.
- * Would flag if the check is at least this many ms SLOWER than the baseline.
- * The go/no-go module is not built; a student is writing it.
- * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
- */
-export const GO_NO_GO_SLOWER_MS: number | null = null;
-
-/**
  * Go/no-go commission errors — responding on a no-go trial, i.e. failing to hold back.
  * Would flag if the check has at least this many MORE than the baseline.
  * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
@@ -133,6 +147,31 @@ export const GO_NO_GO_MORE_COMMISSION_ERRORS: number | null = null;
  * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
  */
 export const GO_NO_GO_MORE_OMISSION_ERRORS: number | null = null;
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   THE WHOLE-SCREEN FLAG RULE
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * How many modules must cross their own cut-off before the whole screen flags.
+ *
+ * Changed from 1 (flag on any module) to 2 on 2026-09-10, at the project owner's direction,
+ * after the calibration harness measured the difference on simulated athletes: flag-on-any
+ * raised a false alarm on roughly 30% of healthy simulated athletes against roughly 3% for
+ * flag-on-two (the 2026-08-31 SESSION-REPORT records that run — nine of the ten measurement
+ * profiles behind it were placeholders, so treat those numbers as a shape, not as truth).
+ * With ten measurements, flag-on-any is ten separate chances to cry wolf at a healthy kid,
+ * and an alarm people learn to ignore protects nobody.
+ *
+ * THE EXCEPTION, decided in the same instruction: the SYMPTOM CHECKLIST may flag alone. The
+ * owner's stated rationale is that published work indicates self-reported symptoms carry the
+ * most weight and that athletes underreport them. TODO(NEEDS_SOURCE): no citation is on file
+ * for that claim — it is recorded here as the reason a human gave, not as an established fact.
+ *
+ * The rule itself is applied in compare.ts (rule 4). This file only holds the number, so
+ * sensitivity is still tuned in exactly one place.
+ */
+export const MODULES_REQUIRED_TO_FLAG = 2;
 
 /* ═══════════════════════════════════════════════════════════════════════════════════
    DATA QUALITY — this is NOT a flagging threshold

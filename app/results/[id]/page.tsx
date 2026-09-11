@@ -18,6 +18,9 @@
 // • "We could not compare anything" is its own loud state. It must never be allowed to look
 //   like "we compared everything and found nothing."
 // • A check with no baseline on file is an ERROR here, not a quiet pass.
+// • A measurement past its cut-off on a screen the flag rule did NOT flag (one non-symptom
+//   module alone — see rule 4 in lib/engine/compare.ts) is its own state too. It must never
+//   be folded into "no change detected": the change happened and gets said out loud.
 
 import { useCallback } from 'react';
 import { useParams } from 'next/navigation';
@@ -374,6 +377,18 @@ export default function ResultPage() {
   */
   const someUnjudged = outcome.unevaluated.length > 0;
 
+  /*
+    DID SOMETHING CROSS ITS CUT-OFF WITHOUT RAISING THE FLAG?
+
+    Since 2026-09-10 the whole screen flags only on symptoms alone or on two modules together
+    (rule 4 in lib/engine/compare.ts). That creates a state that could not exist before: a
+    measurement genuinely past its tested cut-off, on a screen whose flag is down. Rendering
+    the calm panel over a crossed measurement would be a verdict built on more than we have —
+    so it gets its own headline, louder than "no verdict available" and quieter than FLAGGED.
+  */
+  const crossedRows = rows.filter((row) => row.flagged);
+  const belowFlagRule = !outcome.flagged && crossedRows.length > 0;
+
   return (
     <PageShell>
       <PageHeaderLite
@@ -412,6 +427,56 @@ export default function ResultPage() {
             that something measured differently than it did when they were well — and that is
             reason enough for a trained person to take a look.
           </p>
+        </section>
+      ) : belowFlagRule ? (
+        /*
+          A MEASUREMENT CROSSED ITS CUT-OFF, BUT THE FLAG RULE WAS NOT MET.
+
+          One non-symptom module alone does not raise the flag (rule 4). The change is still
+          real, still shown, and still marked in the table below — this panel exists so the
+          headline says so too, instead of the calm panel contradicting a marked row. Ink, not
+          red: red stays reserved for the flagged headline itself.
+
+          No green. No checkmark. It does not say "no change detected", because a change WAS
+          detected. Every path out still ends with a medical professional.
+        */
+        <section className="rounded-xl border-4 border-ink bg-paper p-6" aria-live="polite">
+          <p className="text-meta font-black uppercase tracking-widest text-ink-soft">
+            Change found — below the flag rule
+          </p>
+          <h2 className="mt-2 text-display font-black leading-tight text-ink sm:text-display">
+            {crossedRows.length === 1
+              ? 'One of the measurements moved past its cut-off.'
+              : 'Measurements moved past their cut-off.'}
+          </h2>
+
+          <div className="mt-4 space-y-3 text-body text-ink sm:text-title">
+            <p className="font-bold">This is not a &ldquo;no change&rdquo; result.</p>
+            <p>
+              {crossedRows.map((row) => row.label).join(', ')} changed more than the tested
+              cut-off for that measurement, and is marked in the table below. On its own that
+              does not raise this screen&apos;s flag — the flag needs a rise in reported
+              symptoms, or two or more modules changing together.
+            </p>
+            {someUnjudged && (
+              <p>
+                Several other measurements have no tested cut-off yet, so they were recorded
+                but <strong>not judged at all</strong> — they are marked &ldquo;Not judged&rdquo; below.
+                Treat those as unread, not as normal.
+              </p>
+            )}
+            <p className="font-bold">
+              Treat this as a reason to watch {name} closely. If they may have hit their head,{' '}
+              <span className="underline decoration-ink decoration-4 underline-offset-4">
+                have them seen by a medical professional
+              </span>{' '}
+              — and if anything feels off at any point, seek care straight away.
+            </p>
+            <p className="text-ink-soft">
+              This screen is not a clearance to return to play, and it does not rule out a
+              concussion. Only a medical professional can make that call.
+            </p>
+          </div>
         </section>
       ) : someUnjudged ? (
         /*
