@@ -57,18 +57,22 @@ export default function HomePage() {
           </div>
 
           {/*
-            THE BATTERY IS MID-REBUILD AND RECORDING IS TURNED OFF.
-            Said here, on the first screen, rather than left for someone to discover after they
-            have created an athlete and tapped a disabled button. See app/athletes/[id]/page.tsx.
+            WHAT THE APP CAN AND CANNOT JUDGE — said here, on the first screen, rather than
+            left for someone to discover on a results screen. Recording was re-enabled on
+            2026-09-10 (see app/athletes/[id]/page.tsx for the conditions and the practice
+            gate); the honest caveat now is about how few measurements carry a tested cut-off.
           */}
           <div className="mt-6">
-            <Notice tone="loud" title="Recording is turned off right now">
-              The tests below are all built now, but none of them has a tested cut-off yet — so the
-              app can measure a change and still has no basis for saying whether that change
-              matters. You can try every test, but baselines and sideline checks cannot be recorded
-              until real data has been collected and those cut-offs set.{' '}
+            <Notice tone="loud" title="Early days — most measurements are not judged yet">
+              Recording works: an athlete runs one practice pass, records a baseline while well,
+              and can be checked after a hit. But only two measurements have tested cut-offs so
+              far — the symptom score, and go/no-go response time, whose cut-off comes from one
+              student&apos;s self-collected data. Everything else is measured, shown, and marked
+              as not judged.{' '}
               <strong>
-                This app is not ready to be used on an athlete who may have hit their head.
+                This app never diagnoses and never clears anyone. If an athlete may have hit
+                their head, have them seen by a medical professional — whatever any screen here
+                says.
               </strong>
             </Notice>
           </div>

@@ -19,7 +19,9 @@
  */
 
 // Bump this string to throw away every old cache after a deploy.
-const CACHE_NAME = 'sideline-screen-v3';
+// v4 (2026-09-10): two new routes (/practice, /practice/summary), recording re-enabled, and
+// the home, athlete and results screens all changed copy or states.
+const CACHE_NAME = 'sideline-screen-v4';
 
 self.addEventListener('install', (event) => {
   // Take over as soon as we're installed rather than waiting for every tab to close.

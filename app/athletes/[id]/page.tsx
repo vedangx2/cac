@@ -149,36 +149,41 @@ export default function AthleteDetailPage() {
 
       {/*
         ═══════════════════════════════════════════════════════════════════════════════
-        THE BATTERY IS TURNED OFF WHILE IT IS BEING REBUILT.
+        RECORDING WAS RE-ENABLED ON 2026-09-10, at the project owner's direction.
         ═══════════════════════════════════════════════════════════════════════════════
-        Both buttons below are disabled. This is not a bug and it is not a placeholder to be
-        quietly removed by the next person who finds it inconvenient.
+        The long comment that used to sit here disabled both buttons until "the battery is
+        complete (including go/no-go) and thresholds have been set from real collected
+        measurements". Where those conditions stand now:
 
-        Three separate reasons, each sufficient on its own:
-          1. The battery has only just been completed. A sitting recorded now would measure a
-             different set of tests from one recorded a few weeks ago, and the two would not be
-             comparable. (This is the reason with the shortest life left — the other two are the
-             ones that matter.)
-          2. Every threshold for the new modules is null. The engine can compare the numbers but
-             has no tested cut-off to judge them against, so it cannot answer the only question
-             this app exists to answer.
-          3. Nothing here has been validated against collected data yet.
+          1. The battery is complete — all six modules are built and chained.
+          2. Two measurements have cut-offs: the symptom total (a placeholder carried from the
+             original battery) and the go/no-go median response time (set from the owner's own
+             n=1 noise-floor collection — a measured basis, not a validated one). The other
+             NINE measurements are recorded but unjudged, the engine reports them as
+             unevaluated, and the results screen badges every such row "Not judged".
+          3. Clinical validation has not happened and will not at this project's scale — which
+             is why the app only ever flags and refers, and why the notice below says exactly
+             what a result can and cannot judge.
 
-        Re-enable ONLY when the battery is complete (including go/no-go) and thresholds have been
-        set from real collected measurements. Until then this app must not be pointed at a real
-        athlete who has taken a real hit.
+        What guards recording instead of a blanket off-switch:
+          • A BASELINE requires a completed practice pass first (the first-exposure guard —
+            see Athlete.practiceCompletedAt in lib/types.ts). The button stays disabled until
+            the pass exists, with the reason on screen.
+          • A CHECK still warns when there is no baseline, and the engine still refuses every
+            illegitimate comparison (compare.ts rules 1–7).
       */}
       <div className="mb-8">
-        <Notice tone="loud" title="Testing is turned off — the tests have no tested cut-offs yet">
-          Every test in this app has now been built, but none of them has a cut-off telling us how
-          big a change is big enough to matter. Recording a baseline or running a sideline check is
-          disabled until those are set from real collected data, because a result now could be
-          measured but not judged.
+        <Notice tone="loud" title="What a result can and cannot judge right now">
+          Only two measurements have tested cut-offs so far: the symptom score, and the go/no-go
+          response time — whose cut-off comes from one student&apos;s self-collected data, not
+          from clinical evidence. Everything else is recorded, shown, and marked{' '}
+          <strong>not judged</strong>. The screen flags on a rise in symptoms alone, or on two
+          modules changing together.
           <br />
           <br />
           <strong>
-            If {athlete.name} may have hit their head, do not wait for this app — have them seen by
-            a medical professional.
+            Whatever any screen here says, this app cannot diagnose or clear anyone. If{' '}
+            {athlete.name} may have hit their head, have them seen by a medical professional.
           </strong>
         </Notice>
       </div>
@@ -216,19 +221,52 @@ export default function AthleteDetailPage() {
                   </Notice>
                 </div>
               )}
-              {/* Disabled while the battery is rebuilt — see the notice above this grid. */}
-              <Button className="mt-4 w-full sm:w-auto" onClick={() => begin('baseline')} disabled>
+
+              {/*
+                THE FIRST-EXPOSURE GUARD. A baseline needs at least one completed practice
+                pass first — see Athlete.practiceCompletedAt in lib/types.ts for the whole
+                reasoning. The reason is stated here in one sentence because the person
+                blocked by this button deserves to know it is protecting their data, not
+                malfunctioning.
+              */}
+              {athlete.practiceCompletedAt === null && (
+                <div className="mt-4">
+                  <Notice title="One practice pass first">
+                    A baseline recorded on {athlete.name}&apos;s very first attempt would read
+                    worse than their true normal — later sittings improve just from
+                    familiarity, and that improvement can hide a real decline on the day it
+                    matters. Nothing from the practice run is saved.
+                  </Notice>
+                </div>
+              )}
+              <Button
+                className="mt-4 w-full sm:w-auto"
+                onClick={() => begin('baseline')}
+                disabled={athlete.practiceCompletedAt === null}
+              >
                 {baseline ? 'Record new baseline' : 'Record baseline'}
               </Button>
-              <p className="mt-2 text-meta font-semibold text-ink-soft">
-                Unavailable until the tests have tested cut-offs.
-              </p>
+              {athlete.practiceCompletedAt === null ? (
+                <div className="mt-3">
+                  <ButtonLink
+                    href={`/practice?athlete=${athlete.id}`}
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                  >
+                    Run {athlete.name}&apos;s practice pass
+                  </ButtonLink>
+                </div>
+              ) : (
+                <p className="mt-2 text-meta font-semibold text-ink-soft">
+                  Practice pass completed {formatDateTime(athlete.practiceCompletedAt)}.
+                </p>
+              )}
             </Card>
 
             <Card>
               <h3 className="text-title font-bold text-ink">Sideline check</h3>
               <p className="mt-2 text-body text-ink-soft">
-                Run this after a possible head impact. It is the same three tests, compared
+                Run this after a possible head impact. It is the same six tests, compared
                 against {athlete.name}&apos;s own baseline.
               </p>
 
@@ -248,18 +286,20 @@ export default function AthleteDetailPage() {
                 </div>
               )}
 
-              {/* Disabled while the battery is rebuilt — see the notice above this grid. */}
+              {/*
+                No practice gate here, deliberately: the person starting a check is standing
+                next to a kid who just took a hit, and the first-exposure guard exists to
+                protect BASELINE quality, not to get between that person and the referral
+                screen. A check without a baseline still warns above, and the engine still
+                refuses to compare it against nothing.
+              */}
               <Button
                 variant={baseline ? 'primary' : 'secondary'}
                 className="mt-4 w-full sm:w-auto"
                 onClick={() => begin('check')}
-                disabled
               >
                 Start sideline check
               </Button>
-              <p className="mt-2 text-meta font-semibold text-ink-soft">
-                Unavailable until the tests have tested cut-offs.
-              </p>
             </Card>
           </div>
         </section>
