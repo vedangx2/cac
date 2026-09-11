@@ -205,7 +205,8 @@ export default function WordLearningPage() {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button variant="instrument" onClick={submit} disabled={battery.saving}>
-              {battery.saving ? 'Saving…' : 'Done picking'}
+              {/* Never "Saving…" in a practice run — nothing is being saved. */}
+              {battery.saving ? (battery.practice ? 'Continuing…' : 'Saving…') : 'Done picking'}
             </Button>
             <p className="text-meta text-instrument-ink-soft">
               {selected.size} {selected.size === 1 ? 'word' : 'words'} picked

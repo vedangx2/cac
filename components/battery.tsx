@@ -18,6 +18,7 @@ import {
   type BatterySession,
   type BatteryStep,
   STEP_PATHS,
+  finishPracticeRun,
   finishSession,
   getSession,
   saveStepScores,
@@ -28,7 +29,13 @@ type BatteryState = {
   /** null while we're still reading sessionStorage on the client. */
   loaded: boolean;
   session: BatterySession | null;
-  /** 'battery' = part of a real baseline/check. 'practice' = standalone, nothing is saved. */
+  /**
+   * 'battery' = this screen is one step of a CHAINED sitting and moves to the next step when
+   * it completes — true for a baseline, a check, AND a practice run (kind 'practice'), which
+   * walks the same six steps in the same order. 'practice' = standalone: someone opened one
+   * test screen directly with no sitting at all, so it shows its score and offers a retry.
+   * Whether anything is being RECORDED is a different question — that is `practice` below.
+   */
   mode: 'battery' | 'practice';
   /**
    * Where this module sits in the battery, e.g. "Step 5 of 6".
@@ -39,7 +46,12 @@ type BatteryState = {
    * time. Practice is announced by its own banner; it is not a position.
    */
   stepLabel: string;
-  /** True when nothing is being recorded. Drives the banner, not the position. */
+  /**
+   * True when nothing from this run will be saved as a result — standalone practice AND a
+   * chained practice run alike. Drives the practice banner and any "Save" wording, never the
+   * position. (A practice RUN still stores one fact at the end: that the pass happened, on
+   * the attached athlete — see finishPracticeRun. Never its scores.)
+   */
   practice: boolean;
   /** Call when the test produces its scores. Saves and moves the athlete along. */
   complete: (value: ModuleScores[BatteryStep]) => Promise<void>;
@@ -71,7 +83,7 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
 
   const complete = useCallback(
     async (value: ModuleScores[BatteryStep]) => {
-      // Practice mode: measure, show the number, save nothing.
+      // Standalone practice (no sitting at all): measure, show the number, save nothing.
       if (!session) {
         setPracticeDone(true);
         return;
@@ -88,7 +100,7 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
         // Re-read the sitting so we can see everything recorded so far.
         const current = getSession();
         if (!current) {
-          router.push('/athletes');
+          router.push(session.kind === 'practice' ? '/practice' : '/athletes');
           return;
         }
 
@@ -99,6 +111,22 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
         const missing = BATTERY_STEPS.find((candidate) => current.scores[candidate] === null);
         if (missing) {
           router.push(STEP_PATHS[missing]);
+          return;
+        }
+
+        // A finished PRACTICE pass. Record only the FACT that it happened on the attached
+        // athlete — that is what unlocks recording a baseline — then show the summary, which
+        // reads the scores straight out of sessionStorage. No TestResult is ever written;
+        // the compiler enforces that, because a practice session does not fit finishSession.
+        if (current.kind === 'practice') {
+          try {
+            await finishPracticeRun(current);
+          } catch {
+            // Storage refused the one fact we tried to write. The run itself lost nothing —
+            // the summary re-reads the athlete and says plainly that the pass was not
+            // recorded, which beats blocking someone at the end of six completed tests.
+          }
+          router.push('/practice/summary');
           return;
         }
 
@@ -132,7 +160,7 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
     session,
     mode: session ? 'battery' : 'practice',
     stepLabel: stepPosition(step),
-    practice: !session,
+    practice: !session || session.kind === 'practice',
     complete,
     practiceDone,
     resetPractice: () => setPracticeDone(false),
@@ -163,13 +191,22 @@ export function SaveErrorNotice({ message, tone = 'dark' }: { message: string; t
 }
 
 /**
- * Shown on a test screen when nobody is mid-sitting. It has to be unmistakable that this run
- * is not being recorded, so a coach never believes a check was saved when it wasn't.
+ * Shown on a test screen whenever nothing is being recorded — standalone practice AND a
+ * chained practice run. It has to be unmistakable that this run is not being recorded, so a
+ * coach never believes a check was saved when it wasn't.
  *
- * `tone` exists because the reaction and scan tests sit on the dark instrument surface while
- * the symptom checklist sits on the light document surface — same message, two backgrounds.
+ * It reads the sitting itself rather than taking it as a prop, so the six test screens keep
+ * rendering `<PracticeBanner />` unchanged. That read is safe here: every screen renders this
+ * banner only after the battery hook has loaded on the client, so sessionStorage exists and
+ * holds whatever the hook itself just read.
+ *
+ * `tone` exists because a test screen sits on the dark instrument surface while a document
+ * screen is light — same message, two backgrounds.
  */
 export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
+  const session = getSession();
+  const practiceRun = session?.kind === 'practice' ? session : null;
+
   const styles =
     tone === 'dark'
       ? {
@@ -188,16 +225,33 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
   return (
     <div className={`mb-6 rounded-xl p-4 ${styles.box}`}>
       <p className={`text-title font-black ${styles.title}`}>Practice run — nothing is saved</p>
-      <p className={`mt-2 text-body ${styles.body}`}>
-        No athlete is attached to this run.{' '}
-        <Link
-          href="/athletes"
-          className={`inline-flex min-h-14 items-center font-bold underline underline-offset-4 ${styles.link}`}
-        >
-          Pick an athlete
-        </Link>{' '}
-        to record a real baseline or sideline check.
-      </p>
+      {practiceRun ? (
+        <p className={`mt-2 text-body ${styles.body}`}>
+          {practiceRun.athleteName ? (
+            <>
+              Practising as <strong className={styles.title}>{practiceRun.athleteName}</strong>. All
+              six tests run in order; the scores are shown at the end and then thrown away.
+              Finishing counts as their practice pass — the scores themselves are never stored.
+            </>
+          ) : (
+            <>
+              All six tests run in order; the scores are shown at the end and then thrown away.
+              Nothing about this run is stored anywhere.
+            </>
+          )}
+        </p>
+      ) : (
+        <p className={`mt-2 text-body ${styles.body}`}>
+          No athlete is attached to this run.{' '}
+          <Link
+            href="/athletes"
+            className={`inline-flex min-h-14 items-center font-bold underline underline-offset-4 ${styles.link}`}
+          >
+            Pick an athlete
+          </Link>{' '}
+          to record a real baseline or sideline check.
+        </p>
+      )}
     </div>
   );
 }
@@ -213,6 +267,21 @@ export function SittingLabel({
   if (!session) return null;
   const soft = tone === 'dark' ? 'text-instrument-ink-soft' : 'text-ink-soft';
   const strong = tone === 'dark' ? 'text-instrument-ink' : 'text-ink';
+
+  if (session.kind === 'practice') {
+    return (
+      <p className={`text-meta font-bold ${soft}`}>
+        Practice run
+        {session.athleteName && (
+          <>
+            {' '}
+            · <span className={strong}>{session.athleteName}</span>
+          </>
+        )}
+      </p>
+    );
+  }
+
   return (
     <p className={`text-meta font-bold ${soft}`}>
       {session.kind === 'baseline' ? 'Recording baseline' : 'Sideline check'} ·{' '}

@@ -153,6 +153,27 @@ export type Athlete = {
   name: string;
   baselineId: string | null;
   checkIds: string[];
+
+  /**
+   * When this athlete last COMPLETED a full practice pass of the battery, or null if they
+   * never have. Added 2026-09-10.
+   *
+   * WHY THIS EXISTS — the first-exposure guard: the owner's own noise-floor collection
+   * measured a ~20 ms practice effect on reaction time that survived a week off. A baseline
+   * recorded on an athlete's very first attempt is therefore worse than their true normal,
+   * permanently — and the improvement that comes free with familiarity on the NEXT sitting
+   * can cancel out a real decline and hide it. So recording a baseline is locked until at
+   * least one practice pass has been completed.
+   *
+   * It stores only THAT a pass happened, deliberately never its scores. Practice scores are
+   * first-exposure numbers — the exact thing this field exists to keep out of the data — and
+   * a practice run must stay consequence-free so nobody performs for it.
+   *
+   * On disk this field may be absent (athletes saved before it existed). Storage fills it in
+   * as null on read — see normaliseAthlete in lib/storage.ts — which fails CLOSED: an athlete
+   * we know nothing about is treated as never having practised.
+   */
+  practiceCompletedAt: number | null;
 };
 
 /**

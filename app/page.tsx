@@ -46,9 +46,13 @@ export default function HomePage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/athletes">Get started</ButtonLink>
-            {/* Points at a test that exists. /tests/reaction was deleted in the battery rebuild. */}
-            <ButtonLink href="/tests/symptom" variant="secondary">
-              Try a test first
+            {/*
+              The practice run: all six tests in order, scored and shown once, saved nowhere.
+              Deliberately reachable with no athlete profile — and it is also how an athlete
+              earns their practice pass, which a baseline requires (the first-exposure guard).
+            */}
+            <ButtonLink href="/practice" variant="secondary">
+              Run a practice battery
             </ButtonLink>
           </div>
 
@@ -118,8 +122,9 @@ export default function HomePage() {
           The tests
         </h2>
         <p className="mt-2 max-w-2xl text-body text-ink-soft">
-          The whole battery takes a few minutes. You can try any of them right now without saving
-          anything.
+          The whole battery takes a few minutes. You can try any single test right now without
+          saving anything — or run all six in order as a practice battery, scored at the end and
+          saved nowhere.
         </p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <TestCard

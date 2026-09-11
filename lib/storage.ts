@@ -52,6 +52,25 @@ import { type StoredTestResult, normaliseTestResult, normaliseTestResults } from
 // normalise does not build. If you add another function that returns results, that is the
 // error you will hit, and normalising is the fix.
 
+/**
+ * An Athlete as it may actually exist on disk: records saved before `practiceCompletedAt`
+ * existed (added 2026-09-10) do not carry it. The same idea as StoredTestResult above, kept
+ * private because only this file reads athletes raw.
+ */
+type StoredAthlete = Omit<Athlete, 'practiceCompletedAt'> & { practiceCompletedAt?: number | null };
+
+/**
+ * Fill in the practice-pass field for athletes saved before it existed.
+ *
+ * Absent becomes null — "never completed a practice pass" — which fails CLOSED: the
+ * first-exposure guard stays locked for an athlete we know nothing about, rather than being
+ * waved through. A new object is returned so a caller holding the raw record still sees
+ * exactly what was on disk.
+ */
+function normaliseAthlete(stored: StoredAthlete): Athlete {
+  return { ...stored, practiceCompletedAt: stored.practiceCompletedAt ?? null };
+}
+
 const DB_NAME = 'concussion-screen';
 const DB_VERSION = 1; // bump this only when the schema below changes, and migrate in onupgradeneeded
 const ATHLETES_STORE = 'athletes';
@@ -134,9 +153,10 @@ export async function saveAthlete(athlete: Athlete): Promise<void> {
 export async function getAthletes(): Promise<Athlete[]> {
   const db = await openDb();
   const tx = db.transaction(ATHLETES_STORE, 'readonly');
-  const athletes: Athlete[] = await promisifyRequest(tx.objectStore(ATHLETES_STORE).getAll());
+  const athletes: StoredAthlete[] = await promisifyRequest(tx.objectStore(ATHLETES_STORE).getAll());
   db.close();
-  return athletes;
+  // Normalised, like every result read — see normaliseAthlete.
+  return athletes.map(normaliseAthlete);
 }
 
 /**
@@ -148,9 +168,10 @@ export async function getAthletes(): Promise<Athlete[]> {
 export async function getAthlete(id: string): Promise<Athlete | null> {
   const db = await openDb();
   const tx = db.transaction(ATHLETES_STORE, 'readonly');
-  const athlete: Athlete | undefined = await promisifyRequest(tx.objectStore(ATHLETES_STORE).get(id));
+  const athlete: StoredAthlete | undefined = await promisifyRequest(tx.objectStore(ATHLETES_STORE).get(id));
   db.close();
-  return athlete ?? null;
+  // Normalised, like every result read — see normaliseAthlete.
+  return athlete ? normaliseAthlete(athlete) : null;
 }
 
 /** Create or update a stored test result (baseline or check). */

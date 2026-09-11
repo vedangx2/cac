@@ -103,7 +103,7 @@ function resolveBaseline(
 }
 
 function athlete(baselineId: string | null): Athlete {
-  return { id: ATHLETE, name: 'Jordan', baselineId, checkIds: [] };
+  return { id: ATHLETE, name: 'Jordan', baselineId, checkIds: [], practiceCompletedAt: null };
 }
 
 /* ── 1. resolveComparedBaselineId: the rule, in isolation ─────────────────────────── */

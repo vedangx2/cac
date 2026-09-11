@@ -35,7 +35,7 @@ vi.mock('./storage', () => ({
 }));
 
 // Imported AFTER vi.mock so the mock is the one it binds to.
-const { finishSession } = await import('./session');
+const { finishPracticeRun, finishSession } = await import('./session');
 
 /* ── Fixtures ─────────────────────────────────────────────────────────────────────── */
 
@@ -64,7 +64,13 @@ function session(kind: 'baseline' | 'check') {
 }
 
 function putAthlete(baselineId: string | null): Athlete {
-  const athlete: Athlete = { id: ATHLETE, name: 'Jordan', baselineId, checkIds: [] };
+  const athlete: Athlete = {
+    id: ATHLETE,
+    name: 'Jordan',
+    baselineId,
+    checkIds: [],
+    practiceCompletedAt: null,
+  };
   athletes.set(ATHLETE, athlete);
   return athlete;
 }
@@ -143,6 +149,70 @@ describe('finishSession pins a check to the baseline on file at save time', () =
     // The check is appended to checkIds and the baseline pointer is left alone.
     expect(athletes.get(ATHLETE)?.checkIds).toContain(check.id);
     expect(athletes.get(ATHLETE)?.baselineId).toBe('b1');
+  });
+});
+
+/* ── The practice pass ────────────────────────────────────────────────────────────── */
+
+describe('finishPracticeRun records that a pass happened, and nothing else', () => {
+  // The write half of the first-exposure guard (see Athlete.practiceCompletedAt in
+  // lib/types.ts): finishing a practice pass must mark the athlete — that is what unlocks
+  // recording a baseline — and must write nothing else, because practice scores are
+  // first-exposure numbers and belong in no database.
+
+  function practiceSession(athleteId: string | null) {
+    return {
+      athleteId,
+      athleteName: athleteId ? 'Jordan' : null,
+      kind: 'practice' as const,
+      startedAt: 1_700_000_000_000,
+      scores: emptyScores(),
+    };
+  }
+
+  it('stamps practiceCompletedAt on the attached athlete', async () => {
+    putAthlete(null);
+
+    await finishPracticeRun(practiceSession(ATHLETE));
+
+    const stored = athletes.get(ATHLETE);
+    expect(stored?.practiceCompletedAt).toBeTypeOf('number');
+    expect(stored?.practiceCompletedAt).toBeGreaterThan(0);
+  });
+
+  it('writes NO TestResult — practice scores never reach storage', async () => {
+    putAthlete(null);
+
+    await finishPracticeRun(practiceSession(ATHLETE));
+
+    expect(saved).toHaveLength(0);
+  });
+
+  it('leaves the baseline pointer and the check list untouched', async () => {
+    putAthlete('b1');
+    athletes.get(ATHLETE)!.checkIds = ['c1'];
+
+    await finishPracticeRun(practiceSession(ATHLETE));
+
+    expect(athletes.get(ATHLETE)?.baselineId).toBe('b1');
+    expect(athletes.get(ATHLETE)?.checkIds).toEqual(['c1']);
+  });
+
+  it('does nothing at all for an anonymous practice run', async () => {
+    putAthlete(null);
+
+    await finishPracticeRun(practiceSession(null));
+
+    expect(athletes.get(ATHLETE)?.practiceCompletedAt).toBeNull();
+    expect(saved).toHaveLength(0);
+  });
+
+  it('does nothing when the athlete was deleted mid-run', async () => {
+    // No athlete in storage at all. Must neither crash nor write anything.
+    await finishPracticeRun(practiceSession(ATHLETE));
+
+    expect(athletes.size).toBe(0);
+    expect(saved).toHaveLength(0);
   });
 });
 

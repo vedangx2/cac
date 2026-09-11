@@ -450,6 +450,32 @@ against a written brief. Each step below was a separate commit.
 This session ran autonomously against a written brief from the project owner. Each task below
 was a separate commit.
 
+- **2026-09-10, tasks 1 and 2 — Practice mode, and the first-exposure guard. AI-written.**
+  One commit, because the two halves share a type. **Task 1, practice mode:** `BatterySession`
+  is now a discriminated union — a recorded sitting (`baseline`/`check`) or a practice pass
+  (`kind: 'practice'`, athlete optional) — so the six test screens chain through a practice
+  run with the exact same step logic as a real sitting, while the compiler makes it
+  impossible to hand a practice session to `finishSession`: a practice run structurally
+  cannot produce a `TestResult`. New screens: `/practice` (start, with the one-sentence
+  explanation of why practice comes first) and `/practice/summary` (every module's score,
+  shown once from sessionStorage, judged against nothing, then discarded). Every test screen
+  shows the existing practice banner during a run — including `app/tests/gonogo`, **which was
+  not edited**: it already gets its banner, label and chaining from `components/battery.tsx`.
+  Buttons that said "Save and continue"/"Saving…" say "Continue"/"Continuing…" during
+  practice, because the banner above them says nothing is saved and both must be true.
+  **Task 2, the guard:** `Athlete` gained `practiceCompletedAt: number | null` — a change to
+  the needs-agreement `lib/types.ts`, made on the owner's written instruction. It stores only
+  THAT a full pass was completed, never its scores (practice numbers are first-attempt
+  numbers, the exact data the guard exists to keep out). `finishPracticeRun` writes that one
+  fact for an attached athlete and writes nothing for an anonymous run; storage normalises
+  athletes saved before the field existed to `null`, which fails closed. The reason, stated
+  on screen in one sentence, comes from the owner's own noise-floor collection (a ~20 ms
+  practice effect that survived a week off): a first-attempt baseline reads worse than the
+  athlete's true normal, and the free improvement on the next sitting can hide a real
+  decline. The baseline button itself is gated on this field in task 5, where recording is
+  re-enabled. No schemaVersion bump: `ModuleScores` is unchanged, and the athlete field is
+  filled in on read. Tests 412 → 417 (five new tests on `finishPracticeRun`).
+
 - **2026-09-10, task 3 — First collected-data threshold, and the flag-rule change. AI-typed at
   the owner's direction.** `GO_NO_GO_SLOWER_MS` is now 25 ms. **The value was supplied by the
   project owner from n=1 self-collected noise-floor data — AI chose nothing about it** and

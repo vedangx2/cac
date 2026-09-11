@@ -148,7 +148,8 @@ export default function WordRecallPage() {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button variant="instrument" onClick={submit} disabled={battery.saving}>
-              {battery.saving ? 'Saving…' : 'Finish'}
+              {/* Never "Saving…" in a practice run — nothing is being saved. */}
+              {battery.saving ? (battery.practice ? 'Finishing…' : 'Saving…') : 'Finish'}
             </Button>
             <p className="text-meta text-instrument-ink-soft">
               {selected.size} {selected.size === 1 ? 'word' : 'words'} picked

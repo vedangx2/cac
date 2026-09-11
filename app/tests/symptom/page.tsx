@@ -149,8 +149,18 @@ export default function SymptomTestPage() {
 
       <div className="mt-8 flex flex-col gap-3">
         {battery.mode === 'battery' ? (
+          /*
+            In a PRACTICE run this button must not say "Save" — the banner above it has just
+            said nothing is saved, and both statements have to be true at once.
+          */
           <Button variant="instrument" onClick={handleContinue} disabled={battery.saving}>
-            {battery.saving ? 'Saving…' : 'Save and continue'}
+            {battery.saving
+              ? battery.practice
+                ? 'Continuing…'
+                : 'Saving…'
+              : battery.practice
+                ? 'Continue'
+                : 'Save and continue'}
           </Button>
         ) : (
           <Button variant="instrument" onClick={handleContinue} disabled={battery.practiceDone}>
