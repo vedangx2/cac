@@ -86,6 +86,34 @@ const FALSE_START_MESSAGE_MS = 1200;
  */
 const MAX_PLAUSIBLE_REACTION_MS = 3000;
 
+/**
+ * The FASTEST a single trial can be and still plausibly be a reaction rather than a guess.
+ *
+ * ADDED 2026-09-10, at the project owner's direction, because until then this page had NO
+ * lower bound: it discarded implausibly slow trials and counted taps while red as false
+ * starts, but a tap landing just AFTER green — a finger already on its way down — was
+ * recorded as a genuine reaction. The owner's own collected runs contained three trials
+ * under 200 ms, one at 131 ms, and one of them moved a run's median by 11 ms. Those are
+ * anticipations, not reactions, and left in the data they make the noise floor look tighter
+ * than it is — which would eventually argue for a threshold set too low.
+ *
+ * A too-fast trial is DISCARDED AND REPEATED, exactly the way go/no-go treats an
+ * anticipation: never recorded, and never counted as an error either — we did not measure
+ * that trial, so we say nothing about it. It is deliberately NOT added to the false-start
+ * count, so that count keeps meaning what it meant on every reading already on paper: taps
+ * while the pad was still red.
+ *
+ * TODO(NEEDS_SOURCE): 180 ms is the owner's own choice of "too fast to be a reaction to
+ * this stimulus", not a value from any published protocol.
+ *
+ * COMPARABILITY WARNING, same as the constant above but sharper because this rule arrived
+ * MID-COLLECTION: readings taken before 2026-09-10 could contain anticipations; readings
+ * taken after this rule cannot. That difference is deliberate — the earlier data is what
+ * exposed the problem — but keep it in mind when the two are side by side on paper, and
+ * treat the value as frozen from here on.
+ */
+const MIN_PLAUSIBLE_REACTION_MS = 180;
+
 type PadPhase = 'idle' | 'armed' | 'go' | 'toosoon' | 'done';
 
 // Static class strings. They must appear literally in the source, because Tailwind builds
@@ -195,6 +223,19 @@ export default function NoiseFloorPage() {
       if (ms > MAX_PLAUSIBLE_REACTION_MS) {
         greenAtRef.current = 0;
         paintPad('toosoon', 'MISSED', 'Too slow to be a reaction — that trial will start again');
+        timerRef.current = setTimeout(() => {
+          idlePrompt(trialsRef.current.length);
+        }, FALSE_START_MESSAGE_MS);
+        return;
+      }
+
+      // The other direction: a tap this soon after green was already on its way down before
+      // anything could have been seen and processed. Discard and repeat, the same way
+      // go/no-go handles an anticipation — it is not recorded and not counted as anything.
+      // See MIN_PLAUSIBLE_REACTION_MS for why this exists and why it is not a false start.
+      if (ms < MIN_PLAUSIBLE_REACTION_MS) {
+        greenAtRef.current = 0;
+        paintPad('toosoon', 'TOO SOON', 'Too fast to be a reaction — that trial will start again');
         timerRef.current = setTimeout(() => {
           idlePrompt(trialsRef.current.length);
         }, FALSE_START_MESSAGE_MS);
@@ -323,7 +364,8 @@ export default function NoiseFloorPage() {
       <InstrumentHeader title="Reaction noise floor" step={`Run ${runNumber}`}>
         <p>
           Wait for the pad to turn green, then tap it as fast as you can. Five trials. Tapping
-          while it is red counts as a false start and that trial starts over.
+          while it is red counts as a false start and that trial starts over; a tap almost
+          instantly after green is discarded as a guess and the trial repeats too.
         </p>
       </InstrumentHeader>
 
@@ -385,8 +427,10 @@ export default function NoiseFloorPage() {
 
           <p className="mt-4 text-meta text-instrument-ink-soft">
             Trials are shown in the order they happened. Any trial slower than{' '}
-            {MAX_PLAUSIBLE_REACTION_MS} ms was discarded and repeated rather than recorded, so
-            all five numbers above are genuine reactions. False starts do not consume a trial.
+            {MAX_PLAUSIBLE_REACTION_MS} ms or faster than {MIN_PLAUSIBLE_REACTION_MS} ms was
+            discarded and repeated rather than recorded, so all five numbers above are genuine
+            reactions — a sub-{MIN_PLAUSIBLE_REACTION_MS} ms tap is a guess that was already on
+            its way down, not a reaction. False starts do not consume a trial.
           </p>
 
           <div className="mt-8">

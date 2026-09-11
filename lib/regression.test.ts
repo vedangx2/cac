@@ -199,6 +199,14 @@ describe('#2 timed pad — recovers when requestAnimationFrame never fires (stru
   it('throws out an implausibly long trial and repeats it instead of recording garbage', () => {
     expect(NOISE_FLOOR_SRC).toMatch(/if \(ms > MAX_PLAUSIBLE_REACTION_MS\)/);
   });
+
+  it('throws out an implausibly FAST trial — an anticipation — and repeats it too', () => {
+    // Added 2026-09-10. The pad had no lower bound, and collected runs contained three trials
+    // under 200 ms (one at 131 ms); one of them moved a run's median by 11 ms. A tap that soon
+    // after green was already on its way down — a guess, not a reaction — and it is discarded
+    // and repeated exactly as go/no-go discards an anticipation, never recorded or counted.
+    expect(NOISE_FLOOR_SRC).toMatch(/if \(ms < MIN_PLAUSIBLE_REACTION_MS\)/);
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════════

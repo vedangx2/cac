@@ -497,6 +497,20 @@ was a separate commit.
   thresholds file is byte-for-byte unchanged by a run, instead of asserting null-ness that is
   no longer true. Tests 402 → 412.
 
+- **2026-09-10, task 4 — Anticipation floor on the noise-floor pad. AI-written.** The brief
+  asked whether `/tools/noise-floor` had a LOWER bound on trial times. **It did not** — it
+  discarded implausibly slow trials (over 3000 ms) and counted taps while red as false
+  starts, but a tap landing just after green was recorded as a reaction however fast it was.
+  The owner's collected runs contained three trials under 200 ms, one at 131 ms, and one of
+  them moved a run's median by 11 ms. AI added a 180 ms floor: a faster tap shows TOO SOON
+  and the trial is discarded and repeated, exactly the way go/no-go treats an anticipation —
+  never recorded, never counted as an error, and deliberately NOT added to the false-start
+  count so that count keeps meaning what it means on every reading already on paper. The
+  value 180 is the owner's instruction, marked `TODO(NEEDS_SOURCE)` in the code; the comment
+  also carries a comparability warning, because this rule arrived mid-collection: readings
+  taken before it could contain anticipations, readings after it cannot. A structural
+  regression guard now pins the floor beside the existing ceiling guard. Tests 417 → 418.
+
 ---
 
 ### Written by Vedang, not by AI
