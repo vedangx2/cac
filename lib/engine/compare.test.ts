@@ -362,6 +362,22 @@ describe('a module missing from either sitting', () => {
     expect(outcome.unevaluated).not.toContain('Repeating numbers backwards');
   });
 
+  it('a silent-when-absent module missing from ONE side still gets the could-not-compare sentence', () => {
+    // The behaviour the comment on silentWhenAbsent promises, pinned. Mutating the condition
+    // from `absentFromBoth && silentWhenAbsent` to just `silentWhenAbsent` would silence
+    // one-sided absences too — and a check that lost its go/no-go score (a run with no
+    // responses records nothing) would then drop the sentence a coach needs to see.
+    const base = sitting('baseline', scores({ symptom: symptom(0), goNoGo: goNoGo(300) }));
+    const check = sitting('check', scores({ symptom: symptom(0) })); // goNoGo missing
+    const { explanations } = compareToBaseline(base, check);
+
+    expect(
+      explanations.some(
+        (l) => l.includes('Go / no-go') && l.includes('not recorded in both sittings'),
+      ),
+    ).toBe(true);
+  });
+
   it('stays quiet about a module absent from BOTH sittings, rather than nagging every screen', () => {
     // Go/no-go is built now, but a sitting can legitimately carry no score for it (a run where
     // no go trial got a response records nothing — see scoreGoNoGo). When it is absent from

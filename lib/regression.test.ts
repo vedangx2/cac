@@ -62,6 +62,7 @@ const NOISE_FLOOR_SRC = source(join('app', 'tools', 'noise-floor', 'page.tsx'));
 const PATTERN_SRC = source(join('app', 'tests', 'pattern', 'page.tsx'));
 const RESULTS_SRC = source(join('app', 'results', '[id]', 'page.tsx'));
 const GONOGO_SRC = source(join('app', 'tests', 'gonogo', 'page.tsx'));
+const ATHLETE_DETAIL_SRC = source(join('app', 'athletes', '[id]', 'page.tsx'));
 
 /* ── Small fixtures for the behavioural (engine) assertions ───────────────────────── */
 
@@ -429,5 +430,86 @@ describe('#6 go/no-go — taps are judged against refs, not React state (structu
     expect(GONOGO_SRC).toMatch(/const stimulusTokenRef = useRef\(/);
     expect(GONOGO_SRC).toMatch(/const token = \(stimulusTokenRef\.current \+= 1\);/);
     expect(GONOGO_SRC).toMatch(/stimulusTokenRef\.current === token && stimulusAtRef\.current !== 0/);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #7 — A measurement past its cut-off on an UNFLAGGED screen gets its own headline,
+   ranked above the transitional and calm states.
+
+   Since 2026-09-10 the whole-screen flag needs symptoms alone or two modules together, so
+   one non-symptom module can cross its cut-off without raising the flag. The engine side is
+   behaviourally tested (compare.test.ts); this guards the SCREEN side, which is the
+   safety-critical half: delete or reorder the `belowFlagRule` branch and a crossed
+   measurement renders under "no verdict available" — or, when nothing is unevaluated,
+   under the calm "no change detected" panel. That is the exact crossed-change-folded-into-
+   no-change conflation the hard rule forbids.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#7 results screen — a crossed measurement on an unflagged screen is its own state (structural guard)', () => {
+  it('computes the state from the crossed rows and the flag together', () => {
+    expect(RESULTS_SRC).toMatch(/const crossedRows = rows\.filter\(\(row\) => row\.flagged\);/);
+    expect(RESULTS_SRC).toMatch(/const belowFlagRule = !outcome\.flagged && crossedRows\.length > 0;/);
+  });
+
+  it('renders the branch ABOVE the transitional and calm branches, so it wins the priority ladder', () => {
+    const below = RESULTS_SRC.indexOf(') : belowFlagRule ? (');
+    const unjudged = RESULTS_SRC.indexOf(') : someUnjudged ? (');
+    expect(below).toBeGreaterThan(-1);
+    expect(unjudged).toBeGreaterThan(-1);
+    expect(below).toBeLessThan(unjudged);
+  });
+
+  it('says out loud that this is not a "no change" result, and still ends in a referral', () => {
+    expect(RESULTS_SRC).toContain('Change found — below the flag rule');
+    // The branch must carry its own referral — every headline state on this screen does.
+    const branch = RESULTS_SRC.slice(
+      RESULTS_SRC.indexOf(') : belowFlagRule ? ('),
+      RESULTS_SRC.indexOf(') : someUnjudged ? ('),
+    );
+    expect(branch).toContain('have them seen by a medical professional');
+    expect(branch).toContain('not a &ldquo;no change&rdquo; result');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #8 — The first-exposure gate: recording a baseline requires a completed practice pass.
+
+   Recording was re-enabled on 2026-09-10 and this gate is the sole mechanism that replaced
+   the old blanket disable. The write half (finishPracticeRun stamping the athlete) is
+   behaviourally tested in lib/session.test.ts; this pins the ENFORCEMENT half — one
+   `disabled` prop — because deleting it would silently reopen first-attempt baselines, the
+   ~20 ms practice-effect skew the whole feature exists to prevent.
+
+   The sideline-check button carries NO gate, deliberately: the guard protects baseline
+   quality and must never stand between a coach and the referral screen.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#8 athlete page — the baseline button is gated on the practice pass (structural guard)', () => {
+  it('disables Record baseline until a practice pass exists', () => {
+    expect(ATHLETE_DETAIL_SRC).toMatch(/disabled=\{athlete\.practiceCompletedAt === null\}/);
+  });
+
+  it('says why, in the one-sentence form the brief required', () => {
+    expect(ATHLETE_DETAIL_SRC).toContain('One practice pass first');
+    expect(ATHLETE_DETAIL_SRC).toContain('worse than their true normal');
+  });
+
+  it('offers the practice pass as the way through, not a dead end', () => {
+    expect(ATHLETE_DETAIL_SRC).toMatch(/href=\{`\/practice\?athlete=\$\{athlete\.id\}`\}/);
+  });
+
+  it('leaves the sideline-check button ungated', () => {
+    // A coach next to a hurt kid must never be blocked by the baseline-quality guard. The
+    // check button must not carry the gate (or any disabled prop at all).
+    const checkButton = ATHLETE_DETAIL_SRC.slice(
+      ATHLETE_DETAIL_SRC.indexOf("onClick={() => begin('check')}") - 400,
+      ATHLETE_DETAIL_SRC.indexOf("onClick={() => begin('check')}") + 100,
+    );
+    expect(checkButton).not.toContain('disabled');
   });
 });

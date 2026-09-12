@@ -5,17 +5,19 @@
 // The one that matters most is `agrees with the real engine on every simulated pair`. The harness
 // exists to answer questions about the engine, so the way it fails catastrophically is by
 // gradually becoming a model OF the engine that no longer matches it — a curve that describes
-// code nobody runs. Symptom is the only measurement with a real threshold, so it is the only
-// place the two can be held against each other, and that check runs on every single pair of every
-// simulated run rather than only here in the tests.
+// code nobody runs. Symptom is the measurement the recorded cross-check field carries, and that
+// check runs on every single pair of every simulated run rather than only here in the tests.
+// (Since 2026-09-10 the flag RULE can drift too — the engine now runs 'symptom-weighted' with
+// MODULES_REQUIRED_TO_FLAG — so a drift test below holds applyFlagRule against that constant.)
 
 import { describe, expect, it } from 'vitest';
-import { SYMPTOM_INCREASE, compareToBaseline } from '../engine';
+import { MODULES_REQUIRED_TO_FLAG, SYMPTOM_INCREASE, compareToBaseline } from '../engine';
 import { CURRENT_SCHEMA_VERSION } from '../schema';
 import {
   CALIBRATED_MEASUREMENTS,
   type Degradations,
   MEASUREMENT_SHAPES,
+  type ModuleKey,
   PLACEHOLDER_PROFILES,
   applyDegradation,
 } from './profiles';
@@ -389,6 +391,28 @@ describe('the multi-module flag rule', () => {
     expect(applyFlagRule('symptom-weighted', symptomOnly)).toBe(true);
     expect(applyFlagRule('symptom-weighted', oneOther)).toBe(false);
     expect(applyFlagRule('symptom-weighted', two)).toBe(true);
+  });
+
+  it("the rule labelled 'what the engine does now' agrees with the engine's own constant", () => {
+    // FLAG_RULE_LABELS says 'symptom-weighted' is what the engine does since 2026-09-10, but
+    // applyFlagRule and the engine compute their halves independently — the harness hardcodes
+    // its `>= 2` while the engine reads MODULES_REQUIRED_TO_FLAG. If a human ever retunes the
+    // constant, this test fails and forces the label and rule to be revisited on purpose,
+    // instead of the harness quietly describing a rule nobody runs any more.
+    const crossingSets: Set<ModuleKey>[] = [
+      new Set(),
+      new Set(['symptom']),
+      new Set(['digitSpan']),
+      new Set(['digitSpan', 'goNoGo']),
+      new Set(['symptom', 'goNoGo']),
+      new Set(['digitSpan', 'goNoGo', 'patternSpan']),
+    ];
+
+    for (const set of crossingSets) {
+      expect(applyFlagRule('symptom-weighted', set)).toBe(
+        set.has('symptom') || set.size >= MODULES_REQUIRED_TO_FLAG,
+      );
+    }
   });
 
   it('never lets a measurement with no threshold set a flag', () => {

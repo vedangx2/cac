@@ -54,10 +54,13 @@ import { type StoredTestResult, normaliseTestResult, normaliseTestResults } from
 
 /**
  * An Athlete as it may actually exist on disk: records saved before `practiceCompletedAt`
- * existed (added 2026-09-10) do not carry it. The same idea as StoredTestResult above, kept
- * private because only this file reads athletes raw.
+ * existed (added 2026-09-10) do not carry it. The same idea as StoredTestResult above.
+ * Exported only so lib/storage.test.ts can exercise the normaliser with a legacy-shaped
+ * record; the read paths below are the real consumers.
  */
-type StoredAthlete = Omit<Athlete, 'practiceCompletedAt'> & { practiceCompletedAt?: number | null };
+export type StoredAthlete = Omit<Athlete, 'practiceCompletedAt'> & {
+  practiceCompletedAt?: number | null;
+};
 
 /**
  * Fill in the practice-pass field for athletes saved before it existed.
@@ -65,9 +68,11 @@ type StoredAthlete = Omit<Athlete, 'practiceCompletedAt'> & { practiceCompletedA
  * Absent becomes null — "never completed a practice pass" — which fails CLOSED: the
  * first-exposure guard stays locked for an athlete we know nothing about, rather than being
  * waved through. A new object is returned so a caller holding the raw record still sees
- * exactly what was on disk.
+ * exactly what was on disk. Behaviour and read-path wiring are both pinned by
+ * lib/storage.test.ts, because a bypassed normaliser would fail OPEN: `undefined === null`
+ * is false, so the baseline gate would silently unlock for a never-practised athlete.
  */
-function normaliseAthlete(stored: StoredAthlete): Athlete {
+export function normaliseAthlete(stored: StoredAthlete): Athlete {
   return { ...stored, practiceCompletedAt: stored.practiceCompletedAt ?? null };
 }
 

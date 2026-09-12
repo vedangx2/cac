@@ -200,11 +200,17 @@ export function SaveErrorNotice({ message, tone = 'dark' }: { message: string; t
  * banner only after the battery hook has loaded on the client, so sessionStorage exists and
  * holds whatever the hook itself just read.
  *
+ * The read happens ONCE, in a lazy useState initialiser, not on every render — re-parsing
+ * sessionStorage each time a rating chip or keypad key re-renders the parent would be wasted
+ * work (flagged by review). Once per mount is also honest: the sitting cannot change while a
+ * test screen is up (scores are written and then the screen navigates away), so there is
+ * nothing for a fresher read to see.
+ *
  * `tone` exists because a test screen sits on the dark instrument surface while a document
  * screen is light — same message, two backgrounds.
  */
 export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
-  const session = getSession();
+  const [session] = useState(getSession);
   const practiceRun = session?.kind === 'practice' ? session : null;
 
   const styles =
