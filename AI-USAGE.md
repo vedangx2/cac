@@ -511,6 +511,43 @@ was a separate commit.
   taken before it could contain anticipations, readings after it cannot. A structural
   regression guard now pins the floor beside the existing ceiling guard. Tests 417 → 418.
 
+- **2026-09-10, task 5 — Recording unlocked, gated by the practice pass. AI-written.**
+  The blanket "recording is disabled" notices on the home and athlete screens are gone.
+  **Record a baseline** is now enabled only once that athlete has `practiceCompletedAt` set,
+  with the one-sentence reason on screen while it is locked and a button straight to the
+  practice run, so the gate is a door rather than a dead end. **Start a sideline check** is
+  enabled unconditionally and deliberately carries no gate — the guard exists to protect
+  baseline quality and must never stand between a coach and the referral screen; a check with
+  no baseline on file still warns, and the engine still refuses it as an error rather than
+  passing it as "no flag". The shutdown notices were replaced with honest capability notices:
+  two measurements have tested cut-offs (symptom, and go/no-go response time from one
+  student's self-collected data), everything else renders as **not judged**, and every path
+  still ends at a medical professional. `CACHE_NAME` bumped to v4 for the new routes.
+
+- **2026-09-11, task 5 (second half) — The battery timed in a real browser. AI-measured.**
+  The brief asked for actual seconds per module. A Playwright script walked the full six-module
+  **practice** run (practice writes no `TestResult`, and the run was anonymous so not even the
+  practice-pass fact was stored) on a 390×844 viewport against `next dev`, marking wall-clock
+  at every module boundary. Two runs: **161.3 s and 160.2 s** end to end. Per module, second
+  run: symptom 0.1 s, word learning 24.1 s, numbers backwards 52.1 s, tapped patterns 30.6 s,
+  go/no-go 52.8 s, word recall 0.4 s.
+
+  **What that number is, stated precisely.** It is a FLOOR, not a prediction of a real sitting.
+  Automated input is instant, so the two modules that are purely athlete-paced — the symptom
+  checklist and the two word grids — register as ~0 s and are missing from it entirely. What it
+  does measure exactly is the machine-paced time an athlete cannot speed up, and each figure
+  cross-checks against the constants in `lib/modules/`: word study 10 × (2000 + 300) = 23.0 s
+  against 23.7 s measured; digits 43 × (900 + 250) = 49.5 s against 52.1 s; patterns
+  34 × (600 + 250) = 28.9 s against 30.6 s. Go/no-go is the one module whose figure is close to
+  a real athlete's, because the script had to wait ~320 ms before each tap — anything under
+  150 ms is judged an anticipation and the trial is discarded and repeated, so an instant bot
+  cannot complete the module at all.
+
+  No human-time estimate has been added to these numbers, here or anywhere else. Timing a real
+  athlete reading ten symptom items and picking from two 20-word grids needs a real athlete;
+  guessing it would be exactly the fabricated-number problem `TODO(NEEDS_SOURCE)` exists for.
+  `TODO(NEEDS_SOURCE)`: the athlete-paced portion of the battery is unmeasured.
+
 ---
 
 ### Written by Vedang, not by AI

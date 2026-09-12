@@ -1,4 +1,234 @@
-# Session report — 31 August 2026
+# Session report — 10–11 September 2026
+
+Autonomous session, resumed on 11 September after a usage limit cut the 10 September run off
+mid-task. Branch: `feat/gonogo-and-calibration`. **Not merged. Branch pushed only.**
+
+**Headline: all five tasks are complete. The one dangerous half-landed state the brief warned
+about did not happen — task 3 landed whole, so go/no-go has never been able to flag on its own.
+Task 5's timing half was the only thing genuinely unfinished, and it is now measured: the battery
+has a floor of about 2 minutes 40 seconds, and the athlete-paced part of it is still unmeasured.**
+
+Tests: **412 → 435**, all passing. `tsc --noEmit`, `eslint`, `next build` (18 routes) all clean.
+No threshold value was invented. No statistic, source, citation or clinical red-flag list was
+added. `CLAUDE.md` was not edited — the changes it needs are listed in §5.
+
+---
+
+## 1. What the resume found on disk
+
+The brief said not to trust memory, and specifically to check whether task 3 had half-landed —
+the 25 ms go/no-go threshold set but the flag rule still any-module. That state would have made
+go/no-go the only module able to flag, so a single timing measurement could have produced a
+verdict alone.
+
+**It did not happen.** `lib/engine/thresholds.ts` carries `GO_NO_GO_SLOWER_MS = 25` *and*
+`MODULES_REQUIRED_TO_FLAG = 2`, and `lib/engine/compare.ts:479` reads:
+
+```ts
+const flagged = modules.symptom || flaggedModuleCount >= MODULES_REQUIRED_TO_FLAG;
+```
+
+Symptoms alone, or any two modules together. One non-symptom module crossing its cut-off does
+not raise the flag. Nothing had to be fixed before continuing.
+
+| Task | State found | State now |
+|---|---|---|
+| 1 — Practice mode, six modules, saves nothing | Done (`a494203`) | Done |
+| 2 — First-exposure guard | Done (`a494203`) | Done |
+| 3 — 25 ms threshold + two-or-more flag rule | Done, whole (`981ed2a`) | Done |
+| 4 — 180 ms anticipation floor on the noise-floor pad | Done (`2248677`) | Done |
+| 5 — Unlock recording | Done (`38682f6`) | Done |
+| 5 — Time the battery in the browser | **Never started** | **Done — §3** |
+
+Two loose ends the cut-off also left, both now closed: a completed but uncommitted review pass
+sitting in the working tree (committed as `5abb3fe`), and a missing `AI-USAGE.md` entry for
+task 5 (written, along with one for the timing work).
+
+---
+
+## 2. The uncommitted work that was recovered
+
+It was found green — 435 tests, `tsc`, `eslint`, `build` all clean — and committed unchanged as
+`5abb3fe`. It pins both halves of the first-exposure guard, which nothing was guarding:
+
+- **`lib/storage.test.ts` (new).** The gate checks `practiceCompletedAt === null`. An athlete
+  record that skipped normalisation carries `undefined`, and `undefined === null` is false — so
+  a bypassed normaliser would fail **open** and enable the baseline button for someone who never
+  practised. The normaliser now has behavioural tests, and the two read paths in `storage.ts`
+  get the same structural guard `lib/schema.test.ts` gives the `TestResult` read paths.
+- **Regression guard #8** pins the `disabled` prop itself, the sentence explaining why, and the
+  fact that the sideline-check button stays ungated.
+- **Regression guard #7** pins the results screen's "Change found — below the flag rule" branch
+  and its position above the transitional and calm branches. This one matters most: since the
+  flag rule became two-or-more, a module can cross its cut-off without raising the flag, and if
+  that branch is deleted or reordered a real crossed measurement renders under "no change
+  detected". That is precisely the conflation the hard rule forbids.
+- A compare test for a module missing from one side only, and a calibration test holding
+  `applyFlagRule` against `MODULES_REQUIRED_TO_FLAG` so the harness cannot drift into describing
+  a rule nobody runs.
+
+---
+
+## 3. The battery, timed in a real browser
+
+### How it was measured
+
+A Playwright script walked the full six-module run at a 390×844 viewport against `next dev`,
+marking wall-clock at every module boundary. It ran the **practice** flow, and anonymously: a
+practice run writes no `TestResult`, and with no athlete attached `finishPracticeRun` returns
+before touching storage, so **nothing was written to IndexedDB at all**. Two complete runs.
+
+### The numbers
+
+| Module | Run 1 | Run 2 |
+|---|---|---|
+| Symptom checklist | 0.2 s | 0.1 s |
+| Word learning | 23.7 s | 24.1 s |
+| Numbers backwards | 52.1 s | 52.1 s |
+| Tapped patterns | 30.7 s | 30.6 s |
+| Go / no-go | 54.2 s | 52.8 s |
+| Word recall | 0.4 s | 0.4 s |
+| **Total** | **161.3 s** | **160.2 s** |
+
+### What this number is, and what it is not
+
+**It is a floor, not a prediction of a real sitting.** The script's input is instant, so the two
+modules that are *purely* athlete-paced — the symptom checklist and both 20-word grids — register
+as roughly zero and are effectively absent from the total. A real athlete reads ten symptom items
+and picks from a twenty-word grid twice, and none of that is in these figures.
+
+What it *does* measure exactly is the machine-paced time an athlete cannot speed up, and every
+figure cross-checks against the constants in `lib/modules/`:
+
+| Module | Predicted from the constants | Measured |
+|---|---|---|
+| Word study | 10 × (2000 + 300) = 23.0 s | 23.7 s |
+| Numbers backwards | 43 digits × (900 + 250) = 49.5 s | 52.1 s |
+| Tapped patterns | 34 cells × (600 + 250) = 28.9 s | 30.6 s |
+| Go / no-go | 22 go × (1150 + 320) + 8 no-go × (1150 + 1500) ≈ 53.5 s | 52.8 s |
+
+Go/no-go is the one module whose figure is close to a real athlete's, because the script **had**
+to wait ~320 ms before each tap: `judgeResponse` calls anything under 150 ms an anticipation and
+discards and repeats the trial, so an instant bot cannot finish the module at all. That the
+anticipation rule blocks a machine from completing it is itself a useful result.
+
+**No human-time estimate has been added to any of this.** Timing an athlete reading and deciding
+needs an athlete. `TODO(NEEDS_SOURCE)`: the athlete-paced portion of the battery is unmeasured.
+
+### The thing worth deciding
+
+Numbers backwards and go/no-go are each about 52 seconds of unavoidable machine time, and together
+they are two thirds of the floor. If the battery turns out to be too long for a sideline — and a
+real sitting is the floor **plus** everything above — those two are where the time is, and both
+are shortenable by construction (fewer trials, or a shorter no-go window) rather than by tuning
+anything that decides a flag. Not proposing a change; recording where the cost sits.
+
+---
+
+## 4. Every file touched this session
+
+| File | Change |
+|---|---|
+| `lib/storage.ts`, `lib/storage.test.ts` | Normaliser exported and tested — recovered work |
+| `lib/regression.test.ts` | Guards #7 and #8 — recovered work |
+| `lib/engine/compare.test.ts`, `lib/calibration/calibration.test.ts` | Two tests — recovered work |
+| `components/battery.tsx` | `PracticeBanner` reads sessionStorage once — recovered work |
+| `AI-USAGE.md` | Task 5 entry, and the timing entry |
+| `SESSION-REPORT.md` | This section |
+
+No file in the needs-agreement table was edited this session. No threshold value changed.
+
+---
+
+## 5. `CLAUDE.md` needs the owner, and I did not touch it
+
+The brief said not to edit it. It is now out of step with the code in eight places. Listed
+loudest first; the first three are the ones that change what "correct" means.
+
+1. **"`flagged` is true if any module flags"** (§The engine) is now false. The rule is symptoms
+   alone, or two modules together, via `MODULES_REQUIRED_TO_FLAG`. Since `CLAUDE.md` is the
+   tie-breaker when code and intent disagree, this line currently says the shipped engine is
+   wrong. **This is the one to fix first.**
+2. **"Go / no-go: NOT BUILT"** and the student-owned rule that *"no AI session may create it,
+   including as a stub"*. It was built by AI on 2026-08-31 at the owner's direction. The
+   contradiction was flagged in the August report (§6.1) and is still open.
+3. **`lib/engine/thresholds.ts` — the values** is listed as student-owned, with AI permitted to
+   add only `null`. `GO_NO_GO_SLOWER_MS = 25` and `MODULES_REQUIRED_TO_FLAG = 2` were typed by
+   AI at the owner's direction. The file records that; the ownership table does not.
+4. **"Recording is currently DISABLED"** (§The battery) is no longer true. Recording is unlocked
+   behind the practice gate, and the condition written there — *"until go/no-go exists **and**
+   thresholds have been set from collected data"* — has arguably been met by one threshold out
+   of ten. Worth saying explicitly which reading the owner intends.
+5. **The `Athlete` type reproduced in §The data contract** is missing `practiceCompletedAt`, so
+   the copy in `CLAUDE.md` no longer matches `lib/types.ts`.
+6. **Practice mode is absent entirely** — `/practice`, `/practice/summary`, and the rule that a
+   baseline requires a completed practice pass are nowhere in the file.
+7. **P0 scope** still lists "thresholds derived from collected data" as outstanding. One of ten
+   now exists, from n=1 self-collected data.
+8. **The battery section** does not mention the 180 ms anticipation floor on
+   `/tools/noise-floor`, which is a comparability break in the collected data: readings taken
+   before 2026-09-10 could contain anticipations, readings after cannot. The code says so; the
+   document does not.
+
+---
+
+## 6. Standing limitations, unchanged
+
+- **Nine of ten thresholds are still `null`**, and every one carries `TODO(NEEDS_SOURCE)`. The
+  engine can compare them but forms no verdict, they are reported as `unevaluated`, and the
+  results screen says out loud that it could not judge them.
+- **The one threshold that exists is n=1**, from one healthy person's self-collected noise-floor
+  data. It clears the bar this project set — measured rather than guessed — and no other bar.
+- **Structural guards are still text matching.** They prove the wiring is written, not that it
+  runs. Stated openly at the top of `lib/regression.test.ts` and repeated here.
+- **Timing was never validated against a second clock.** Every claim about response time rests
+  on `performance.now()` measuring itself.
+- **The athlete-paced half of the battery is unmeasured** — new this session, §3.
+
+---
+
+## 7. Say it out loud
+
+> First thing: I checked the one dangerous possibility before touching anything. The worry was
+> that yesterday's threshold work had half-landed — the go/no-go number set, but the rule still
+> saying any single test can raise a flag. That would have meant one timing measurement could
+> flag a kid on its own. It didn't happen. The rule needs the symptom checklist on its own, or
+> any two tests together, and that's what's actually in the code.
+>
+> Four of the five tasks were already done. The one real gap was that nobody had ever timed the
+> battery, so I did. It's about two minutes forty — but I want to be careful about that number,
+> because it's a floor, not the real answer. I ran it with a script, and a script fills in the
+> symptom checklist instantly. A real kid reading ten symptoms and picking words out of a grid
+> twice adds time I haven't measured and won't guess at. What I can tell you exactly is the part
+> nobody can speed up: the words take 24 seconds to show, the number rounds take 52, the tapping
+> takes 31, and go/no-go takes 53. Those matched the code's own timing constants to within a
+> couple of seconds, which is how I know the measurement is real.
+>
+> One nice accident: the script couldn't cheat. Go/no-go throws away any tap faster than 150
+> milliseconds as guessing, so a bot tapping instantly can't finish the test at all. I had to
+> make it wait a realistic third of a second. The anti-guessing rule works.
+>
+> If the battery ever turns out to be too long for a sideline, the time is in numbers-backwards
+> and go/no-go — two thirds of it — and both can be shortened without touching anything that
+> decides whether someone gets flagged.
+>
+> I also found yesterday's last piece of work sitting uncommitted. It was finished and passing,
+> so I committed it. It's the tests that make sure the practice gate can't quietly break — the
+> nastiest one being that an athlete record saved before this feature existed would have
+> *unlocked* the baseline button instead of locking it, which is the wrong way to fail.
+>
+> Tests went 412 to 435. Everything builds. Nothing merged — the branch is pushed, that's all.
+> Still nine of ten thresholds empty, and the one that exists came from one person's data.
+>
+> The thing I need from you is CLAUDE.md. It now disagrees with the code in eight places, and
+> the worst is that it still says a flag is raised if *any* single test looks off. That file is
+> the tie-breaker when the code and the rules disagree — so right now it says the engine we
+> shipped is wrong. I listed all eight in the report and edited none of them, because you told
+> me not to touch that file.
+
+---
+
+# Session report — 31 August 2026 *(previous session, kept for the record)*
 
 Autonomous session. Project: `C:\Users\vedan\Downloads\cac-main\cac-main`.
 Branch: `feat/gonogo-and-calibration`. **Nothing merged, nothing pushed, tag untouched.**
