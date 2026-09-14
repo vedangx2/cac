@@ -1,3 +1,103 @@
+# Session report — 14 September 2026
+
+Documentation and reconciliation session, not a build session. Branch:
+`feat/gonogo-and-calibration`. **No feature, test, or threshold code was written or changed. Not
+merged. Branch pushed only.**
+
+Five tasks: reconcile `CLAUDE.md` against the shipped code (the eight contradictions the
+2026-09-11 report below listed in its §5), audit `AI-USAGE.md` against the full commit history,
+write `docs/HOW-IT-WORKS.md` and `docs/SUBMISSION-NOTES.md`, and this honest-status section.
+
+One thing worth flagging before anything else: the brief for this session named
+`docs/NOISE-FLOOR.md` as required reading. **That file does not exist** — `docs/` holds
+`GONOGO-WALKTHROUGH.md` and a `screenshots/` folder, nothing named `NOISE-FLOOR.md`, in the
+working tree or anywhere in `git log --all`. Proceeded without it; nothing in this session
+depended on its contents specifically, but whoever wrote that brief should know it does not
+point at a real file.
+
+## §1 — `CLAUDE.md`: all eight fixed
+
+Every item in the 2026-09-11 report's §5 list is now fixed, verified with `git diff CLAUDE.md`:
+the flag rule description (symptoms-alone-or-two-or-more, not "any"), the go/no-go "NOT BUILT"
+language in both the data contract and the battery section, the `thresholds.ts` and
+`app/tests/gonogo/**` ownership-table rows (now describe what was actually built and by whom,
+while keeping the ownership boundary intact going forward), the `Athlete` type's missing
+`practiceCompletedAt` field, a new "Practice mode" section, the P0 scope line, and a note on the
+noise-floor pad's 180ms anticipation floor and the comparability break it creates. No rule was
+added, none of the hard rule or no-fabrication wording was touched, and nothing outside those
+eight areas was changed. The hard rule and no-fabrication rule sections are byte-identical to
+before this session.
+
+## §2 — `AI-USAGE.md`: two real disclosure gaps found and closed
+
+Walked every commit on `feat/gonogo-and-calibration` (which contains every commit on
+`fix/baseline-pinning` as an ancestor — `git merge-base --is-ancestor` confirms it, so nothing on
+that branch was missed) and checked each `Co-Authored-By: Claude` commit against the entries
+above it. Full writeup is the new 2026-09-14 entry appended to `AI-USAGE.md`. Short version:
+
+- **Commit `5abb3fe`** — the practice-gate guards recovered from an interrupted session and
+  committed on 2026-09-11 — had **no disclosure entry at all**, despite being real AI-authored
+  work (17 tests, six files) and despite the session that committed it believing it had closed
+  the disclosure gap left by the cut-off. Now has an entry.
+- **Commit `2f03912`** (the 2026-08-31 design audit — two real defects found and fixed, 3 tests)
+  was folded silently into an adjacent entry's test-count arithmetic with no description of what
+  it actually found. Now has an entry.
+- Two smaller items also closed: the `.gitignore`/credential-file judgment calls (`c15a1bd`,
+  `8bc4204`) had no entry despite being AI-authored and security-relevant; and a note was added
+  flagging that the 2026-07-29 step 3 entry's description of `lib/forms/wordLists.ts` and
+  `lib/forms/digitSequences.ts` as "AI-generated stand-ins" is now stale — both were replaced with
+  hand-checked (non-AI) versions later the same day, and the AI-generated marker is gone from the
+  top of both files.
+- No human-written entry was edited or deleted. Nothing found was attributed to the wrong author
+  in either direction, beyond the two staleness/omission issues above.
+
+## §3 and §4 — new docs
+
+`docs/HOW-IT-WORKS.md` (study material, Java/Python reader, no TS/React assumed) and
+`docs/SUBMISSION-NOTES.md` (raw material for the written questions, not drafted answers) are both
+new this session. Both are sourced only from this repo's code and history; anywhere a number is
+stated, `SUBMISSION-NOTES.md`'s two tables say plainly whether it was measured or assumed.
+
+## §5 — Honest status, today
+
+**What works end to end**, verified this session by running `npx vitest run`, `npx tsc --noEmit`,
+`npx eslint`, and `npx next build` against the current tree — all clean (435 tests across 20
+files, 17 routes) — and by reading the actual code paths, not by re-driving a browser session
+(this was a documentation session; the last real browser walkthroughs are the ones already
+recorded in the 2026-08-31 and 2026-09-10/11 reports below):
+
+- Practice mode, standalone or athlete-attached, all six modules in the real battery order,
+  scores shown once and discarded, with `practiceCompletedAt` stamped for an attached athlete.
+- Baseline recording, gated on a completed practice pass.
+- Sideline checks, ungated, pinning `comparedToBaselineId` at save time.
+- The engine's all seven refusal rules (no baseline, cross-athlete, wrong `kind`, baseline not
+  before check, schema-version mismatch, plus the null-threshold and flag-rule handling) — all
+  code-reachable and covered by the test suite; every regression guard from every prior session
+  still passes.
+- The results screen's full set of states: flagged, below-the-flag-rule, no-verdict-available,
+  no-change, nothing-compared, cannot-compare, schema-mismatch, and the baseline-view screen.
+- JSON export.
+
+**What does not exist yet:** the balance module (P1, the data contract already has a slot for
+it), a history view beyond the flat past-checks list, and `goTrialsMs`/a nullable `medianMs` on
+go/no-go (computed, shown on screen, not stored — needs a `schemaVersion` bump nobody has made
+yet).
+
+**What is gated on data not collected:** nine of ten flagging thresholds are still `null`, so
+most of what a real sitting measures today renders as "not judged," never as normal. Only the
+symptom score (an unvalidated placeholder) and the go/no-go response time (n=1, self-collected)
+have any cut-off at all. Form alternation between sittings is probable (~5 in 6) but not
+guaranteed, because the per-athlete sitting counter `pickFormBySitting` needs does not exist yet.
+The battery's timing floor is measured (161–160s) but the athlete-paced portion — reading symptom
+items, scanning two word grids — is not, and no app timing anywhere has been checked against a
+clock other than the browser's own `performance.now()`.
+
+**No new code bug was found this session.** This was a documentation pass, not a code review —
+the codebase was read for accuracy while writing the docs above, not audited end to end for
+defects. Nothing surfaced that contradicted the test suite or the prior sessions' own findings.
+
+---
+
 # Session report — 10–11 September 2026
 
 Autonomous session, resumed on 11 September after a usage limit cut the 10 September run off
