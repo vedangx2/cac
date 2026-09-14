@@ -91,7 +91,7 @@ type ModuleScores = {
   digitSpan:       { formId: string; trialsCorrect: boolean[]; correct: number } | null;
   patternSpan:     { formId: string; trialsCorrect: boolean[]; correct: number } | null;
   goNoGo:          { formId: string; medianMs: number;
-                     commissionErrors: number; omissionErrors: number } | null;  // NOT BUILT
+                     commissionErrors: number; omissionErrors: number } | null;
   balance:         { swayScore: number } | null;                    // stays null for now
 };
 
@@ -117,10 +117,14 @@ type Athlete = {
   name: string;
   baselineId: string | null;
   checkIds: string[];
+  practiceCompletedAt: number | null; // when this athlete last completed a full practice pass,
+                                       // or null if never. Gates recording a baseline — see
+                                       // "Practice mode" below. Added 2026-09-10.
 };
 
 type FlagOutcome = {
-  flagged: boolean;             // true if ANY module flagged
+  flagged: boolean;             // true if the symptom module flags on its own, OR if 2+
+                                // modules flag together (MODULES_REQUIRED_TO_FLAG)
   modules: {
     symptom: boolean; wordLearning: boolean; wordRecognition: boolean;
     digitSpan: boolean; patternSpan: boolean; goNoGo: boolean; balance: boolean;
@@ -156,10 +160,11 @@ anywhere else.
 ## Scope — hold this line
 
 - **P0 (ship this):** athlete profiles, the test battery (symptom, word learning + delayed
-  recall, numbers backwards, tapped patterns, and go/no-go once it is written), the comparison
+  recall, numbers backwards, tapped patterns, and go/no-go — all six now built), the comparison
   engine, the result screen, and **thresholds derived from collected data**. The last item is
-  not optional polish — without it the engine can compare but cannot judge, which is the state
-  the app is in today.
+  not optional polish — without it the engine can compare but cannot judge. As of this file, one
+  of ten thresholds (`GO_NO_GO_SLOWER_MS`) has a measured basis, from one person's self-collected
+  data; the other nine are still `null`. Getting real thresholds set is still mostly outstanding.
 - **P1 (only after P0 is polished):** balance test via motion sensors, history view.
 - **Done, promoted out of P1:** **export to a file.** Thresholds have to come from collected
   measurements, that data lives in IndexedDB on individual phones, and there was no way to get
@@ -178,7 +183,12 @@ is scored.
 
 Reaction time and number scan were **removed** in the 2026-07-29 rebuild and their screens
 deleted. The 5-trial reaction protocol survives as a measurement tool only, at
-`/tools/noise-floor` — it is not part of the battery and writes nothing.
+`/tools/noise-floor` — it is not part of the battery and writes nothing. Since 2026-09-10 it
+also discards and repeats any trial under a **180ms anticipation floor** (too fast to be a real
+reaction — `TODO(NEEDS_SOURCE)` on the exact value), the same rule go/no-go applies to its own
+taps. This is a **comparability break in collected data**: readings taken before 2026-09-10 could
+contain anticipations that dragged their median down; readings taken after cannot. Treat the two
+as not directly comparable when deriving a threshold from noise-floor data.
 
 - **Symptom checklist** (`/tests/symptom`): 10 common symptoms, each rated 0–3, total out of
   30. Use plain common symptom names; **do not** reproduce a specific copyrighted instrument
@@ -193,10 +203,14 @@ deleted. The 5-trial reaction protocol survives as a measurement tool only, at
   `ModuleScores.patternSpan`.
 - **Word recall** (`/tests/words/recall`): the **same** 20-word grid again, at the very end.
   Produces `ModuleScores.wordRecognition`.
-- **Go / no-go**: **NOT BUILT.** A student is writing `app/tests/gonogo` by hand. It is absent
-  from `BATTERY_STEPS` and there is deliberately **no route stub** — a stub that wrote
-  plausible-looking scores would be fabricated data. The stimulus pool exists at
-  `lib/forms/goNo.ts`; nothing consumes it yet.
+- **Go / no-go** (`/tests/gonogo`): 30 trials — tap the instant the signal says TAP, do nothing
+  on HOLD. Sits in `BATTERY_STEPS` between the two span tasks and the delayed word screen, the
+  one place it could go without breaking ordering rule 1 below. Produces `ModuleScores.goNoGo`:
+  a median response time on go trials, commission errors (responded on a no-go trial), and
+  omission errors (missed a go trial). **Built by an AI session on 2026-08-31, at the project
+  owner's direct written instruction** — see "Who owns what" below and the 2026-08-31 task 1
+  entry in `AI-USAGE.md`. A line-by-line walkthrough for a reader who knows Java/Python but not
+  TypeScript/React is at `docs/GONOGO-WALKTHROUGH.md`.
 
 ### Two ordering rules that are not stylistic
 
@@ -209,11 +223,46 @@ deleted. The 5-trial reaction protocol survives as a measurement tool only, at
    partly a memory of the earlier one — and that practice effect inflates it, making a
    struggling athlete look unchanged.
 
-### Recording is currently DISABLED
+### Practice mode
 
-"Record a baseline" and "Start sideline check" are disabled behind a plain notice. They stay off
-until go/no-go exists **and** thresholds have been set from collected data. This battery does not
-go in front of a real athlete before then.
+Before an athlete can have a baseline recorded, they must complete one full **practice pass** of
+the battery — all six tests, in order, scored and shown once at `/practice/summary`, then thrown
+away. Nothing from a practice run is written to the database except one fact, stamped on the
+athlete: `Athlete.practiceCompletedAt`.
+
+**Why this exists (the first-exposure guard):** the project owner's own noise-floor collection
+measured a ~20ms practice effect on reaction time that survived a week off. An athlete's very
+first attempt at these tests reads worse than their true normal — so a baseline recorded on a
+first attempt is permanently skewed, and the free improvement that comes with familiarity on the
+NEXT sitting can cancel out, and hide, a real decline. That is the exact failure this app exists
+to prevent, arriving through the front door.
+
+- `/practice` starts a run. It works with an athlete attached (`?athlete=<id>` — finishing counts
+  as that athlete's pass) or with none at all (fully anonymous, nothing recorded, reachable by
+  anyone including a judge watching a demo).
+- `/practice/summary` shows the scores once, from `sessionStorage`, then discards them.
+- A practice run walks the same six screens in the same order as a baseline or check
+  (`BatterySession` in `lib/session.ts` is a discriminated union of
+  `'baseline' | 'check' | 'practice'`), so the compiler — not discipline — makes it impossible to
+  hand a practice session to `finishSession()` and have it produce a `TestResult`.
+- "Start a sideline check" is never gated on practice. The guard protects baseline quality only —
+  see "Recording" below.
+
+### Recording is gated, not fully disabled
+
+**"Start a sideline check" is enabled unconditionally.** The guard that used to block both
+buttons existed to protect baseline quality, and it must never stand between a coach and the
+referral screen: a check with no baseline on file still warns on screen, and the engine still
+refuses to compare it against nothing rather than silently passing it as "no flag."
+
+**"Record a baseline" is enabled only after that athlete has completed one practice pass**
+(`Athlete.practiceCompletedAt` — see "Practice mode" above). Recording was re-enabled on
+2026-09-10, at the project owner's direction, once the battery itself was complete (go/no-go
+built) — it was **not** re-enabled because thresholds are in place. As of this file, **9 of 10
+flagging thresholds are still `null`**; only the symptom score (a placeholder carried over from
+the original battery) and the go/no-go response time (set from one person's self-collected data)
+have any tested cut-off at all. Every measurement without one is reported to the athlete as **not
+judged**, never as normal — see `FlagOutcome.unevaluated` in the data contract above.
 
 ---
 
@@ -225,7 +274,11 @@ returns a `FlagOutcome`. Rules:
 - Compare **only** against that athlete's own baseline.
 - **Every threshold comes from `lib/engine/thresholds.ts`.** No magic numbers anywhere else.
 - Handle missing modules gracefully (a module can be `null`).
-- `flagged` is true if **any** module flags.
+- `flagged` is true if the **symptom module** flags on its own, or if **two or more modules**
+  flag together (`MODULES_REQUIRED_TO_FLAG` in `lib/engine/thresholds.ts`). A single
+  non-symptom module past its cut-off does **not** flag the whole screen by itself — but it
+  still shows up in `modules`, and the result screen has its own state for that case ("Change
+  found — below the flag rule"), never folded into "no change."
 - A check with **no baseline on file** must **error clearly** — never silently pass as
   "no flag."
 - `explanations[]` must be readable by a parent, e.g.
@@ -247,8 +300,8 @@ if they are changed carelessly.
 
 | Path | Why |
 |---|---|
-| `app/tests/gonogo/**` | A student is writing this module by hand. It does not exist yet. **No AI session may create it, including as a stub** — a stub that wrote plausible-looking scores would be fabricated data. |
-| `lib/engine/thresholds.ts` — *the values* | Every number here has to come from collected data. An AI session may add a new threshold **as `null` with `TODO(NEEDS_SOURCE)`** and may edit the comments, but must never fill in, estimate or tune a value. |
+| `app/tests/gonogo/**` | Built in full by an AI session on 2026-08-31, at the project owner's direct written instruction — see the 2026-08-31 task 1 entry in `AI-USAGE.md` and the human-written note at the end of that file. That instruction superseded this row's original blanket ban on AI creating even a stub. Going forward this path is still the student's to own: an AI session should not modify it without that same kind of direct, explicit instruction. |
+| `lib/engine/thresholds.ts` — *the values* | Every number here has to come from collected data. An AI session may add a new threshold **as `null` with `TODO(NEEDS_SOURCE)`**, edit the comments, or type in a value **the human supplies verbatim, together with its derivation** (this happened once: `GO_NO_GO_SLOWER_MS` and `MODULES_REQUIRED_TO_FLAG`, both set 2026-09-10 at the owner's direction — see the comments in the file and `AI-USAGE.md`). An AI session must never itself estimate, tune, or infer a value. |
 | `AI-USAGE.md` — *the students' own entries* | The disclosure log. AI appends its own dated entries and never edits or deletes a human-written one. |
 
 ### Needs agreement before editing — say so first, in writing
