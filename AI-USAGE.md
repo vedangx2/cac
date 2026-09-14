@@ -548,6 +548,65 @@ was a separate commit.
   guessing it would be exactly the fabricated-number problem `TODO(NEEDS_SOURCE)` exists for.
   `TODO(NEEDS_SOURCE)`: the athlete-paced portion of the battery is unmeasured.
 
+## 2026-09-14 — Audit: gaps found in the disclosure log itself
+
+This was a documentation-and-reconciliation session, not a build session — read CLAUDE.md and
+this file, then checked every commit on `feat/gonogo-and-calibration` (which contains every
+commit on `fix/baseline-pinning` as an ancestor) against what is written above. No code, tests,
+or thresholds were touched. Two real gaps found, plus one entry that has gone stale through no
+fault of its own.
+
+- **Commit `5abb3fe` ("task 5 (review): guards for the two halves of the practice gate") has NO
+  entry above, and it is real AI-authored work.** It is co-authored by Claude Opus 5, touches six
+  files, and adds 17 tests (test count 418 → 435): `lib/storage.test.ts` (new — covers
+  `normaliseAthlete`, because the practice gate checks `practiceCompletedAt === null` and a
+  record that skipped normalisation carries `undefined`, which fails that check OPEN rather than
+  closed — the baseline button would enable for someone who never practised), regression guards
+  #7 and #8 in `lib/regression.test.ts`, one test in `lib/engine/compare.test.ts`, one in
+  `lib/calibration/calibration.test.ts`, and a small fix to `components/battery.tsx`
+  (`PracticeBanner` now reads `sessionStorage` once in a lazy initialiser instead of on every
+  render). The 2026-09-11 session that found this work sitting uncommitted said it was closing
+  the AI-USAGE.md gap left by the interrupted 2026-09-10 session — and it did, for the unlock and
+  timing entries above — but it never wrote an entry for this commit itself, so the disclosure
+  gap it set out to close was only partly closed. `SESSION-REPORT.md` §2 has the full narrative;
+  this bullet is the entry that should have accompanied it.
+
+- **Commit `2f03912` ("task 3 (design audit)") is folded silently into the numbers above, with no
+  entry of its own.** Co-authored by Claude Opus 5. It found and fixed two real defects — two
+  declared font stacks (Tailwind's reset puts its own on `<html>`, the app's was on `<body>`, so
+  "one font family" held by inheritance rather than by intent) and two tap targets under the 56px
+  floor, at 21px and 49px — and added 3 tests to `lib/design.test.ts`. The 2026-08-31 task 3
+  entry above states "38 tests" for that file and "Tests 357 → 395"; the file has 41 tests today,
+  and that 3-test, 2-defect difference is this commit, which the entries above never name.
+
+- **`lib/forms/wordLists.ts` and `lib/forms/digitSequences.ts` are no longer AI-generated
+  stand-ins**, and the 2026-07-29 step 3 entry above — and CLAUDE.md's "stimulus pools are a
+  special case" section — read today, both still say otherwise. Both were accurate when written:
+  the stand-ins existed and were marked as such at the time. Later the same day, commit `28556c0`
+  ("Replace AI stand-in form pools with hand-checked versions") replaced both files' content and
+  removed the AI-generated marker from the top of each. That commit carries no `Co-Authored-By`
+  trailer, and its content reads as a human hand-editing pass rather than an AI session's output,
+  so no new AI disclosure is owed for it — but this note exists so nobody reads the step 3 entry
+  today and assumes the files it describes are still AI's stand-ins.
+
+- **Two more AI-authored commits with no entry, both about `.gitignore`**: `c15a1bd` (revert an
+  unintended `.gstack/` line that a `git add -A` swept into the task 1 commit) and `8bc4204`
+  (re-add that line on purpose, because `.gstack/` turned out to hold
+  `.gstack/terminal-internal-token` — a credential — and leaving it untracked and unignored was
+  judged worse than the stray line). Both are co-authored by Claude Opus 5 and both are narrated
+  in full in the 2026-08-31 `SESSION-REPORT.md`, judgement call 17. This bullet is the
+  disclosure-log entry that narration should have had and never got.
+
+- **Everything else checked out.** Every other AI-authored commit on the branch has a
+  corresponding entry above, and spot-checking the 2026-07-27 pinning entries and their
+  reconciliation (`41a869a`, `bae4e78`) against the actual diffs found no further overstatement,
+  understatement, or misattribution. The two earliest AI commits (`dfd2722`, `5944f76`) predate
+  the `Co-Authored-By` trailer convention — every commit from `41a869a` onward (same day,
+  2026-07-27) carries one — but both are already fully attributed to AI in this file's own prose,
+  so that is a convention gap, not a disclosure gap. Nothing above is attributed to Vedang that
+  was written by AI, or the reverse; the author's own provenance statement at the end of this
+  file (`0d03ce4`) still matches the code it describes.
+
 ---
 
 ### Written by Vedang, not by AI
