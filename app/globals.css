@@ -188,6 +188,42 @@
 }
 
 /*
+  ─────────────────────────────────────────────────────────────────────────────────────
+  THE RESULTS SCREEN'S TWO TYPEFACES — added 2026-09-20, deliberately scoped
+  ─────────────────────────────────────────────────────────────────────────────────────
+  Every other screen in this app is ONE font family — see "there is exactly one font
+  family" above, and lib/design.test.ts, which still enforces that for the app as a
+  whole. The results screen (app/results/[id]/page.tsx) is the single, deliberate
+  exception: it is the one screen built to read like a clinical results document —
+  a lab report, a discharge summary — rather than software chrome, and that reference
+  class pairs a reading face with a figures face.
+
+  Both are SYSTEM stacks, not a webfont: this app makes no external network calls at
+  runtime (see CLAUDE.md → Stack), and loading a font from a CDN at runtime would be
+  exactly that. Every name in each stack ships on some real, current OS.
+
+  Scope is machine-checked, not just commented: lib/design.test.ts asserts these two
+  class names appear NOWHERE outside app/results/[id]/page.tsx, so this exception
+  cannot silently spread to the rest of the app the way a shared component change
+  could.
+*/
+.font-read {
+  /* The reading face — headlines, module names, safety copy. A serif reads as a
+     document being reported to you; the sans stack everywhere else reads as software
+     you are operating. That distinction is the whole point of this screen's redesign. */
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.font-figure {
+  /* The figures face — baseline/check/change/threshold values only, never prose.
+     Monospace digits hold their width as they change, so a column of numbers stays a
+     column instead of re-flowing every time a check produces a different-width value. */
+  font-family:
+    ui-monospace, "Cascadia Code", "Segoe UI Mono", "SF Mono", Consolas, "Roboto Mono",
+    monospace;
+}
+
+/*
   ACCESSIBILITY FLOOR — respect reduced motion.
   Someone who has just taken a hit to the head may be motion-sensitive, which makes this
   more than a nicety here.

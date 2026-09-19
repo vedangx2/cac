@@ -298,7 +298,7 @@ describe('anything you tap in a test module is big enough to hit', () => {
   });
 });
 
-describe('there is exactly one font family', () => {
+describe('the app is one font family, with one deliberate, scoped exception', () => {
   it('declares the same stack on the root and on the body', () => {
     // Tailwind's reset puts its own stack on <html>. Only <body> is ever visible, so this was
     // true by inheritance rather than by intent — and anything mounted on the root would have
@@ -311,10 +311,25 @@ describe('there is exactly one font family', () => {
     expect(bodyBlock).toMatch(stack);
   });
 
-  it('names no second family anywhere in the stylesheet', () => {
+  it('names exactly the base sans stack plus the results screen\'s reading/figures pair', () => {
+    // Added 2026-09-20. The results screen is the one deliberate exception to "one font
+    // family" — see the comment above .font-read / .font-figure in globals.css. Any THIRD
+    // family, or a fourth, means something drifted in without the same deliberate scoping.
     const families = [...GLOBALS.matchAll(/font-family:\s*([^;]+);/g)].map((m) =>
       m[1].trim().split(',')[0].trim(),
     );
-    expect([...new Set(families)]).toEqual(['ui-sans-serif']);
+    expect(new Set(families)).toEqual(new Set(['ui-sans-serif', 'ui-serif', 'ui-monospace']));
+  });
+
+  it('keeps .font-read and .font-figure out of every screen except the results screen', () => {
+    // The scoping promise made in the globals.css comment, machine-checked: these two
+    // classes may not appear anywhere else, or the "one font family" rule has quietly
+    // become "however many fonts anyone reaches for."
+    const offenders = FILES.filter(
+      ([name, source]) =>
+        name !== 'app/results/[id]/page.tsx' && /\bfont-(?:read|figure)\b/.test(source),
+    ).map(([name]) => name);
+
+    expect(offenders).toEqual([]);
   });
 });

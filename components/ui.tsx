@@ -26,8 +26,21 @@ import type { ComponentProps, ReactNode } from 'react';
    ──────────────────────────────────────────────────────────────────────────────────── */
 
 /** The standard light "document" page wrapper: centred, capped width, comfortable padding. */
-export function PageShell({ children }: { children: ReactNode }) {
-  return <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-8 sm:py-12">{children}</div>;
+export function PageShell({
+  children,
+  className = '',
+}: {
+  children: ReactNode;
+  /** Extra classes on the wrapper. Added 2026-09-20 so the results screen alone can apply its
+   * own reading typeface (see the two-typeface classes in app/globals.css) without every other
+   * screen that uses this shell picking them up too. */
+  className?: string;
+}) {
+  return (
+    <div className={`mx-auto w-full max-w-4xl px-4 py-8 sm:px-8 sm:py-12 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 /** Page title, optional supporting line, and an optional "back" link above it. */
