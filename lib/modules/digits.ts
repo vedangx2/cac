@@ -42,8 +42,13 @@ export { type SpanScore, scoreSpanTrials };
  * Fixed rather than adjustable for the same reason the word exposure is: the whole app rests on
  * comparing one athlete's sitting against their own earlier sitting, and a pace that varied
  * between the two would make the difference partly about the pace.
+ *
+ * CHANGED 2026-09-20, from 900 to 2400 (+1.5s). Same reasoning and same moment as
+ * WORD_EXPOSURE_MS in lib/modules/words.ts: no real baseline existed yet, so this was the free
+ * window to move it before the change would break comparability with an existing record — see
+ * CURRENT_SCHEMA_VERSION in lib/schema.ts, bumped in the same session for this reason.
  */
-export const DIGIT_EXPOSURE_MS = 900;
+export const DIGIT_EXPOSURE_MS = 2400;
 
 /** A blank beat between digits, so two digits never read as one number. */
 export const DIGIT_GAP_MS = 250;

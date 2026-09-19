@@ -46,10 +46,30 @@ import type { TestResult } from './types';
  * a new screen for an existing module), because bumping needlessly throws away baselines
  * that are still perfectly valid and makes athletes redo them for nothing.
  *
- * Version 1 is the original three-module battery: symptom + reaction + scan (+ an unused
+ * ALSO BUMP IT for a change to a presentation-timing constant that a module's score is sensitive
+ * to (added 2026-09-20, see below) — the field's original job was "the SHAPE of `scores`
+ * matches", but shape-matching is not the same thing as comparable. Two records can carry the
+ * identical set of keys and still not mean the same thing if one was measured under a faster or
+ * slower presentation than the other. Nothing else in the data contract catches that: the record
+ * itself has nowhere to note "measured at a 2000ms word exposure" versus "measured at 3500ms",
+ * so a version bump is the only mechanism available to stop the two from being silently compared.
+ * This is a broadening of what this field means, not a one-off exception — the next person who
+ * changes CELL_ON_MS, GO_NO_STIMULUS_WINDOW_MS, or any other timing constant a module's raw score
+ * depends on should bump this too, and say so here.
+ *
+ * Version 1 was the original three-module battery: symptom + reaction + scan (+ an unused
  * balance slot).
+ *
+ * Version 2 (2026-09-20): the shape is unchanged from version 1. The bump is for timing —
+ * WORD_EXPOSURE_MS (lib/modules/words.ts, 2000 -> 3500ms) and DIGIT_EXPOSURE_MS
+ * (lib/modules/digits.ts, 900 -> 2400ms) both changed. No real baseline existed on any device at
+ * the time (recording had only just been unlocked, and the demo-trial and results-screen work
+ * landing in the same session meant nobody had a reason to have recorded one yet), so this was
+ * the one free window to change these values before an old baseline would silently stop being
+ * comparable to a new check. CELL_ON_MS / CELL_GAP_MS (tapped patterns) and every go/no-go timing
+ * constant were deliberately left untouched this session — see SESSION-REPORT.md.
  */
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 /**
  * The version we attribute to a record that carries no version field at all.

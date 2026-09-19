@@ -31,8 +31,13 @@ export type GridWord = {
  * thirty seconds at baseline and four seconds at the check, and the drop would measure their
  * patience rather than their memory. A fixed exposure is the only version of this test whose two
  * scores mean the same thing.
+ *
+ * CHANGED 2026-09-20, from 2000 to 3500 (+1.5s). No real baseline existed on any device yet, so
+ * this was the one free moment to move it before a change here would make an old baseline
+ * incomparable with a future check — see CURRENT_SCHEMA_VERSION in lib/schema.ts, which was
+ * bumped in the same session specifically because this value changed.
  */
-export const WORD_EXPOSURE_MS = 2000;
+export const WORD_EXPOSURE_MS = 3500;
 
 /** A beat of blank screen between words, so two words never blur into one another. */
 export const WORD_GAP_MS = 300;
