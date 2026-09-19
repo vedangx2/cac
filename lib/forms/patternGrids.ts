@@ -172,3 +172,23 @@ export const PATTERN_FORMS: readonly PatternForm[] = [
     ],
   },
 ];
+
+/**
+ * DEMO SEQUENCES — added 2026-09-20. Two unscored, unstored practice rounds shown before the
+ * nine real trials, so an athlete meets the "watch the grid, then tap it back" format on a round
+ * that carries no consequence rather than on trial 1.
+ *
+ * Same reasoning as DIGIT_DEMO_SEQUENCES in lib/forms/digitSequences.ts: a separate fixed pool,
+ * never drawn from PATTERN_FORMS, run identically at baseline and at check, and shorter than the
+ * shortest real trial (length 2 here matches the shortest scored trial, since pattern span's
+ * ladder already starts at the floor a demo needs).
+ *
+ * NOT PART OF the difficulty this module is trying to hold steady — see CLAUDE.md, task 1 of the
+ * 2026-09-20 session: tapped patterns is already at ceiling in early data and must not get
+ * easier. A two-cell demo shown before a two-cell FIRST SCORED trial does not change that trial's
+ * difficulty; it only shows the mechanics once before they count.
+ */
+export const PATTERN_DEMO_SEQUENCES: readonly (readonly number[])[] = [
+  [0, 4],
+  [8, 2],
+];

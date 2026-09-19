@@ -37,11 +37,27 @@
 // timer, suspended page — the athlete would sit forever on a grid that never finishes flashing and
 // never accepts input. So a WATCHDOG is armed when playback starts and force-completes it if the
 // chain has not finished by the time it possibly could have. See lib/modules/pattern.ts.
+//
+// ═════════════════════════════════════════════════════════════════════════════════════
+// TWO UNSCORED DEMO ROUNDS BEFORE THE NINE REAL ONES (added 2026-09-20)
+// ═════════════════════════════════════════════════════════════════════════════════════
+// The instructions screen's Start button now leads into the demo, not trial 1 — so an athlete
+// cannot reach a scored round without completing at least one demo round first. The demo plays
+// against PATTERN_DEMO_SEQUENCES, a separate fixed pool that never overlaps with a scored form
+// and never changes sitting to sitting, so baseline and check see an identical demo and nothing
+// about it is saved or scored. See lib/forms/patternGrids.ts.
+//
+// The demo deliberately does NOT reuse GUARD 1's correctness machinery (expectedIndexRef /
+// trialFailedRef): a demo round has no verdict to protect, so it only needs to count taps, not
+// judge them. It gets its own ref-based counter (`demoTapCountRef`) for the same reason GUARD 1
+// exists at all — several taps landing in one animation frame must still be counted correctly —
+// but the real trial's judging code below is untouched by any of this.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, InstrumentHeader, InstrumentShell, ModuleIntro } from '@/components/ui';
 import { PracticeBanner, SaveErrorNotice, SittingLabel, useBatteryStep } from '@/components/battery';
 import {
+  PATTERN_DEMO_SEQUENCES,
   PATTERN_FORMS,
   PATTERN_GRID_COLUMNS,
   PATTERN_TRIALS_PER_FORM,
@@ -58,16 +74,25 @@ import {
   watchdogDelayMs,
 } from '@/lib/modules/pattern';
 
-type Phase = 'instructions' | 'presenting' | 'tapping' | 'done';
+type Phase =
+  | 'instructions'
+  | 'demoPresenting'
+  | 'demoTapping'
+  | 'demoDone'
+  | 'presenting'
+  | 'tapping'
+  | 'done';
 
 export default function PatternSpanPage() {
   const battery = useBatteryStep('patternSpan');
 
   const [phase, setPhase] = useState<Phase>('instructions');
   const [trialIndex, setTrialIndex] = useState(0);
-  /** Which cell is lit during playback, or -1 for none. */
+  /** Which demo round (0 or 1) is playing or being tapped. */
+  const [demoRound, setDemoRound] = useState(0);
+  /** Which cell is lit during playback, or -1 for none. Shared by demo and real trials. */
   const [litCell, setLitCell] = useState(-1);
-  /** How many taps the athlete has made this trial — drives rendering only. */
+  /** How many taps the athlete has made this trial — drives rendering only. Shared by demo and real trials. */
   const [tapCount, setTapCount] = useState(0);
   const [results, setResults] = useState<boolean[]>([]);
   const [finalScore, setFinalScore] = useState<ReturnType<typeof scoreSpanTrials> | null>(null);
@@ -84,11 +109,21 @@ export default function PatternSpanPage() {
   const expectedIndexRef = useRef(0);
   const trialFailedRef = useRef(false);
 
+  /**
+   * DEMO STATE. A demo round has no verdict, so it needs no failed-trial ref — only a
+   * synchronous tap counter, for the same reason GUARD 1 needs one: several taps can land inside
+   * one animation frame, and only a ref updated synchronously counts them correctly.
+   */
+  const demoTapCountRef = useRef(0);
+
   const seed = battery.session
     ? `${battery.session.athleteId}:${battery.session.startedAt}`
     : 'practice';
   const form = useMemo(() => pickForm(PATTERN_FORMS, seed), [seed]);
   const sequence = form.sequences[trialIndex] ?? [];
+  const demoSequence = PATTERN_DEMO_SEQUENCES[demoRound] ?? [];
+  /** Whichever sequence is actually in play right now, real or demo. */
+  const activeSequence = phase === 'demoPresenting' || phase === 'demoTapping' ? demoSequence : sequence;
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -149,6 +184,50 @@ export default function PatternSpanPage() {
     [beginTapping, clearTimers, form],
   );
 
+  /** Move from demo playback into the athlete's demo turn. Safe to call twice. */
+  const beginDemoTapping = useCallback(() => {
+    clearTimers();
+    setLitCell(-1);
+    demoTapCountRef.current = 0;
+    setTapCount(0);
+    setPhase('demoTapping');
+  }, [clearTimers]);
+
+  /** Flash the cells of demo round `round`, then hand over to the athlete. Never scored, never stored. */
+  const presentDemoTrial = useCallback(
+    (round: number) => {
+      clearTimers();
+      setPhase('demoPresenting');
+      setTapCount(0);
+      demoTapCountRef.current = 0;
+
+      const cells = PATTERN_DEMO_SEQUENCES[round] ?? [];
+      let position = 0;
+
+      const step = () => {
+        setLitCell(cells[position]);
+        timerRef.current = setTimeout(() => {
+          setLitCell(-1);
+          timerRef.current = setTimeout(() => {
+            position += 1;
+            if (position >= cells.length) {
+              beginDemoTapping();
+              return;
+            }
+            step();
+          }, CELL_GAP_MS);
+        }, CELL_ON_MS);
+      };
+
+      // Same GUARD 2 reasoning as the real trial: a demo an athlete can never escape is exactly
+      // as bad as a real trial they can never escape.
+      watchdogRef.current = setTimeout(() => beginDemoTapping(), watchdogDelayMs(cells.length));
+
+      step();
+    },
+    [beginDemoTapping, clearTimers],
+  );
+
   // No timer may outlive the screen.
   useEffect(() => clearTimers, [clearTimers]);
 
@@ -197,15 +276,51 @@ export default function PatternSpanPage() {
     presentTrial(nextTrial);
   };
 
+  /**
+   * A demo tap. No correctness judgement — a demo round has no verdict to protect, so this only
+   * has to count taps, synchronously, the same way GUARD 1 counts real ones.
+   */
+  const handleDemoTap = () => {
+    if (phase !== 'demoTapping') return;
+
+    const nextCount = demoTapCountRef.current + 1;
+    if (nextCount > demoSequence.length) return; // ignore extra taps past the end
+    demoTapCountRef.current = nextCount;
+    setTapCount(nextCount);
+
+    if (nextCount >= demoSequence.length) {
+      finishDemoTrial();
+    }
+  };
+
+  /**
+   * Finish a demo round. Never scored, never compared, nothing pushed to `battery.complete`.
+   * After the second demo round this lands on 'demoDone', which is the only place the "Start the
+   * real test" control exists — so a real trial can never be reached without having completed at
+   * least one full demo round first.
+   */
+  const finishDemoTrial = () => {
+    const nextRound = demoRound + 1;
+    if (nextRound >= PATTERN_DEMO_SEQUENCES.length) {
+      setPhase('demoDone');
+      clearTimers();
+      return;
+    }
+    setDemoRound(nextRound);
+    presentDemoTrial(nextRound);
+  };
+
   const restart = () => {
     clearTimers();
     setTrialIndex(0);
+    setDemoRound(0);
     setResults([]);
     setFinalScore(null);
     setLitCell(-1);
     setTapCount(0);
     expectedIndexRef.current = 0;
     trialFailedRef.current = false;
+    demoTapCountRef.current = 0;
     setPhase('instructions');
     battery.resetPractice();
   };
@@ -225,16 +340,25 @@ export default function PatternSpanPage() {
       {phase === 'instructions' && (
         <ModuleIntro
           heading="Tap them back in the same order"
-          detail={`${PATTERN_TRIALS_PER_FORM} rounds, getting longer.`}
-          onStart={() => presentTrial(0)}
+          detail={`Two practice rounds first, then ${PATTERN_TRIALS_PER_FORM} scored rounds, getting longer.`}
+          actionLabel="Start practice"
+          onStart={() => presentDemoTrial(0)}
         />
       )}
 
-      {(phase === 'presenting' || phase === 'tapping') && (
+      {(phase === 'presenting' ||
+        phase === 'tapping' ||
+        phase === 'demoPresenting' ||
+        phase === 'demoTapping') && (
         <div>
           <p className="mb-4 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
-            Round {trialIndex + 1} of {PATTERN_TRIALS_PER_FORM} ·{' '}
-            {phase === 'presenting' ? 'watch' : `your turn — ${tapCount} of ${sequence.length} tapped`}
+            {phase === 'demoPresenting' || phase === 'demoTapping'
+              ? `Practice round ${demoRound + 1} of ${PATTERN_DEMO_SEQUENCES.length}`
+              : `Round ${trialIndex + 1} of ${PATTERN_TRIALS_PER_FORM}`}{' '}
+            ·{' '}
+            {phase === 'presenting' || phase === 'demoPresenting'
+              ? 'watch'
+              : `your turn — ${tapCount} of ${activeSequence.length} tapped`}
           </p>
 
           <div
@@ -244,12 +368,13 @@ export default function PatternSpanPage() {
             {allCells().map((cell) => {
               const lit = litCell === cell;
               const { row, column } = cellPosition(cell, PATTERN_GRID_COLUMNS);
+              const tappable = phase === 'tapping' || phase === 'demoTapping';
               return (
                 <button
                   key={cell}
                   type="button"
-                  disabled={phase !== 'tapping'}
-                  onPointerDown={() => handleTap(cell)}
+                  disabled={!tappable}
+                  onPointerDown={() => (phase === 'demoTapping' ? handleDemoTap() : handleTap(cell))}
                   aria-label={`Row ${row}, column ${column}`}
                   /*
                     A LIT cell is a bright neutral panel, not green. It is a target to watch and
@@ -260,17 +385,47 @@ export default function PatternSpanPage() {
                     lit
                       ? 'border-instrument-ink bg-instrument-ink'
                       : 'border-instrument-ink/20 bg-instrument-panel'
-                  } ${phase === 'tapping' ? 'cursor-pointer hover:border-instrument-ink-soft' : ''}`}
+                  } ${tappable ? 'cursor-pointer hover:border-instrument-ink-soft' : ''}`}
                 />
               );
             })}
           </div>
 
-          {phase === 'tapping' && (
+          {(phase === 'tapping' || phase === 'demoTapping') && (
             <p className="mt-4 text-center text-body text-instrument-ink-soft">
-              Tap {sequence.length} {sequence.length === 1 ? 'square' : 'squares'}, in order.
+              Tap {activeSequence.length} {activeSequence.length === 1 ? 'square' : 'squares'}, in order.
             </p>
           )}
+        </div>
+      )}
+
+      {/* ── Demo complete — the only door into the scored rounds ──────────────────────── */}
+      {phase === 'demoDone' && (
+        <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
+          <h2 className="text-title font-bold">Practice complete</h2>
+          <p className="mt-2 text-body text-instrument-ink-soft">
+            That was practice — nothing was recorded. The real test works exactly the same way.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Button
+              variant="instrument-quiet"
+              onClick={() => {
+                setDemoRound(0);
+                presentDemoTrial(0);
+              }}
+            >
+              Do the practice again
+            </Button>
+            <Button
+              variant="instrument"
+              onClick={() => {
+                setTrialIndex(0);
+                presentTrial(0);
+              }}
+            >
+              Start the real test
+            </Button>
+          </div>
         </div>
       )}
 

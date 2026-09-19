@@ -141,3 +141,22 @@ export const DIGIT_FORMS: readonly DigitForm[] = [
 
 /** Trials per form. Max score. */
 export const DIGIT_TRIALS_PER_FORM = DIGIT_TRIAL_LENGTHS.length;
+
+/**
+ * DEMO SEQUENCES — added 2026-09-20. Two unscored, unstored practice rounds shown before the
+ * nine real trials, so an athlete meets the "watch it, then type it backwards" format on a
+ * round that carries no consequence rather than on trial 1.
+ *
+ * DELIBERATELY A SEPARATE, FIXED POOL, NOT DRAWN FROM DIGIT_FORMS:
+ *   - A demo round must never double as a scored trial or borrow a sequence that could appear
+ *     in one, so it cannot inflate or deflate a real score by pre-exposing part of it.
+ *   - It runs identically at baseline and at check — the same two sequences every sitting, for
+ *     every athlete. A gate that is easier at one sitting than the other would give whichever
+ *     sitting got the easier gate a head start that has nothing to do with the athlete.
+ *   - Shorter than the shortest real trial (length 3) on purpose: two digits is enough to teach
+ *     the mechanics — watch, then reverse — without rehearsing the task itself.
+ */
+export const DIGIT_DEMO_SEQUENCES: readonly (readonly number[])[] = [
+  [4, 8],
+  [7, 3],
+];

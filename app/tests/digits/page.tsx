@@ -21,11 +21,21 @@
 //      remaining trials stop measuring anything. Silence keeps every trial comparable.
 //
 // The trials simply advance. The total is shown once, at the end, with no verdict attached.
+//
+// ═════════════════════════════════════════════════════════════════════════════════════
+// TWO UNSCORED DEMO ROUNDS BEFORE THE NINE REAL ONES (added 2026-09-20)
+// ═════════════════════════════════════════════════════════════════════════════════════
+// The instructions screen's Start button now leads into the demo, not trial 1 — so an athlete
+// cannot reach a scored round without completing at least one demo round first. The demo plays
+// exactly like a real trial (same watch-then-type mechanics, same lack of right/wrong feedback)
+// but draws its two sequences from DIGIT_DEMO_SEQUENCES, a separate fixed pool that never
+// overlaps with a scored form and never changes sitting to sitting — so baseline and check see
+// an identical demo, and nothing about it is saved or scored. See lib/forms/digitSequences.ts.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, InstrumentHeader, InstrumentShell, ModuleIntro } from '@/components/ui';
 import { PracticeBanner, SaveErrorNotice, SittingLabel, useBatteryStep } from '@/components/battery';
-import { DIGIT_FORMS, DIGIT_TRIALS_PER_FORM, pickForm } from '@/lib/forms';
+import { DIGIT_DEMO_SEQUENCES, DIGIT_FORMS, DIGIT_TRIALS_PER_FORM, pickForm } from '@/lib/forms';
 import {
   DIGIT_EXPOSURE_MS,
   DIGIT_GAP_MS,
@@ -34,7 +44,14 @@ import {
   scoreSpanTrials,
 } from '@/lib/modules/digits';
 
-type Phase = 'instructions' | 'presenting' | 'entering' | 'done';
+type Phase =
+  | 'instructions'
+  | 'demoPresenting'
+  | 'demoEntering'
+  | 'demoDone'
+  | 'presenting'
+  | 'entering'
+  | 'done';
 
 const KEYPAD = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -43,7 +60,9 @@ export default function DigitSpanPage() {
 
   const [phase, setPhase] = useState<Phase>('instructions');
   const [trialIndex, setTrialIndex] = useState(0);
-  /** Which digit of the current sequence is on screen, or -1 during a gap. */
+  /** Which demo round (0 or 1) is playing or being entered. */
+  const [demoRound, setDemoRound] = useState(0);
+  /** Which digit of the current sequence is on screen, or -1 during a gap. Shared by demo and real trials — they never run at the same time. */
   const [shownDigit, setShownDigit] = useState(-1);
   const [entered, setEntered] = useState<number[]>([]);
   const [results, setResults] = useState<boolean[]>([]);
@@ -59,33 +78,48 @@ export default function DigitSpanPage() {
   const form = useMemo(() => pickForm(DIGIT_FORMS, seed), [seed]);
 
   const sequence = form.sequences[trialIndex] ?? [];
+  const demoSequence = DIGIT_DEMO_SEQUENCES[demoRound] ?? [];
+  /** Whichever sequence is actually on screen right now, real or demo. */
+  const activeSequence = phase === 'demoPresenting' || phase === 'demoEntering' ? demoSequence : sequence;
 
-  /** Play the digits of trial `index` one at a time, then hand over to the keypad. */
+  /** Play a sequence of digits one at a time, then run `onFinished`. Shared by demo and real trials so the two can never drift apart. */
+  const playDigits = useCallback((digits: readonly number[], onFinished: () => void) => {
+    setEntered([]);
+    setShownDigit(0);
+
+    let position = 0;
+    const advance = () => {
+      setShownDigit(-1); // blank beat
+      timerRef.current = setTimeout(() => {
+        position += 1;
+        if (position >= digits.length) {
+          onFinished();
+          return;
+        }
+        setShownDigit(position);
+        timerRef.current = setTimeout(advance, DIGIT_EXPOSURE_MS);
+      }, DIGIT_GAP_MS);
+    };
+
+    timerRef.current = setTimeout(advance, DIGIT_EXPOSURE_MS);
+  }, []);
+
+  /** Play the digits of real trial `index`, then hand over to the keypad. */
   const presentTrial = useCallback(
     (index: number) => {
       setPhase('presenting');
-      setEntered([]);
-      setShownDigit(0);
-
-      const digits = form.sequences[index] ?? [];
-      let position = 0;
-
-      const advance = () => {
-        setShownDigit(-1); // blank beat
-        timerRef.current = setTimeout(() => {
-          position += 1;
-          if (position >= digits.length) {
-            setPhase('entering');
-            return;
-          }
-          setShownDigit(position);
-          timerRef.current = setTimeout(advance, DIGIT_EXPOSURE_MS);
-        }, DIGIT_GAP_MS);
-      };
-
-      timerRef.current = setTimeout(advance, DIGIT_EXPOSURE_MS);
+      playDigits(form.sequences[index] ?? [], () => setPhase('entering'));
     },
-    [form],
+    [form, playDigits],
+  );
+
+  /** Play demo round `round`, then hand over to the keypad. Never scored, never stored. */
+  const presentDemo = useCallback(
+    (round: number) => {
+      setPhase('demoPresenting');
+      playDigits(DIGIT_DEMO_SEQUENCES[round] ?? [], () => setPhase('demoEntering'));
+    },
+    [playDigits],
   );
 
   // No timer may outlive the screen, and none may survive into the next trial.
@@ -97,9 +131,11 @@ export default function DigitSpanPage() {
   );
 
   const press = (digit: number) => {
-    // Cap at the sequence length so an over-long answer cannot be typed. The cap is a kindness,
-    // not the scoring rule — a wrong-length answer would fail anyway.
-    setEntered((previous) => (previous.length >= sequence.length ? previous : [...previous, digit]));
+    // Cap at the active sequence's length so an over-long answer cannot be typed. The cap is a
+    // kindness, not the scoring rule — a wrong-length answer would fail anyway.
+    setEntered((previous) =>
+      previous.length >= activeSequence.length ? previous : [...previous, digit],
+    );
   };
 
   const backspace = () => setEntered((previous) => previous.slice(0, -1));
@@ -122,9 +158,26 @@ export default function DigitSpanPage() {
     presentTrial(nextIndex);
   };
 
+  /**
+   * Submit a demo round. Never scored, never compared, nothing pushed to `battery.complete`.
+   * After the second demo round this lands on 'demoDone', which is the only place the "Start the
+   * real test" control exists — so a real trial can never be reached without having completed at
+   * least one full demo round first.
+   */
+  const submitDemo = () => {
+    const nextRound = demoRound + 1;
+    if (nextRound >= DIGIT_DEMO_SEQUENCES.length) {
+      setPhase('demoDone');
+      return;
+    }
+    setDemoRound(nextRound);
+    presentDemo(nextRound);
+  };
+
   const restart = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setTrialIndex(0);
+    setDemoRound(0);
     setEntered([]);
     setResults([]);
     setFinalScore(null);
@@ -149,39 +202,44 @@ export default function DigitSpanPage() {
       {phase === 'instructions' && (
         <ModuleIntro
           heading="See 4 — 1 — 7, type 7 1 4"
-          detail={`${DIGIT_TRIALS_PER_FORM} rounds, getting longer.`}
-          onStart={() => presentTrial(0)}
+          detail={`Two practice rounds first, then ${DIGIT_TRIALS_PER_FORM} scored rounds, getting longer.`}
+          actionLabel="Start practice"
+          onStart={() => presentDemo(0)}
         />
       )}
 
-      {/* ── Presenting the sequence ─────────────────────────────────────────────────── */}
-      {phase === 'presenting' && (
+      {/* ── Presenting the sequence, real or demo ─────────────────────────────────────── */}
+      {(phase === 'presenting' || phase === 'demoPresenting') && (
         <div
           className="flex min-h-64 flex-col items-center justify-center rounded-2xl border-4 border-instrument-ink/20 bg-instrument-panel p-6 text-center sm:min-h-96"
           aria-live="off"
         >
           {shownDigit >= 0 ? (
-            <span className="tabular text-stimulus font-black">{sequence[shownDigit]}</span>
+            <span className="tabular text-stimulus font-black">{activeSequence[shownDigit]}</span>
           ) : (
             <span className="sr-only">next number coming</span>
           )}
           <span className="mt-8 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
-            Round {trialIndex + 1} of {DIGIT_TRIALS_PER_FORM} · watch
+            {phase === 'demoPresenting'
+              ? `Practice round ${demoRound + 1} of ${DIGIT_DEMO_SEQUENCES.length} · watch`
+              : `Round ${trialIndex + 1} of ${DIGIT_TRIALS_PER_FORM} · watch`}
           </span>
         </div>
       )}
 
-      {/* ── Keypad entry ────────────────────────────────────────────────────────────── */}
-      {phase === 'entering' && (
+      {/* ── Keypad entry, real or demo ─────────────────────────────────────────────────── */}
+      {(phase === 'entering' || phase === 'demoEntering') && (
         <div>
           <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4">
             <p className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
-              Round {trialIndex + 1} of {DIGIT_TRIALS_PER_FORM} · type them backwards
+              {phase === 'demoEntering'
+                ? `Practice round ${demoRound + 1} of ${DIGIT_DEMO_SEQUENCES.length} · type it backwards`
+                : `Round ${trialIndex + 1} of ${DIGIT_TRIALS_PER_FORM} · type them backwards`}
             </p>
 
             {/* The answer so far, with a slot per expected digit so the length is obvious. */}
             <div className="mt-4 flex flex-wrap gap-2" aria-live="polite">
-              {Array.from({ length: sequence.length }, (_, index) => (
+              {Array.from({ length: activeSequence.length }, (_, index) => (
                 <span
                   key={index}
                   className="tabular flex h-16 w-12 items-center justify-center rounded-xl border-2 border-instrument-ink/20 text-display font-black sm:w-16"
@@ -209,12 +267,52 @@ export default function DigitSpanPage() {
             <Button variant="instrument-quiet" onClick={backspace} disabled={entered.length === 0}>
               Undo last
             </Button>
+            {phase === 'demoEntering' ? (
+              <Button
+                variant="instrument"
+                onClick={submitDemo}
+                disabled={entered.length !== activeSequence.length}
+              >
+                {demoRound + 1 >= DIGIT_DEMO_SEQUENCES.length ? 'Finish practice' : 'Next practice round'}
+              </Button>
+            ) : (
+              <Button
+                variant="instrument"
+                onClick={submitTrial}
+                disabled={entered.length !== sequence.length || battery.saving}
+              >
+                {trialIndex + 1 >= DIGIT_TRIALS_PER_FORM ? 'Finish' : 'Next round'}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Demo complete — the only door into the scored rounds ──────────────────────── */}
+      {phase === 'demoDone' && (
+        <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
+          <h2 className="text-title font-bold">Practice complete</h2>
+          <p className="mt-2 text-body text-instrument-ink-soft">
+            That was practice — nothing was recorded. The real test works exactly the same way.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Button
+              variant="instrument-quiet"
+              onClick={() => {
+                setDemoRound(0);
+                presentDemo(0);
+              }}
+            >
+              Do the practice again
+            </Button>
             <Button
               variant="instrument"
-              onClick={submitTrial}
-              disabled={entered.length !== sequence.length || battery.saving}
+              onClick={() => {
+                setTrialIndex(0);
+                presentTrial(0);
+              }}
             >
-              {trialIndex + 1 >= DIGIT_TRIALS_PER_FORM ? 'Finish' : 'Next round'}
+              Start the real test
             </Button>
           </div>
         </div>

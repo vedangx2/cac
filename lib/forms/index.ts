@@ -43,6 +43,7 @@ export {
   DIGIT_FORMS,
   DIGIT_TRIALS_PER_FORM,
   DIGIT_TRIAL_LENGTHS,
+  DIGIT_DEMO_SEQUENCES,
   type DigitForm,
 } from './digitSequences';
 
@@ -53,6 +54,7 @@ export {
   PATTERN_GRID_COLUMNS,
   PATTERN_GRID_ROWS,
   PATTERN_GRID_SIZE,
+  PATTERN_DEMO_SEQUENCES,
   type PatternForm,
 } from './patternGrids';
 
