@@ -1,3 +1,200 @@
+# Session report — 20 September 2026
+
+Branch: `feat/gonogo-and-calibration`. **Not merged. Branch pushed only.** Four tasks: presentation
+timing changes on word learning and numbers backwards, unscored demo trials before numbers
+backwards and tapped patterns, a full redesign of the results screen away from a generic-dashboard
+look, and this report. No threshold value in `lib/engine/thresholds.ts` was touched, tapped
+patterns' difficulty and timing were left alone, and `CLAUDE.md` was not edited — see §4 for what
+it needs.
+
+`npx vitest run` — **436 tests, 20 files, all passing** (435 → 436; one new test,
+`lib/design.test.ts`'s rewritten font-family describe block, replaced one and added one).
+`npx tsc --noEmit`, `npm run lint`, `npm run build` (17 routes) all clean. 13 files touched, +599/
+-201 lines (`git diff --stat`).
+
+---
+
+## §1 — Task 1: presentation timing, and the schema-version question the brief asked directly
+
+**Word learning** (`WORD_EXPOSURE_MS`, `lib/modules/words.ts`): 2000 → 3500ms (+1.5s).
+**Numbers backwards** (`DIGIT_EXPOSURE_MS`, `lib/modules/digits.ts`): 900 → 2400ms (+1.5s).
+Both constants carry a dated comment saying what changed and why. **Tapped patterns
+(`CELL_ON_MS`/`CELL_GAP_MS`) and go/no-go were left untouched**, per the brief's explicit
+instruction — tapped patterns' early data already sits at ceiling (8-9 of 9 in the first week)
+and must not get easier.
+
+**The schema-version question.** The brief asked two things: whether presentation timing is
+currently covered by `schemaVersion`, and — since this session's changes make two records
+incomparable regardless of shape — to bump it now if so, because zero real baselines exist
+anywhere and this is the only free window before a bump would cost someone a baseline.
+
+It was not covered. `lib/schema.ts`'s own field comment, before this session, said explicitly:
+bump for a shape change, **not** for "new thresholds, new copy, a new screen for an existing
+module" — presentation timing was never named either way, but the field's whole design was about
+`ModuleScores` SHAPE, and two records can carry the identical set of keys while having been
+measured at a 2000ms word exposure and a 3500ms one respectively. Nothing in the data contract
+records which timing a record was measured under, so nothing could have caught that mismatch.
+
+**`CURRENT_SCHEMA_VERSION` is now 2.** This is a judgment call on a needs-agreement file
+(`lib/schema.ts`), made because the brief's direct question was read as the agreement itself —
+see the code comment there and the `AI-USAGE.md` entry for this session, which says so explicitly
+so the owner can say if that reading was wrong. The field's documented meaning is now broadened
+from "the `ModuleScores` shape" to "the shape, plus any presentation-timing constant a module's
+raw score is sensitive to" — worth reading the updated comment in full, because the next person
+who changes `CELL_ON_MS` or a go/no-go timing constant is now expected to bump this too, and nothing
+currently enforces that expectation beyond the comment asking for it. **This is a gap CLAUDE.md
+should probably describe** — see §4.
+
+Version 1 → 2 has zero cost right now: no real baseline exists on any device (recording was only
+unlocked 2026-09-10, and nobody has had a reason to record one since), so nothing gets silently
+invalidated. `lib/schema.test.ts` and `lib/engine/schemaGuard.test.ts` reference the constant
+symbolically rather than hardcoding `1`, so the bump needed no test changes.
+
+---
+
+## §2 — Task 2: two demo rounds before numbers backwards and tapped patterns
+
+Two unscored, unstored practice rounds now run before the nine real trials on both modules, from
+new fixed stimulus pools — `DIGIT_DEMO_SEQUENCES` (`lib/forms/digitSequences.ts`, two 2-digit
+sequences) and `PATTERN_DEMO_SEQUENCES` (`lib/forms/patternGrids.ts`, two 2-cell sequences) —
+never drawn from a scored form, so a demo round can never double as (or spoil) a real trial.
+
+- **Never scored, never stored.** Demo submission never calls `battery.complete` or
+  `saveStepScores`; nothing about a demo round reaches `sessionStorage` or IndexedDB.
+- **Runs identically at baseline and at check.** The demo pools are fixed constants with no
+  per-sitting selection, unlike the six-form scored pools — the same two sequences every time,
+  for every athlete, at every sitting. A gate that's easier at one sitting than another would
+  hand whichever sitting got the easier gate a head start that has nothing to do with the
+  athlete.
+- **Cannot be skipped.** Each instructions screen's Start button now leads into the demo, not
+  trial 1 — the only way to reach a scored trial is through the `demoDone` gate screen's "Start
+  the real test" button, which only exists after completing at least one full demo round. The
+  athlete can redo the demo as many times as they like from that same screen first.
+
+For tapped patterns specifically, the demo **does not reuse** the real trial's correctness-judging
+refs (`expectedIndexRef`, `trialFailedRef`) — those, and the handler around them, are the
+student-owned code the 2026-08-31 mutation-testing pass hardened (see that session's §3, M7), and
+this session did not touch a line of it. The demo gets its own, separate synchronous tap counter
+(`demoTapCountRef`) because it only needs to count taps, not judge them — a demo round has no
+verdict to protect. Verified end to end in a real browser (both modules, both demo rounds, the gate
+screen, and the transition into a real scored trial 1) rather than just by the test suite.
+
+---
+
+## §3 — Task 3: the results screen, redesigned
+
+### What changed
+
+`app/results/[id]/page.tsx` — the card grid is gone. In its place:
+
+- **One ruled table**, same markup at every viewport (the old desktop `<table>` / mobile
+  `<Card>`-stack split is gone entirely, and so is the `Card` import). Each row: module name and
+  a flagged/not-judged tag on the left, the change value in monospace on the right, on the same
+  line; baseline, check, and the threshold applied move to a smaller ink-soft line under the
+  name — the lab-report convention of a result with a reference range printed beneath it, not a
+  fifth column fighting for space on a phone.
+- **Sentence case everywhere.** Every all-caps, letter-spaced eyebrow label ("FLAGGED", "NO
+  VERDICT AVAILABLE") is now a plain small line above its headline.
+- **Real hierarchy.** Every verdict headline — flagged, below-flag-rule, no-verdict-available,
+  nothing-compared, and no-change alike — now reaches `text-stimulus` (64px) on a wide-enough
+  screen, the same size token the six test modules use for a single stimulus digit. That's the
+  existing five-size scale reused, not a sixth size added — `lib/design.test.ts`'s "defines
+  exactly five type sizes" guard still passes. The measurement table stays at `body`/`meta` sizes,
+  so it reads as supporting detail rather than competing with the verdict.
+- **Two typefaces, scoped to this one screen.** A serif reading face
+  (`ui-serif, Georgia, Cambria, "Times New Roman", Times, serif`) for every headline and sentence,
+  and a monospace figures face
+  (`ui-monospace, "Cascadia Code", "Segoe UI Mono", "SF Mono", Consolas, "Roboto Mono", monospace`)
+  for the table's right-aligned change values only. Both are system stacks — no font is fetched
+  over the network, which matters here specifically because CLAUDE.md's Stack section says this
+  app makes no external calls at runtime. Applied via two new CSS classes (`.font-read`,
+  `.font-figure` in `app/globals.css`) and a new optional `className` prop on the shared
+  `PageShell` (`components/ui.tsx`, backward-compatible — every other caller is unaffected).
+  `lib/design.test.ts`'s old "there is exactly one font family" guard is rewritten into two
+  checks: the stylesheet declares exactly three families total (the base sans, plus this
+  deliberate reading/figures pair), and `.font-read`/`.font-figure` appear nowhere outside
+  `app/results/[id]/page.tsx` — so the exception is machine-checked shut to this one screen, not
+  a door anyone can walk through later.
+- **The flagged state dropped its solid red fill.** It was a solid `bg-flag` card with reversed
+  white text; it is now a heavy red rule above red headline text on the page background — still
+  the loudest thing on the page, still the only red anywhere in the app, but closer to how a lab
+  report marks a critical flag (a red result line) than to a toast notification. Every other
+  ruled state (nothing-compared, below-flag-rule, no-verdict-available, no-change) uses the same
+  unfilled, ink-on-page treatment for visual consistency — the old "no change" panel's solid dark
+  fill (`bg-ink text-paper`) is gone too.
+
+Every safety-copy string is unchanged, verified against `lib/regression.test.ts`'s guards, which
+still pass without modification: "Do not record a baseline right now", "have them seen by a
+medical professional", "does not rule out a concussion", "Change found — below the flag rule", and
+guard #7's exact `) : belowFlagRule ? (` / `) : someUnjudged ? (` ternary-ordering check, which
+this redesign had to preserve character-for-character while restyling everything inside each
+branch.
+
+### Contrast — lowest measured ratio: **5.18:1** (was 5.88:1 before this session — see why below)
+
+Computed live against the actual rendered flagged-state page (73 text elements checked
+programmatically, WCAG's real formula, large-text vs normal-text thresholds applied per element):
+**zero failures.** The lowest ratio is `flag` (#c8102e) text at 5.18:1, both for the small
+"Flagged" label (16px, needs 4.5:1) and the 64px headline (needs 3:1 as large text) — comfortably
+above both floors. This number is *lower* than the 5.88:1 the 2026-08-31 session measured for the
+same accent, and that is a real, deliberate consequence of this redesign, not a regression: 5.88:1
+was `paper` (#ffffff) on `flag` — white text on a solid red **card**. Removing that solid fill
+means flag-coloured text now sits on the page's `surface` background (#eef1f2) instead of pure
+white, which is a slightly lower-contrast pairing. Every other text colour on the page (`ink`,
+`ink-soft`) clears 7:1 or better. Touch targets: every visible interactive element is at least
+56px; the only element under that floor is the visually-hidden "Skip to main content" link, which
+is correct — it is not meant to be a visible target.
+
+### Process
+
+Ran `/plan-design-review` and `/design-review` as instructed, but not their full mechanics.
+`/plan-design-review`'s interactive mockup-generation loop (three AI-generated PNG variants, a
+comparison board, a feedback round-trip) was skipped in favour of implementing the brief's own
+detailed spec directly — the brief already specified the layout, typography pairing, and hierarchy
+precisely enough that generating alternate visual directions would have cost time without changing
+the outcome; this is recorded as a scoped decision in-conversation, not silently. `/design-review`'s
+fix loop requires a clean git tree and commits one atomic fix per finding on its own — neither fit
+a tree already holding all three of this session's tasks uncommitted, so its actual review content
+(the AI-slop blacklist, computed WCAG contrast, touch-target and typography checklists) was applied
+by hand against the live rendered page instead of letting the skill drive.
+
+**Verification method:** ten synthetic `TestResult`/`Athlete` records were injected directly into
+the browser's `concussion-screen` IndexedDB via the console (never through the real UI, so nothing
+this session did touched anyone's real athlete data), to view all eight result-screen states —
+flagged, below-flag-rule, no-verdict-available, no-change, nothing-compared, cannot-compare,
+schema-mismatch, and baseline-view — each confirmed live in a browser rather than only inferred
+from the test suite. All ten records were deleted again afterward; a check against the database
+after cleanup found exactly one remaining record, a pre-existing athlete profile with no results
+that predates this session and was left untouched.
+
+**Before/after screenshots:** `docs/screenshots/before/results-2026-09-20-{headline,table}.jpg` and
+`docs/screenshots/after/results-2026-09-20-{headline,table}.jpg`. The "before" pair was captured by
+`git stash`-ing this session's own uncommitted changes to briefly render the pre-redesign code,
+screenshotting it, then `git stash pop`-ing everything back — `git status --porcelain` and the full
+test suite were both checked immediately after the pop to confirm the round-trip lost nothing.
+`docs/screenshots/after/results-flagged.png` (from the 2026-08-31 session) is now stale — it shows
+the card-grid look — and was intentionally left in place rather than deleted, so the new dated
+files sit alongside it rather than silently overwriting history.
+
+---
+
+## §4 — `CLAUDE.md` needs the owner, and this session did not touch it
+
+1. **`lib/schema.ts`'s row** in "Needs agreement before editing" describes `CURRENT_SCHEMA_VERSION`
+   only in terms of what stored records the app will still compare — it doesn't say a
+   presentation-timing change can also be a reason to bump it. The field's own code comment now
+   says so (§1), but CLAUDE.md's prose doesn't yet, and CLAUDE.md is the tie-breaker when the two
+   disagree. Worth a line, or worth overruling this session's reading if the owner disagrees with
+   it.
+2. **The battery section's module list** doesn't mention that numbers backwards and tapped
+   patterns each now open with two unscored, unstored demo rounds before the nine scored ones
+   (§2). Worth a line on each.
+3. **P0 scope / thresholds line** is unchanged by this session — still one of ten, from n=1 data —
+   and doesn't need editing, but is repeated here since every report keeps saying it: getting real
+   thresholds set is still the largest thing outstanding.
+
+---
+
 # Session report — 14 September 2026
 
 Documentation and reconciliation session, not a build session. Branch:

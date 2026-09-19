@@ -607,6 +607,56 @@ fault of its own.
   was written by AI, or the reverse; the author's own provenance statement at the end of this
   file (`0d03ce4`) still matches the code it describes.
 
+- **2026-09-20 — Timing changes, demo trials, results screen redesign.** Co-authored by Claude
+  Sonnet 5, at the project owner's direction, in one session with four tasks. No threshold value
+  in `lib/engine/thresholds.ts` was touched.
+
+  *Task 1 — presentation timing.* `WORD_EXPOSURE_MS` (`lib/modules/words.ts`) went from 2000 to
+  3500ms; `DIGIT_EXPOSURE_MS` (`lib/modules/digits.ts`) went from 900 to 2400ms. Tapped patterns'
+  timing was left untouched on explicit instruction (its early data sits at ceiling and must not
+  get easier). `CURRENT_SCHEMA_VERSION` in `lib/schema.ts` was bumped 1 → 2 for this — a judgment
+  call, since `lib/schema.ts` is a needs-agreement file and its own field comment previously said
+  version bumps are about `ModuleScores` SHAPE, not presentation timing. The brief asked directly
+  whether presentation timing should be covered by schemaVersion and, if not, to say so and bump
+  it anyway since this was the one window (zero real baselines existed) to do it for free; AI
+  treated that as the agreement this file requires, broadened the field's documented meaning to
+  cover comparability-affecting timing constants (not just shape), and said so in both the code
+  comment and `SESSION-REPORT.md`. The owner should read that reasoning and say if it's wrong.
+
+  *Task 2 — demo trials.* Two unscored, unstored practice rounds were added before numbers
+  backwards and tapped patterns, from new fixed pools (`DIGIT_DEMO_SEQUENCES` in
+  `lib/forms/digitSequences.ts`, `PATTERN_DEMO_SEQUENCES` in `lib/forms/patternGrids.ts`) never
+  drawn from a scored form. `app/tests/digits/page.tsx` and `app/tests/pattern/page.tsx` each got
+  a `demoPresenting`/`demoTapping-or-entering`/`demoDone` phase chain that runs identically at
+  baseline and check and is the only door into the scored rounds — the instructions screen's Start
+  button now leads into the demo, not trial 1. For pattern span, the demo deliberately does NOT
+  reuse the real trial's correctness-judging refs (`expectedIndexRef`, `trialFailedRef`, both
+  student-owned via CLAUDE.md's regression guards) — it gets its own separate tap counter
+  (`demoTapCountRef`) so the real trial's guarded code is untouched by any of this.
+
+  *Task 3 — results screen redesign.* `app/results/[id]/page.tsx` lost its card grid for a single
+  ruled table (one `<table>`, module name and change on the same line, baseline/check/threshold
+  as a smaller sub-line — no separate mobile layout) and its all-caps tracked labels for sentence
+  case. The verdict headline reaches `text-stimulus` (64px, reusing the existing five-size scale,
+  no new token) on every branch, not just flagged, so it is the largest thing on the page by
+  construction. Two new typefaces (`.font-read`, a serif reading face; `.font-figure`, a monospace
+  figures face — both system stacks, no network font load) are scoped to this one screen via a new
+  `className` prop on the shared `PageShell` (`components/ui.tsx`) and machine-checked to stay out
+  of every other screen (`lib/design.test.ts`, rewritten "one font family" describe block). Every
+  safety-copy string the existing structural guards in `lib/regression.test.ts` pin — including
+  the belowFlagRule ternary chain shape guard #7 depends on — was preserved verbatim; the guard
+  suite and `lib/design.test.ts` both still pass. AI ran `/plan-design-review` and `/design-review`
+  as instructed, but did not use either skill's full mechanics: `/plan-design-review`'s interactive
+  mockup-generation loop was skipped in favor of implementing the brief's own detailed spec
+  directly (recorded in-conversation as a scoped decision), and `/design-review`'s auto-commit fix
+  loop was not run because it requires a clean git tree and this session's tree held all three
+  tasks' uncommitted work — AI applied that skill's actual review checklist (AI-slop patterns,
+  computed WCAG contrast, touch targets) by hand against the live rendered page instead, injecting
+  and then removing synthetic `TestResult` records via the browser's IndexedDB console to view all
+  eight result states. The `git stash` used to capture a genuine "before" screenshot for the report
+  round-tripped cleanly — `git status --porcelain` and the full test suite were both checked
+  immediately after `stash pop` to confirm nothing was lost.
+
 ---
 
 ### Written by Vedang, not by AI
