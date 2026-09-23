@@ -85,6 +85,27 @@ export function isExpectedTap(
   return sequence[expectedIndex] === cell;
 }
 
+/**
+ * Has this cell already been tapped this trial?
+ *
+ * DELIBERATE, DOCUMENTED BEHAVIOUR — added 2026-09-22 after a real run scored 8/9 where the one
+ * miss was a screen with no tap feedback, not the athlete: with nothing on screen changing when
+ * a tap landed, an athlete unsure the first tap registered tapped the SAME cell again, and the
+ * second tap was silently judged as the NEXT position in the sequence — consuming a slot the
+ * sequence never meant for it, and very likely failing an otherwise-correct trial.
+ *
+ * Construction rule 3 in lib/forms/patternGrids.ts guarantees no sequence ever repeats a cell,
+ * so a second tap on a cell already tapped THIS TRIAL can never be a legitimate next answer —
+ * it is either a mis-registered duplicate or a deliberate re-tap of something already answered.
+ * Either way the right response is to ignore it: it must not advance the sequence and must not
+ * count as an error. The screen also now shows a selected state the instant a tap lands (see
+ * app/tests/pattern/page.tsx), which is the other half of this fix — the guard below is the
+ * safety net for a double-tap that still gets through despite the feedback.
+ */
+export function isRepeatTap(tappedThisTrial: readonly number[], cell: number): boolean {
+  return tappedThisTrial.includes(cell);
+}
+
 /** The best possible score, for showing "x out of 9". */
 export const MAX_PATTERN_CORRECT = PATTERN_TRIALS_PER_FORM;
 

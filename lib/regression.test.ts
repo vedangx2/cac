@@ -60,6 +60,7 @@ function source(relativePath: string): string {
 */
 const NOISE_FLOOR_SRC = source(join('app', 'tools', 'noise-floor', 'page.tsx'));
 const PATTERN_SRC = source(join('app', 'tests', 'pattern', 'page.tsx'));
+const DIGITS_SRC = source(join('app', 'tests', 'digits', 'page.tsx'));
 const RESULTS_SRC = source(join('app', 'results', '[id]', 'page.tsx'));
 const GONOGO_SRC = source(join('app', 'tests', 'gonogo', 'page.tsx'));
 const ATHLETE_DETAIL_SRC = source(join('app', 'athletes', '[id]', 'page.tsx'));
@@ -511,5 +512,45 @@ describe('#8 athlete page — the baseline button is gated on the practice pass 
       ATHLETE_DETAIL_SRC.indexOf("onClick={() => begin('check')}") + 100,
     );
     expect(checkButton).not.toContain('disabled');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #9 — Pattern span shows a tapped cell immediately, and a repeat tap on it is ignored
+   rather than silently consuming the next position in the sequence.
+
+   OLD BUG (found on a real phone, 2026-09-22): the tapping grid changed nothing on screen when
+   a tap landed. An athlete unsure a tap had registered tapped the same cell again, and — because
+   nothing tracked which cells had already been tapped this trial — the second tap was judged as
+   the NEXT position in the sequence instead of ignored, very likely failing an otherwise-correct
+   trial. A real run scored 8/9 where the single miss was this, not the athlete's memory.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#9 pattern span — a tapped cell shows immediately and a repeat tap is ignored (structural guard)', () => {
+  it('tracks tapped cells in a ref, written synchronously, mirrored to state for rendering', () => {
+    expect(PATTERN_SRC).toMatch(/const tappedCellsRef = useRef<number\[\]>\(\[\]\);/);
+    expect(PATTERN_SRC).toMatch(/tappedCellsRef\.current = \[\.\.\.tappedCellsRef\.current, cell\];/);
+  });
+
+  it('ignores a repeat tap before judging it against the sequence at all, in both handlers', () => {
+    // The exact guard the regression depends on. Deleting either line reopens the double-count.
+    const handleTapStart = PATTERN_SRC.indexOf('const handleTap = (cell: number) => {');
+    const handleDemoTapStart = PATTERN_SRC.indexOf('const handleDemoTap = (cell: number) => {');
+    expect(handleTapStart).toBeGreaterThan(-1);
+    expect(handleDemoTapStart).toBeGreaterThan(-1);
+
+    const handleTapBody = PATTERN_SRC.slice(handleTapStart, handleTapStart + 400);
+    const handleDemoTapBody = PATTERN_SRC.slice(handleDemoTapStart, handleDemoTapStart + 400);
+    expect(handleTapBody).toMatch(/if \(isRepeatTap\(tappedCellsRef\.current, cell\)\) return;/);
+    expect(handleDemoTapBody).toMatch(/if \(isRepeatTap\(tappedCellsRef\.current, cell\)\) return;/);
+  });
+
+  it('gives a tapped cell a fill distinct from both the lit playback cue and the resting state', () => {
+    // "Selected" must never be the SAME treatment as "lit" (that would read as the app replaying
+    // the stimulus back) and must never be green or a tick (that would read as "correct").
+    expect(PATTERN_SRC).toMatch(/selected\s*\?\s*'border-instrument-ink-soft bg-instrument-ink-soft'/);
+    expect(PATTERN_SRC).not.toMatch(/\b(?:bg|text|border)-(?:green|emerald|lime|teal)\b/);
   });
 });

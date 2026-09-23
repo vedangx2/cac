@@ -39,6 +39,30 @@
 // chain has not finished by the time it possibly could have. See lib/modules/pattern.ts.
 //
 // ═════════════════════════════════════════════════════════════════════════════════════
+// GUARD 3 — A TAP SHOWS IMMEDIATELY, AND A REPEAT TAP ON THE SAME CELL IS IGNORED, NOT
+// DOUBLE-COUNTED (fixed 2026-09-22)
+// ═════════════════════════════════════════════════════════════════════════════════════
+//
+// THE BUG: nothing on screen changed when a tap landed. An athlete who was not sure the first
+// tap registered tapped the same cell again, and the second tap was silently judged as the NEXT
+// position in the sequence — a real run scored 8/9 where the single miss was this, not the
+// athlete's memory.
+//
+// THE FIX has two halves:
+//   1. A tapped cell shows a distinct SELECTED fill (ink-soft, not the lit cue's full ink) the
+//      instant the tap is recorded, so the athlete can see it took without being told whether it
+//      was correct — selected means "you picked this", never "this is right". See CLAUDE.md.
+//   2. A second tap on a cell already tapped THIS TRIAL is deliberately ignored — see
+//      isRepeatTap in lib/modules/pattern.ts for why that is always the safe reading (no
+//      sequence in the pool ever repeats a cell, so a repeat tap can never be a legitimate next
+//      answer). This is the safety net for a double-tap that still slips through despite the
+//      visual feedback, e.g. two pointerdown events the OS itself coalesces oddly.
+//
+// Tracked in `tappedCellsRef`/`tappedCells`, the same synchronous-ref-plus-mirrored-state shape
+// GUARD 1 already uses for `expectedIndexRef`/`tapCount` — the ref is the authority a tap is
+// judged against, the state exists only to paint the selected cells.
+//
+// ═════════════════════════════════════════════════════════════════════════════════════
 // TWO UNSCORED DEMO ROUNDS BEFORE THE NINE REAL ONES (added 2026-09-20)
 // ═════════════════════════════════════════════════════════════════════════════════════
 // The instructions screen's Start button now leads into the demo, not trial 1 — so an athlete
@@ -70,6 +94,7 @@ import {
   allCells,
   cellPosition,
   isExpectedTap,
+  isRepeatTap,
   scoreSpanTrials,
   watchdogDelayMs,
 } from '@/lib/modules/pattern';
@@ -94,6 +119,11 @@ export default function PatternSpanPage() {
   const [litCell, setLitCell] = useState(-1);
   /** How many taps the athlete has made this trial — drives rendering only. Shared by demo and real trials. */
   const [tapCount, setTapCount] = useState(0);
+  /**
+   * Which cells have been tapped THIS TRIAL, in tap order — drives the selected-cell visual.
+   * Shared by demo and real trials, and mirrored from `tappedCellsRef` (see GUARD 3 above).
+   */
+  const [tappedCells, setTappedCells] = useState<number[]>([]);
   const [results, setResults] = useState<boolean[]>([]);
   const [finalScore, setFinalScore] = useState<ReturnType<typeof scoreSpanTrials> | null>(null);
 
@@ -108,6 +138,12 @@ export default function PatternSpanPage() {
   */
   const expectedIndexRef = useRef(0);
   const trialFailedRef = useRef(false);
+
+  /**
+   * GUARD 3 STATE. The authority on which cells have been tapped this trial — see isRepeatTap
+   * in lib/modules/pattern.ts. Written synchronously, same reasoning as expectedIndexRef.
+   */
+  const tappedCellsRef = useRef<number[]>([]);
 
   /**
    * DEMO STATE. A demo round has no verdict, so it needs no failed-trial ref — only a
@@ -140,7 +176,9 @@ export default function PatternSpanPage() {
     // against position 0 rather than against whatever the last trial left behind.
     expectedIndexRef.current = 0;
     trialFailedRef.current = false;
+    tappedCellsRef.current = [];
     setTapCount(0);
+    setTappedCells([]);
     setPhase('tapping');
   }, [clearTimers]);
 
@@ -150,8 +188,10 @@ export default function PatternSpanPage() {
       clearTimers();
       setPhase('presenting');
       setTapCount(0);
+      setTappedCells([]);
       expectedIndexRef.current = 0;
       trialFailedRef.current = false;
+      tappedCellsRef.current = [];
 
       const cells = form.sequences[index] ?? [];
       let position = 0;
@@ -189,7 +229,9 @@ export default function PatternSpanPage() {
     clearTimers();
     setLitCell(-1);
     demoTapCountRef.current = 0;
+    tappedCellsRef.current = [];
     setTapCount(0);
+    setTappedCells([]);
     setPhase('demoTapping');
   }, [clearTimers]);
 
@@ -199,7 +241,9 @@ export default function PatternSpanPage() {
       clearTimers();
       setPhase('demoPresenting');
       setTapCount(0);
+      setTappedCells([]);
       demoTapCountRef.current = 0;
+      tappedCellsRef.current = [];
 
       const cells = PATTERN_DEMO_SEQUENCES[round] ?? [];
       let position = 0;
@@ -234,9 +278,13 @@ export default function PatternSpanPage() {
   /**
    * GUARD 1 IN ACTION. Every judgement below reads `expectedIndexRef.current`, never the
    * `tapCount` state. Do not "simplify" this to use state — see the header comment.
+   *
+   * GUARD 3 IN ACTION too: a cell already in `tappedCellsRef` this trial is ignored outright,
+   * before anything else runs — see isRepeatTap in lib/modules/pattern.ts.
    */
   const handleTap = (cell: number) => {
     if (phase !== 'tapping') return;
+    if (isRepeatTap(tappedCellsRef.current, cell)) return;
 
     const expectedIndex = expectedIndexRef.current;
 
@@ -248,6 +296,9 @@ export default function PatternSpanPage() {
       // finishes the trial normally instead of being told mid-way that they got it wrong.
       trialFailedRef.current = true;
     }
+
+    tappedCellsRef.current = [...tappedCellsRef.current, cell]; // synchronous — GUARD 3
+    setTappedCells(tappedCellsRef.current); // for rendering only
 
     const nextIndex = expectedIndex + 1;
     expectedIndexRef.current = nextIndex; // synchronous — this is the guard
@@ -278,14 +329,19 @@ export default function PatternSpanPage() {
 
   /**
    * A demo tap. No correctness judgement — a demo round has no verdict to protect, so this only
-   * has to count taps, synchronously, the same way GUARD 1 counts real ones.
+   * has to count taps, synchronously, the same way GUARD 1 counts real ones. It gets the same
+   * selected-cell feedback and repeat-tap guard as a real trial (GUARD 3) — the demo exists to
+   * teach the real mechanic, and teaching a different one would defeat the point of practising.
    */
-  const handleDemoTap = () => {
+  const handleDemoTap = (cell: number) => {
     if (phase !== 'demoTapping') return;
+    if (isRepeatTap(tappedCellsRef.current, cell)) return;
 
     const nextCount = demoTapCountRef.current + 1;
     if (nextCount > demoSequence.length) return; // ignore extra taps past the end
     demoTapCountRef.current = nextCount;
+    tappedCellsRef.current = [...tappedCellsRef.current, cell];
+    setTappedCells(tappedCellsRef.current);
     setTapCount(nextCount);
 
     if (nextCount >= demoSequence.length) {
@@ -318,8 +374,10 @@ export default function PatternSpanPage() {
     setFinalScore(null);
     setLitCell(-1);
     setTapCount(0);
+    setTappedCells([]);
     expectedIndexRef.current = 0;
     trialFailedRef.current = false;
+    tappedCellsRef.current = [];
     demoTapCountRef.current = 0;
     setPhase('instructions');
     battery.resetPractice();
@@ -367,6 +425,7 @@ export default function PatternSpanPage() {
           >
             {allCells().map((cell) => {
               const lit = litCell === cell;
+              const selected = tappedCells.includes(cell);
               const { row, column } = cellPosition(cell, PATTERN_GRID_COLUMNS);
               const tappable = phase === 'tapping' || phase === 'demoTapping';
               return (
@@ -374,17 +433,24 @@ export default function PatternSpanPage() {
                   key={cell}
                   type="button"
                   disabled={!tappable}
-                  onPointerDown={() => (phase === 'demoTapping' ? handleDemoTap() : handleTap(cell))}
+                  onPointerDown={() => (phase === 'demoTapping' ? handleDemoTap(cell) : handleTap(cell))}
                   aria-label={`Row ${row}, column ${column}`}
+                  aria-pressed={selected}
                   /*
                     A LIT cell is a bright neutral panel, not green. It is a target to watch and
                     then hit — it says nothing about correctness, and it must not borrow the visual
                     language of "right". See CLAUDE.md.
+
+                    A SELECTED cell (GUARD 3, added 2026-09-22) is a distinct ink-soft fill — never
+                    the lit cue's full ink, so "you tapped this" is never confused with "watch this"
+                    during playback, and never green or a checkmark, so it never reads as "correct".
                   */
                   className={`aspect-square touch-none rounded-xl border-4 transition-none ${
                     lit
                       ? 'border-instrument-ink bg-instrument-ink'
-                      : 'border-instrument-ink/20 bg-instrument-panel'
+                      : selected
+                        ? 'border-instrument-ink-soft bg-instrument-ink-soft'
+                        : 'border-instrument-ink/20 bg-instrument-panel'
                   } ${tappable ? 'cursor-pointer hover:border-instrument-ink-soft' : ''}`}
                 />
               );

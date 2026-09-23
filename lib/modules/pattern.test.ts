@@ -15,10 +15,12 @@ import {
   expectedPlaybackMs,
   isExpectedTap,
   isPatternCorrect,
+  isRepeatTap,
   patternTrialLength,
   scoreSpanTrials,
   watchdogDelayMs,
 } from './pattern';
+import { PATTERN_DEMO_SEQUENCES } from '../forms/patternGrids';
 
 describe('isExpectedTap', () => {
   const sequence = [4, 0, 7];
@@ -51,6 +53,46 @@ describe('isExpectedTap', () => {
     // make the top-left square impossible to tap correctly, and it is in plenty of sequences.
     expect(isExpectedTap([0, 5], 0, 0)).toBe(true);
     expect(isExpectedTap([0, 5], 0, 5)).toBe(false);
+  });
+});
+
+describe('isRepeatTap — a second tap on an already-tapped cell is ignored, not double-counted', () => {
+  // Added 2026-09-22: a real run scored 8/9 where the miss was a screen giving no tap feedback,
+  // not the athlete. See the comment on isRepeatTap in pattern.ts for the full story.
+
+  it('is not a repeat the first time a cell is tapped', () => {
+    expect(isRepeatTap([], 4)).toBe(false);
+    expect(isRepeatTap([2, 6], 4)).toBe(false);
+  });
+
+  it('is a repeat once that exact cell has already been tapped this trial', () => {
+    expect(isRepeatTap([4], 4)).toBe(true);
+    expect(isRepeatTap([2, 4, 6], 4)).toBe(true);
+  });
+
+  it('treats cell 0 as a real cell, not as absent (same trap as isExpectedTap)', () => {
+    expect(isRepeatTap([0], 0)).toBe(true);
+    expect(isRepeatTap([], 0)).toBe(false);
+  });
+
+  it('never mistakes a repeat for the SAME position tapped twice inside one frame', () => {
+    // Two DIFFERENT positions landing in one frame (GUARD 1's whole reason for existing) must
+    // still both count, as long as they are different cells — only a repeated CELL is ignored.
+    expect(isRepeatTap([4], 0)).toBe(false);
+  });
+
+  it('assumes no sequence in the pool ever repeats a cell — construction rule 3 holds for every scored and demo sequence', () => {
+    // isRepeatTap's whole justification is that a repeat tap can never be a legitimate next
+    // answer. That is only true if construction rule 3 (lib/forms/patternGrids.ts) really holds
+    // everywhere it is tapped against, including the demo pool select.test.ts does not check.
+    for (const form of PATTERN_FORMS) {
+      for (const sequence of form.sequences) {
+        expect(new Set(sequence).size, `${form.id}: ${sequence}`).toBe(sequence.length);
+      }
+    }
+    for (const sequence of PATTERN_DEMO_SEQUENCES) {
+      expect(new Set(sequence).size, `demo: ${sequence}`).toBe(sequence.length);
+    }
   });
 });
 
