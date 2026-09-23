@@ -28,6 +28,7 @@ import {
 } from './gonogo';
 import { GO_NO_FORMS, GO_NO_NOGO_PER_FORM, GO_NO_TRIALS_PER_FORM } from '../forms';
 import { MAX_PLAUSIBLE_REACTION_MS } from '../engine/thresholds';
+import { makeRng } from '../calibration/random';
 
 /* ═══════════════════════════════════════════════════════════════════════════════════
    judgeResponse — is this tap a real response?
@@ -274,6 +275,55 @@ describe('pacing', () => {
   it('allows a repeat budget that is finite, so a broken run cannot loop forever', () => {
     expect(GO_NO_MAX_TRIAL_REPEATS).toBeGreaterThan(0);
     expect(Number.isFinite(GO_NO_MAX_TRIAL_REPEATS)).toBe(true);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   The pre-stimulus gap must not leak the trial type — /investigate, 2026-09-22
+
+   A real-phone report claimed the wait before a no-go trial ran consistently longer than the
+   wait before a go trial: learnable, and a task that can be learned by interval instead of by
+   inhibition stops measuring what it says it measures. Reading armTrial's call site in
+   app/tests/gonogo/page.tsx shows gapDelayMs() is called with no argument at all — it has no way
+   to know which trial is coming, so its output cannot be a function of that. See lib/regression
+   .test.ts's #10 for the source-level guard pinning that call site.
+
+   This test is the numerical version of the same proof: draw the gap exactly as often as a real
+   session would, tag every draw with the REAL trial type at that position in each form's actual
+   schedule, and confirm the two buckets land on the same mean. It is not testing a fix — nothing
+   changed at runtime — it is testing an invariant that was already true, so a future change that
+   breaks it (say, "helpfully" widening the no-go gap to make it more inhibitable) gets caught
+   here rather than by someone noticing on a phone again.
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('gapDelayMs is blind to trial type', () => {
+  it('draws the same distribution before a go trial and before a no-go trial, on every form', () => {
+    const rng = makeRng(20260922);
+    // ~12,000 no-go draws and ~33,000 go draws per form — enough that sampling noise on the
+    // difference between the two means shrinks to a couple of milliseconds (see below).
+    const REPEATS_PER_FORM = 1500;
+
+    const mean = (values: number[]) => values.reduce((total, value) => total + value, 0) / values.length;
+
+    for (const form of GO_NO_FORMS) {
+      const goDelays: number[] = [];
+      const nogoDelays: number[] = [];
+
+      for (let repeat = 0; repeat < REPEATS_PER_FORM; repeat += 1) {
+        for (const trial of form.trials) {
+          const delay = gapDelayMs(rng);
+          (trial === 'go' ? goDelays : nogoDelays).push(delay);
+        }
+      }
+
+      // Under the true, uncorrelated distribution — uniform between GO_NO_MIN_GAP_MS and
+      // GO_NO_MAX_GAP_MS regardless of what follows — tens of thousands of samples per bucket
+      // pin the difference in means to a few milliseconds. An actual correlation (say, no-go
+      // trials drawing from the top third of the 900ms range) would separate these means by well
+      // over a hundred milliseconds, so 15ms of tolerance is nowhere near the failure this test
+      // exists to catch, and it is not a flaky assertion.
+      expect(Math.abs(mean(goDelays) - mean(nogoDelays)), form.id).toBeLessThan(15);
+    }
   });
 });
 

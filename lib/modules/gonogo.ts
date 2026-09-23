@@ -157,7 +157,17 @@ export function windowIsWithinPlausibleCeiling(): boolean {
   return GO_NO_STIMULUS_WINDOW_MS <= MAX_PLAUSIBLE_REACTION_MS;
 }
 
-/** How long to wait before the next stimulus. `random` is injected so tests can pin it. */
+/**
+ * How long to wait before the next stimulus. `random` is injected so tests can pin it.
+ *
+ * DELIBERATELY BLIND TO TRIAL TYPE — confirmed by /investigate, 2026-09-22. This function takes
+ * no argument describing what trial is coming, on purpose: it must draw the same distribution
+ * whether the next stimulus is a go or a no-go, or the gap itself becomes a tell — a learnable
+ * "long wait means don't tap" that lets the athlete pass by watching the clock instead of by
+ * holding back. See the statistical proof in gonogo.test.ts and the structural guard (#10) in
+ * lib/regression.test.ts. If a future change ever needs the delay to know about the upcoming
+ * trial, that is this invariant breaking, not a refactor.
+ */
 export function gapDelayMs(random: () => number = Math.random): number {
   return GO_NO_MIN_GAP_MS + random() * (GO_NO_MAX_GAP_MS - GO_NO_MIN_GAP_MS);
 }

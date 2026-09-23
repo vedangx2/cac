@@ -556,6 +556,31 @@ describe('#9 pattern span — a tapped cell shows immediately and a repeat tap i
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════════
+   #10 — Go/no-go's pre-stimulus gap is drawn independent of trial type.
+
+   NOT a regression from a bug that shipped — a guard against one that never did. A 2026-09-22
+   real-phone report claimed the wait before a no-go trial ran consistently longer than before a
+   go trial, which would make the task learnable by interval rather than by inhibition.
+   /investigate traced armTrial's call site: gapDelayMs() takes no argument at all, so it cannot
+   see which trial is coming and cannot be correlated with it. See the numerical proof in
+   lib/modules/gonogo.test.ts and the write-up in SESSION-REPORT.md.
+
+   This guard exists so nobody "fixes" that report by wiring the trial type into the call —
+   which would introduce exactly the bug the report described, where today there is none.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#10 go/no-go — the pre-stimulus gap is drawn blind to trial type (structural guard)', () => {
+  it('arms every trial with a bare call — nothing about the trial is passed in', () => {
+    // gapDelayMs's only parameter is an injectable RNG for tests. A future change that reached
+    // into `form.trials[index]` to pick a longer gap ahead of a no-go trial would still compile,
+    // so the only thing that can catch it is pinning what the call site looks like today.
+    expect(GONOGO_SRC).toMatch(/setTimeout\(\(\) => showStimulus\(index\), gapDelayMs\(\)\)/);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
    #11 — Numbers backwards keeps every answer-so-far row on one line at 375px width.
 
    OLD BUG (found on a real phone, 2026-09-22): the answer slots wrapped to a second line for a
