@@ -734,6 +734,98 @@ fault of its own.
 
 ---
 
+## 2026-09-23 — Autonomous session: Apple web design system, a product screenshot, and an app-wide copy audit
+
+Co-authored by Claude Sonnet 5, run autonomously start to finish at the project owner's
+direction, five tasks named directly in the brief plus disclosure and the session report.
+`/guard` was supposed to run for the whole session and was NOT started until partway through
+task 5 — a real process miss, disclosed rather than glossed over; see `SESSION-REPORT.md` §3
+for what that did and did not put at risk. No threshold value in `lib/engine/thresholds.ts`
+was touched and `CLAUDE.md` was not edited. Commits `6b85d39`, `7396e26`, `1e825ec`,
+`f390e02`, `a5d48f2`.
+
+*Task 1 — replace the design system (`6b85d39`).* The entire warm/serif/monospace/`clinic`
+reading-screen system from 2026-09-20/22 was deleted and replaced with the exact spec the
+brief gave: seven Apple colour tokens (`canvas`, `surface`, `ink`, `ink-secondary`,
+`hairline`, `action`, `link`), one system-UI font family everywhere, sentence-case labels (no
+tracked all-caps), pill-shaped 44px reading buttons, and full-width alternating canvas/surface
+bands (`Section` in `components/ui.tsx`, new) instead of boxed Cards — the `Card` component
+was deleted outright since nothing on a reading screen uses one any more. `flag` (#c8102e) and
+`pad-go` are byte-for-byte unchanged; the six instrument screens' colours moved to Apple's dark
+values (`#000000`/`#1d1d1f`/`#f5f5f7`) with zero code changes to any of the six module files —
+only the CSS variable values in `app/globals.css` changed, which is what "keep the dark
+instrument treatment, only align colours" meant in practice. `app/results/[id]/page.tsx` is a
+needs-agreement file; the brief names "results" explicitly in Task 1's scope, which is the
+agreement `CLAUDE.md` asks for — only colours, weights and the verdict headline's size token
+(`stimulus` → new `hero`, 48px) changed there, every word of copy and the branch ordering are
+untouched. `lib/design.test.ts` was rewritten (not loosened) to assert the new system: thirteen
+colours, six type sizes, one font family, pill buttons on reading screens with unchanged
+56px/rounded-rect geometry on instrument screens. Two dev-only tool pages
+(`app/tools/calibration`, `app/tools/noise-floor`) needed mechanical token renames — `bg-paper`
+and `text-ink-soft` no longer existed anywhere in the stylesheet after the palette swap, so
+those two files would have silently lost their styling — fixed as a correctness matter, not a
+redesign; their layout and dark treatment are untouched. `Card`'s three call sites in
+`calibration/page.tsx` became a local `DEV_TOOL_BOX` constant instead, for the same reason.
+
+*Task 2 — a real product screenshot (`7396e26`).* `public/images/pattern-span-screenshot.png`
+is a genuine screenshot, captured live against the running dev server, of the Tapped patterns
+module mid practice run (one cell selected, "1 of 2 tapped") — not a mockup, not an
+illustration. It shows no athlete data: a practice run saves nothing, and this one was never
+attached to an athlete, so there was nothing to fabricate or redact. It sits in a plain
+CSS-only rounded-rectangle phone frame in a new right-hand column of the home hero (stacks
+below the text on narrow screens).
+
+*Task 3 — copy audit (`1e825ec`).* Every em dash and en dash in rendered, user-facing text was
+removed and rewritten as two sentences or restructured with a colon/comma/parentheses — this
+took a full pass through every reading screen, every test module's on-screen instruction
+string, both dev tools, the persistent safety footer (both `app/layout.tsx` and
+`app/global-error.tsx`, which restates it by hand), and the two engine-generated string sets
+that reach the results screen (`lib/engine/breakdown.ts`'s table labels,
+`lib/engine/compare.ts`'s explanation sentences). `lib/regression.test.ts`'s guard #7 was
+updated to match the one pinned string that changed ("Change found. Below the flag rule").
+British spelling: "practise"/"practising" → "practice"/"practicing" in every rendered instance
+(four places — a `Kicker`, a `Notice` title, and two button labels). Checked and found clean:
+every other British-spelling pattern named in the brief (colour, behaviour, organise, analyse,
+recognise, ...) appears only inside code comments across the whole repo, never in rendered
+copy, so nothing else needed changing. **Explicitly NOT touched, and reported instead:**
+`app/tests/gonogo/page.tsx` has three user-facing em dashes (two `discardAndRepeat` messages,
+one instruction string). `CLAUDE.md` reserves that file to the student and requires a direct,
+explicit instruction naming it before an AI session may edit it; this session's brief does not
+name it, so it is listed in `SESSION-REPORT.md` §5 for a human to fix instead of being changed
+without that authorisation.
+
+*Task 4 — review (`f390e02`, `a5d48f2`).* `/design-review` was evaluated, not run to
+completion: its setup phase needs a first-time build of the gstack `browse` binary, the
+`codex` CLI for its outside-voices pass, and several first-run `AskUserQuestion` onboarding
+prompts (telemetry, cross-project learnings, routing rules) — an interactive loop that does not
+fit an autonomous session told not to ask questions. This is the same call the 2026-09-20 and
+2026-09-22 sessions made for the same reason. Its actual review content — the AI-slop
+blacklist, the WCAG contrast method, the touch-target rules — was read in full and applied by
+hand instead. That hand-applied review found one real defect: `app/layout.tsx`'s `<body>` still
+carried `bg-surface` from the pre-2026-09-23 system, so every single-section reading screen
+(results, athlete detail, roster, practice) rendered on `#f5f5f7` instead of the spec's white
+canvas by default, which dropped the secondary-button blue to 4.31:1 on one measurement — under
+the 4.5:1 AA floor. Fixed in its own commit and re-verified live: a script walking every text
+node on five rendered pages (home, roster, athlete detail, practice, and an injected flagged
+result), resolving each one's real effective background through the ancestor chain, applying
+WCAG's actual relative-luminance formula. Zero failures anywhere afterward; lowest ratio 4.66:1
+(`ink-secondary` on a surface band). The flagged red measures 5.88:1 on canvas, unchanged from
+every prior session. Before/after screenshots: `docs/screenshots/{before,after}/*-2026-09-23.jpg`
+for home (hero + lower sections), roster, athlete detail, and a flagged result — "before" is a
+copy of the equivalent `*-2026-09-22.jpg` file, since no visual change happened between that
+session ending and this one starting, and a live "before" screenshot via `git checkout <old
+commit> -- <files>` on the clean tree was attempted and blocked by the harness's own
+destructive-action guard. A synthetic athlete and a synthetic baseline/check pair were injected
+via the browser's IndexedDB console to render the flagged state and the contrast script against
+it, then deleted — confirmed empty afterward (one pre-existing athlete with no results, from
+before this session, was left untouched).
+
+*Task 5 — this entry, and the session report.* AI wrote both. Nothing in this entry was
+reviewed by the project owner before being committed; it is offered as a record for them to
+check, correct, or contest, the same as every entry before it.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my
