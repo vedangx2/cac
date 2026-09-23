@@ -237,12 +237,25 @@ export default function DigitSpanPage() {
                 : `Round ${trialIndex + 1} of ${DIGIT_TRIALS_PER_FORM} · type them backwards`}
             </p>
 
-            {/* The answer so far, with a slot per expected digit so the length is obvious. */}
-            <div className="mt-4 flex flex-wrap gap-2" aria-live="polite">
+            {/*
+              The answer so far, with a slot per expected digit so the length is obvious.
+
+              FIXED 2026-09-22: at 375px width the longest sequences (6 and 7 digits) wrapped to
+              a second line, because seven of the old w-12 (48px) slots plus their gaps ran to
+              384px against roughly 311px actually available (InstrumentShell's px-4 plus this
+              panel's p-4, each side, subtracted from the viewport). An athlete who sees the
+              layout visibly break mid-sequence second-guesses whether the app glitched, which
+              has nothing to do with their memory. w-8 (32px) keeps even the 7-digit case at
+              about 272px, comfortably on one line with room to spare — still a fingertip-legible
+              slot for a single tabular digit, just narrower than before. `flex-nowrap` makes the
+              one-line guarantee explicit rather than an accident of the arithmetic holding.
+              `sm:w-16` is unchanged — this was never a bug above the mobile breakpoint.
+            */}
+            <div className="mt-4 flex flex-nowrap gap-2" aria-live="polite">
               {Array.from({ length: activeSequence.length }, (_, index) => (
                 <span
                   key={index}
-                  className="tabular flex h-16 w-12 items-center justify-center rounded-xl border-2 border-instrument-ink/20 text-display font-black sm:w-16"
+                  className="tabular flex h-16 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-instrument-ink/20 text-display font-black sm:w-16"
                 >
                   {entered[index] ?? ''}
                 </span>

@@ -554,3 +554,49 @@ describe('#9 pattern span — a tapped cell shows immediately and a repeat tap i
     expect(PATTERN_SRC).not.toMatch(/\b(?:bg|text|border)-(?:green|emerald|lime|teal)\b/);
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════════════
+   #11 — Numbers backwards keeps every answer-so-far row on one line at 375px width.
+
+   OLD BUG (found on a real phone, 2026-09-22): the answer slots wrapped to a second line for a
+   6- or 7-digit sequence, because seven of the old 48px slots plus their gaps (384px) ran well
+   past the roughly 311px actually available at 375px viewport width once InstrumentShell's and
+   the panel's padding are subtracted. A layout that visibly breaks mid-sequence reads as the app
+   glitching, not as a question about the athlete's memory.
+
+   The arithmetic is a real number to keep honest, not a one-time fix — this guard exists so a
+   later change to the slot width, the gap, or either container's padding gets checked against
+   the same 311px budget rather than silently reopening the wrap. See lib/design.test.ts for the
+   viewport-independent design-token guards; this one is specifically about the fixed 375px case.
+
+   STRUCTURAL GUARD (see the note at the top of this file).
+   ═══════════════════════════════════════════════════════════════════════════════════ */
+
+describe('#11 numbers backwards — the answer row never wraps at 375px width (structural guard)', () => {
+  it('never lets the row wrap to a second line', () => {
+    expect(DIGITS_SRC).toMatch(/className="mt-4 flex flex-nowrap gap-2"/);
+  });
+
+  it('sizes the seven-slot case to fit the real budget available at 375px', () => {
+    // InstrumentShell: px-4 (16px) each side below the sm breakpoint. The panel around the slots:
+    // p-4 (16px) each side, unconditionally. 375 - 2*16 - 2*16 = 311px available for the row.
+    const PAGE_PADDING_PX = 16;
+    const PANEL_PADDING_PX = 16;
+    const VIEWPORT_PX = 375;
+    const available = VIEWPORT_PX - 2 * PAGE_PADDING_PX - 2 * PANEL_PADDING_PX;
+
+    const slotWidthMatch = DIGITS_SRC.match(/tabular flex h-16 w-(\d+) shrink-0/);
+    const gapMatch = DIGITS_SRC.match(/className="mt-4 flex flex-nowrap gap-(\d+)"/);
+    expect(slotWidthMatch, 'slot width class').not.toBeNull();
+    expect(gapMatch, 'gap class').not.toBeNull();
+
+    // Tailwind's spacing scale: each unit is 0.25rem = 4px.
+    const slotWidthPx = Number(slotWidthMatch![1]) * 4;
+    const gapPx = Number(gapMatch![1]) * 4;
+
+    const MAX_DIGIT_TRIAL_LENGTH = 7; // the longest trial on the digit-span ladder — see CLAUDE.md
+    const rowWidth = MAX_DIGIT_TRIAL_LENGTH * slotWidthPx + (MAX_DIGIT_TRIAL_LENGTH - 1) * gapPx;
+
+    expect(rowWidth).toBeLessThan(available);
+  });
+});
