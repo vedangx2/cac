@@ -105,7 +105,7 @@ export default function AthletesPage() {
 
           {!loading && athletes?.length === 0 && (
             <Notice title="No athletes yet">
-              Add your first athlete using the form. Nothing is uploaded anywhere — everything
+              Add your first athlete using the form. Nothing is uploaded anywhere: everything
               stays in this browser, on this device.
             </Notice>
           )}
@@ -214,7 +214,7 @@ export default function AthletesPage() {
             </form>
 
             <p className="mt-4 text-meta text-ink-secondary">
-              Names are stored only in this browser. Use whatever your team already uses — a
+              Names are stored only in this browser. Use whatever your team already uses. A
               first name and last initial is plenty.
             </p>
           </div>

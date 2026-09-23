@@ -274,8 +274,8 @@ export default function ResultPage() {
             */}
             <Notice title="What to do about this">
               {name} needs a new baseline recorded on the current tests before checks can be
-              compared again. Record it on a day when they are well and rested —{' '}
-              <strong>not today, and not after a possible head impact.</strong> The old
+              compared again. Record it on a day when they are well and rested.{' '}
+              <strong>Not today, and not after a possible head impact.</strong> The old
               recordings stay saved on this device; they simply cannot be compared against the
               new tests.
             </Notice>
@@ -339,8 +339,8 @@ export default function ResultPage() {
         <div className="mt-6">
           <Notice title="Do not record a baseline right now">
             A baseline only means something if it is recorded while the athlete is well. Record
-            one for {state.athlete?.name ?? 'this athlete'} another day, before they play again
-            — not today, and not after a possible head impact.
+            one for {state.athlete?.name ?? 'this athlete'} another day, before they play again.
+            Not today, and not after a possible head impact.
           </Notice>
         </div>
 
@@ -440,7 +440,7 @@ export default function ResultPage() {
           </p>
           <p className="mt-3 text-body text-ink-secondary">
             This screen cannot tell you whether {name} has a concussion. It can only tell you
-            that something measured differently than it did when they were well — and that is
+            that something measured differently than it did when they were well, and that is
             reason enough for a trained person to take a look.
           </p>
         </section>
@@ -457,7 +457,7 @@ export default function ResultPage() {
           detected. Every path out still ends with a medical professional.
         */
         <section className="border-t-2 border-ink pt-6" aria-live="polite">
-          <p className="text-meta font-semibold text-ink-secondary">Change found — below the flag rule</p>
+          <p className="text-meta font-semibold text-ink-secondary">Change found. Below the flag rule</p>
           <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
             {crossedRows.length === 1
               ? 'One of the measurements moved past its cut-off.'
@@ -469,13 +469,13 @@ export default function ResultPage() {
             <p>
               {crossedRows.map((row) => row.label).join(', ')} changed more than the tested
               cut-off for that measurement, and is marked in the table below. On its own that
-              does not raise this screen&apos;s flag — the flag needs a rise in reported
+              does not raise this screen&apos;s flag. The flag needs a rise in reported
               symptoms, or two or more modules changing together.
             </p>
             {someUnjudged && (
               <p>
                 Several other measurements have no tested cut-off yet, so they were recorded
-                but <strong>not judged at all</strong> — they are marked &ldquo;not judged&rdquo; below.
+                but <strong>not judged at all</strong>. They are marked &ldquo;not judged&rdquo; below.
                 Treat those as unread, not as normal.
               </p>
             )}
@@ -483,8 +483,8 @@ export default function ResultPage() {
               Treat this as a reason to watch {name} closely. If they may have hit their head,{' '}
               <span className="underline underline-offset-4">
                 have them seen by a medical professional
-              </span>{' '}
-              — and if anything feels off at any point, seek care straight away.
+              </span>
+              , and if anything feels off at any point, seek care straight away.
             </p>
             <p className="text-ink-secondary">
               This screen is not a clearance to return to play, and it does not rule out a
@@ -556,7 +556,7 @@ export default function ResultPage() {
             <p>
               A concussion can be present even when these tests look unchanged, and symptoms
               can take hours to appear. Keep monitoring {name}, and{' '}
-              <strong>see a medical professional if anything feels off</strong> — including
+              <strong>see a medical professional if anything feels off</strong>, including
               later today or tomorrow.
             </p>
             <p className="text-ink-secondary">
@@ -598,7 +598,7 @@ export default function ResultPage() {
         <table className="mt-4 w-full border-collapse text-left">
           <caption className="sr-only">
             Each measurement&apos;s baseline value, this check&apos;s value, the threshold
-            applied, and the change — marked flagged or not judged where that applies.
+            applied, and the change, marked flagged or not judged where that applies.
           </caption>
           <tbody>
             {rows.map((row) => (

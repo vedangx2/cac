@@ -440,7 +440,7 @@ export function compareToBaseline(
 
       explanations.push(
         `${item.label}: ${movement} ${bothValues}. This screen has no tested cut-off for this ` +
-          'measurement yet, so it was NOT judged — treat it as unread, not as normal.',
+          'measurement yet, so it was NOT judged. Treat it as unread, not as normal.',
       );
       continue;
     }

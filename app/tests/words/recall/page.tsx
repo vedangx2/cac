@@ -117,7 +117,7 @@ export default function WordRecallPage() {
       <InstrumentHeader
         title="Word recall"
         step={battery.loaded ? battery.stepLabel : undefined}
-        instruction="Tap every word you were shown at the very start — tap again to un-pick."
+        instruction="Tap every word you were shown at the very start. Tap again to un-pick."
       >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>

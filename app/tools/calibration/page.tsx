@@ -226,18 +226,18 @@ function CalibrationTool() {
         <div className="mt-3 max-w-3xl space-y-3 text-body text-ink-secondary">
           <p>
             For each measurement, paste repeated readings from{' '}
-            <strong className="text-ink">healthy</strong> people taken days apart — the same thing{' '}
+            <strong className="text-ink">healthy</strong> people taken days apart, the same thing{' '}
             <code className="text-ink">/tools/noise-floor</code> collects. How much those readings
             move on their own is the only thing that decides how often a threshold will flag
             somebody who is fine.
           </p>
           <ul className="ml-4 list-disc space-y-2">
             <li>
-              <strong className="text-ink">One number per line</strong> — repeated sittings by the
+              <strong className="text-ink">One number per line</strong>: repeated sittings by the
               same person.
             </li>
             <li>
-              <strong className="text-ink">Two numbers per line</strong> — a baseline and a retest
+              <strong className="text-ink">Two numbers per line</strong>: a baseline and a retest
               from one person, one pair per line. Better if you have it: pairs separate one person
               wobbling from different people differing, and only the first of those matters here.
             </li>
@@ -250,7 +250,7 @@ function CalibrationTool() {
           <p>
             <strong className="text-ink">Degradation is yours to choose and has no default.</strong>{' '}
             It is how much worse an impaired athlete is, in that measurement&apos;s own units, always
-            a positive number — 60 for &ldquo;60 ms slower&rdquo;, 2 for &ldquo;2 fewer trials
+            a positive number: 60 for &ldquo;60 ms slower&rdquo;, 2 for &ldquo;2 fewer trials
             correct&rdquo;. Leave it blank and the harness will refuse to report a miss rate for
             that measurement rather than assume an effect size.
           </p>
@@ -457,7 +457,7 @@ function CalibrationTool() {
 
           {/* The curve */}
           <h3 className="mt-8 text-title font-bold text-ink">
-            {MEASUREMENT_SHAPES[output.focus].label} — the whole tradeoff
+            {MEASUREMENT_SHAPES[output.focus].label}: the whole tradeoff
           </h3>
           <p className="mt-2 max-w-3xl text-body text-ink-secondary">
             Read down the table, not across to a winner. A lower threshold catches more but flags
@@ -519,7 +519,7 @@ function CalibrationTool() {
           </h3>
           <p className="mt-2 max-w-3xl text-body text-ink-secondary">
             Since 2026-09-10 the engine flags on symptoms alone, or on two or more modules
-            together — the third row below. It used to flag on <em>any</em> module, which with
+            together (the third row below). It used to flag on <em>any</em> module, which with
             ten measurements is ten separate chances to raise a false alarm on an athlete who
             is fine; that comparison is what retired the old rule, and all three rows stay here
             so it can be re-run against new data. These rows use the candidate thresholds you

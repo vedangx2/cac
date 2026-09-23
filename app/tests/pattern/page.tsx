@@ -416,7 +416,7 @@ export default function PatternSpanPage() {
             ·{' '}
             {phase === 'presenting' || phase === 'demoPresenting'
               ? 'watch'
-              : `your turn — ${tapCount} of ${activeSequence.length} tapped`}
+              : `your turn: ${tapCount} of ${activeSequence.length} tapped`}
           </p>
 
           <div
@@ -470,7 +470,7 @@ export default function PatternSpanPage() {
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
           <h2 className="text-title font-bold">Practice complete</h2>
           <p className="mt-2 text-body text-instrument-ink-soft">
-            That was practice — nothing was recorded. The real test works exactly the same way.
+            That was practice. Nothing was recorded. The real test works exactly the same way.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button

@@ -222,7 +222,7 @@ export default function NoiseFloorPage() {
       // would widen the measured spread and make the floor look far noisier than it is.
       if (ms > MAX_PLAUSIBLE_REACTION_MS) {
         greenAtRef.current = 0;
-        paintPad('toosoon', 'MISSED', 'Too slow to be a reaction — that trial will start again');
+        paintPad('toosoon', 'MISSED', 'Too slow to be a reaction. That trial will start again');
         timerRef.current = setTimeout(() => {
           idlePrompt(trialsRef.current.length);
         }, FALSE_START_MESSAGE_MS);
@@ -235,7 +235,7 @@ export default function NoiseFloorPage() {
       // See MIN_PLAUSIBLE_REACTION_MS for why this exists and why it is not a false start.
       if (ms < MIN_PLAUSIBLE_REACTION_MS) {
         greenAtRef.current = 0;
-        paintPad('toosoon', 'TOO SOON', 'Too fast to be a reaction — that trial will start again');
+        paintPad('toosoon', 'TOO SOON', 'Too fast to be a reaction. That trial will start again');
         timerRef.current = setTimeout(() => {
           idlePrompt(trialsRef.current.length);
         }, FALSE_START_MESSAGE_MS);
@@ -249,7 +249,7 @@ export default function NoiseFloorPage() {
       paintPad(
         done ? 'done' : 'idle',
         `${ms} ms`,
-        done ? 'All trials complete — readings below' : `Tap for trial ${trialsRef.current.length + 1}`,
+        done ? 'All trials complete. Readings below' : `Tap for trial ${trialsRef.current.length + 1}`,
       );
 
       // The measurement is finished, so React is safe to wake up now.
@@ -351,12 +351,12 @@ export default function NoiseFloorPage() {
         a test of anybody and produces nothing about anybody's health.
       */}
       <div className="mb-6 rounded-lg border-l-4 border-y border-r border-instrument-ink-soft bg-instrument-panel p-4">
-        <p className="font-bold text-instrument-ink">Measurement tool — not part of the screening battery</p>
+        <p className="font-bold text-instrument-ink">Measurement tool. Not part of the screening battery</p>
         <p className="mt-1 text-meta text-instrument-ink-soft">
           This page exists so we can measure how much a healthy person&apos;s reaction time
           varies between sittings. It is not a concussion test, it is not scored, it is not
           compared against anyone&apos;s baseline, and it says nothing about anyone&apos;s
-          health. Nothing on this page is saved — the numbers disappear when you leave, so
+          health. Nothing on this page is saved. The numbers disappear when you leave, so
           write them down.
         </p>
       </div>
@@ -429,7 +429,7 @@ export default function NoiseFloorPage() {
             Trials are shown in the order they happened. Any trial slower than{' '}
             {MAX_PLAUSIBLE_REACTION_MS} ms or faster than {MIN_PLAUSIBLE_REACTION_MS} ms was
             discarded and repeated rather than recorded, so all five numbers above are genuine
-            reactions — a sub-{MIN_PLAUSIBLE_REACTION_MS} ms tap is a guess that was already on
+            reactions. A sub-{MIN_PLAUSIBLE_REACTION_MS} ms tap is a guess that was already on
             its way down, not a reaction. False starts do not consume a trial.
           </p>
 

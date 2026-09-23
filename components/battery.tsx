@@ -145,7 +145,7 @@ export function useBatteryStep(step: BatteryStep): BatteryState {
         // the check was recorded when nothing was written. So we say so, loudly, and leave the
         // sitting in place so they can try again without redoing the tests.
         setSaveError(
-          'This sitting could not be saved to this device. Nothing has been recorded. Try again — and if it keeps failing, this browser may be blocking storage (private browsing does this).',
+          'This sitting could not be saved to this device. Nothing has been recorded. Try again. If it keeps failing, this browser may be blocking storage (private browsing does this).',
         );
       } finally {
         savingRef.current = false;
@@ -230,14 +230,14 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
 
   return (
     <div className={`mb-6 rounded-xl p-4 ${styles.box}`}>
-      <p className={`text-title font-black ${styles.title}`}>Practice run — nothing is saved</p>
+      <p className={`text-title font-black ${styles.title}`}>Practice run. Nothing is saved</p>
       {practiceRun ? (
         <p className={`mt-2 text-body ${styles.body}`}>
           {practiceRun.athleteName ? (
             <>
-              Practising as <strong className={styles.title}>{practiceRun.athleteName}</strong>. All
+              Practicing as <strong className={styles.title}>{practiceRun.athleteName}</strong>. All
               six tests run in order; the scores are shown at the end and then thrown away.
-              Finishing counts as their practice pass — the scores themselves are never stored.
+              Finishing counts as their practice pass. The scores themselves are never stored.
             </>
           ) : (
             <>

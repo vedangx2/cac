@@ -22,7 +22,7 @@ const STEPS = [
     number: '1',
     title: 'Record a baseline',
     body:
-      'While the athlete is well, they work through a short battery of tests. This is their personal reference point — how they perform normally, not how anyone else performs.',
+      'While the athlete is well, they work through a short battery of tests. This is their personal reference point: how they perform normally, not how anyone else performs.',
   },
   {
     number: '2',
@@ -34,7 +34,7 @@ const STEPS = [
     number: '3',
     title: 'Compare and refer',
     body:
-      'The app compares the new scores against that athlete’s own baseline, shows what changed, and tells you to get a professional opinion — whatever the comparison finds.',
+      'The app compares the new scores against that athlete’s own baseline, shows what changed, and tells you to get a professional opinion. Whatever the comparison finds.',
   },
 ];
 
@@ -48,7 +48,7 @@ const TESTS = [
     href: '/tests/words',
     title: 'Word learning',
     body:
-      'Study ten words, then pick them out of twenty. You are asked again at the end, so the same words are tested twice — once straight away and once after a delay.',
+      'Study ten words, then pick them out of twenty. You are asked again at the end, so the same words are tested twice: once straight away and once after a delay.',
   },
   {
     href: '/tests/digits',
@@ -105,15 +105,15 @@ export default function HomePage() {
             gate); the honest caveat now is about how few measurements carry a tested cut-off.
           */}
           <div className="mt-8 max-w-2xl">
-            <Notice tone="loud" title="Early days — most measurements are not judged yet">
+            <Notice tone="loud" title="Early days. Most measurements are not judged yet">
               Recording works: an athlete runs one practice pass, records a baseline while well,
               and can be checked after a hit. But only two measurements have tested cut-offs so
-              far — the symptom score, and go/no-go response time, whose cut-off comes from one
+              far: the symptom score, and go/no-go response time, whose cut-off comes from one
               student&apos;s self-collected data. Everything else is measured, shown, and marked
               as not judged.{' '}
               <strong>
                 This app never diagnoses and never clears anyone. If an athlete may have hit
-                their head, have them seen by a medical professional — whatever any screen here
+                their head, have them seen by a medical professional, whatever any screen here
                 says.
               </strong>
             </Notice>
@@ -169,7 +169,7 @@ export default function HomePage() {
             something measured differently than usual.
           </li>
           <li className="py-4 text-body text-ink">
-            Every result — including one that finds no change — ends the same way:{' '}
+            Every result, including one that finds no change, ends the same way:{' '}
             <strong>see a medical professional.</strong>
           </li>
         </ul>
@@ -249,7 +249,7 @@ export default function HomePage() {
             <p className="mt-3 text-body text-ink-secondary">
               There is no account, no server, and no upload. Every athlete and every result is
               stored in this browser&apos;s own storage, on this device. That also means
-              results do not follow you to another phone or another browser — and that
+              results do not follow you to another phone or another browser, and that
               clearing your browser data will erase them.
             </p>
           </div>

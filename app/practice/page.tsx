@@ -73,7 +73,7 @@ export default function PracticePage() {
       <PageHeader
         eyebrow="Instructions"
         title="Practice run"
-        subtitle="All six tests, in order, exactly as a real sitting runs them — scored, shown to you once at the end, and saved nowhere."
+        subtitle="All six tests, in order, exactly as a real sitting runs them: scored, shown to you once at the end, and saved nowhere."
         backHref={athlete ? `/athletes/${athlete.id}` : '/'}
         backLabel={athlete ? `Back to ${athlete.name}` : 'Home'}
       />
@@ -96,10 +96,10 @@ export default function PracticePage() {
       */}
       <div className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-16">
         <div>
-          <Kicker>Why practise before recording a baseline</Kicker>
+          <Kicker>Why practice before recording a baseline</Kicker>
           <p className="mt-2 max-w-2xl text-title text-ink-secondary">
             A baseline recorded on someone&apos;s very first attempt reads worse than their
-            true normal — later sittings improve just from familiarity, and that improvement
+            true normal. Later sittings improve just from familiarity, and that improvement
             can cancel out a real decline and hide it on the day it matters.
           </p>
 
@@ -112,14 +112,14 @@ export default function PracticePage() {
                 </span>
                 <span>
                   {STEP_LABELS[step]}
-                  {index === 0 && ' — the run starts here'}
+                  {index === 0 && ' (the run starts here)'}
                 </span>
               </li>
             ))}
           </ol>
           <p className="mt-6 max-w-2xl text-body text-ink-secondary">
             Each screen is marked as practice while you are on it. At the end you see every
-            module&apos;s score once, and then it is thrown away — practice numbers are
+            module&apos;s score once, and then it is thrown away. Practice numbers are
             first-attempt numbers, which is exactly what a baseline must not contain.
           </p>
         </div>
@@ -127,9 +127,9 @@ export default function PracticePage() {
         <div className="mt-10 lg:mt-0">
           <div className="border-t border-hairline pt-6">
             {athlete ? (
-              <Notice title={`Practising as ${athlete.name}`}>
+              <Notice title={`Practicing as ${athlete.name}`}>
                 Finishing this run counts as {athlete.name}&apos;s practice pass and unlocks
-                recording a baseline for them. Only the fact that the pass happened is stored —
+                recording a baseline for them. Only the fact that the pass happened is stored,
                 never its scores.
               </Notice>
             ) : (

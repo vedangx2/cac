@@ -193,7 +193,7 @@ export default function DigitSpanPage() {
       <InstrumentHeader
         title="Numbers backwards"
         step={battery.loaded ? battery.stepLabel : undefined}
-        instruction="Watch the numbers, then type them back in reverse order — last one first."
+        instruction="Watch the numbers, then type them back in reverse order. Last one first."
       >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>
@@ -201,7 +201,7 @@ export default function DigitSpanPage() {
       {/* ── Instructions ────────────────────────────────────────────────────────────── */}
       {phase === 'instructions' && (
         <ModuleIntro
-          heading="See 4 — 1 — 7, type 7 1 4"
+          heading="See 4, 1, 7. Type 7, 1, 4"
           detail={`Two practice rounds first, then ${DIGIT_TRIALS_PER_FORM} scored rounds, getting longer.`}
           actionLabel="Start practice"
           onStart={() => presentDemo(0)}
@@ -306,7 +306,7 @@ export default function DigitSpanPage() {
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
           <h2 className="text-title font-bold">Practice complete</h2>
           <p className="mt-2 text-body text-instrument-ink-soft">
-            That was practice — nothing was recorded. The real test works exactly the same way.
+            That was practice. Nothing was recorded. The real test works exactly the same way.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Button

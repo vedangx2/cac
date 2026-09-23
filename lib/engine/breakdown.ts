@@ -115,7 +115,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
     {
       module: 'wordLearning',
       measurement: 'wordLearningFalseAlarms',
-      label: 'Word learning, immediate — words wrongly claimed',
+      label: 'Word learning, immediate: words wrongly claimed',
       threshold: WORD_LEARNING_MORE_FALSE_ALARMS,
       baselineValue: baseline.scores.wordLearning?.falseAlarms ?? null,
       checkValue: check.scores.wordLearning?.falseAlarms ?? null,
@@ -137,7 +137,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
     {
       module: 'wordRecognition',
       measurement: 'wordRecognitionFalseAlarms',
-      label: 'Word recall, delayed — words wrongly claimed',
+      label: 'Word recall, delayed: words wrongly claimed',
       threshold: WORD_RECOGNITION_MORE_FALSE_ALARMS,
       baselineValue: baseline.scores.wordRecognition?.falseAlarms ?? null,
       checkValue: check.scores.wordRecognition?.falseAlarms ?? null,
@@ -170,7 +170,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
     {
       module: 'goNoGo',
       measurement: 'goNoGoMedianMs',
-      label: 'Go / no-go — response time',
+      label: 'Go / no-go: response time',
       threshold: GO_NO_GO_SLOWER_MS,
       baselineValue: baseline.scores.goNoGo?.medianMs ?? null,
       checkValue: check.scores.goNoGo?.medianMs ?? null,
@@ -182,7 +182,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
     {
       module: 'goNoGo',
       measurement: 'goNoGoCommissionErrors',
-      label: 'Go / no-go — responded on a stop signal',
+      label: 'Go / no-go: responded on a stop signal',
       threshold: GO_NO_GO_MORE_COMMISSION_ERRORS,
       baselineValue: baseline.scores.goNoGo?.commissionErrors ?? null,
       checkValue: check.scores.goNoGo?.commissionErrors ?? null,
@@ -194,7 +194,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
     {
       module: 'goNoGo',
       measurement: 'goNoGoOmissionErrors',
-      label: 'Go / no-go — missed a go signal',
+      label: 'Go / no-go: missed a go signal',
       threshold: GO_NO_GO_MORE_OMISSION_ERRORS,
       baselineValue: baseline.scores.goNoGo?.omissionErrors ?? null,
       checkValue: check.scores.goNoGo?.omissionErrors ?? null,
@@ -229,7 +229,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
 
     const thresholdText =
       spec.threshold === null
-        ? 'No tested cut-off yet — not judged'
+        ? 'No tested cut-off yet, not judged'
         : `Flags at ${spec.formatChange(spec.threshold)} ${spec.words.worse} or more`;
 
     if (baselineValue === null || checkValue === null) {

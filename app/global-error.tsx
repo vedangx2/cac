@@ -34,7 +34,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           </h1>
           <p style={{ fontSize: '1.125rem', lineHeight: 1.6, marginTop: '1rem' }}>
             The app hit an unexpected error. Any athletes and results you had already saved are
-            still stored on this device — this did not delete anything.
+            still stored on this device. This did not delete anything.
           </p>
 
           <div
@@ -84,7 +84,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
             color: '#4b565d',
           }}
         >
-          Student-built screening aid — not a medical device. Always consult a medical
+          Student-built screening aid. Not a medical device. Always consult a medical
           professional.
         </footer>
       </body>

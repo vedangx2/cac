@@ -58,7 +58,7 @@ export default function SymptomTestPage() {
       <InstrumentHeader
         title="Symptoms"
         step={battery.loaded ? battery.stepLabel : undefined}
-        instruction="Rate each one as it feels right now — an honest rating is what makes the comparison work."
+        instruction="Rate each one as it feels right now. An honest rating is what makes the comparison work."
       >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>

@@ -157,7 +157,7 @@ export default function PracticeSummaryPage() {
     {
       label: STEP_LABELS.symptom,
       value: `${scores.symptom.total} out of ${MAX_SYMPTOM_TOTAL}`,
-      detail: 'Total across ten symptoms, each rated 0–3.',
+      detail: 'Total across ten symptoms, each rated 0 to 3.',
     },
     {
       label: STEP_LABELS.wordLearning,
@@ -191,7 +191,7 @@ export default function PracticeSummaryPage() {
       <PageHeader
         eyebrow="Practice"
         title="Practice run complete"
-        subtitle="Every number below is a record of what happened, judged against nothing. None of it is saved — it exists only on this screen."
+        subtitle="Every number below is a record of what happened, judged against nothing. None of it is saved. It exists only on this screen."
       />
 
       {/* What the run did or did not durably change — said before the numbers, not after. */}
@@ -207,13 +207,13 @@ export default function PracticeSummaryPage() {
           <div className="mb-6">
             <Notice title={`This counted as ${athlete.name}'s practice pass`}>
               Recording a baseline for {athlete.name} is now unlocked on their page. Only the
-              fact that this pass happened was stored — none of the numbers below were.
+              fact that this pass happened was stored. None of the numbers below were.
             </Notice>
           </div>
         ) : (
           <div className="mb-6">
             <Notice tone="loud" title="The practice pass could not be recorded">
-              The run finished, but writing the pass to this device failed — that usually means
+              The run finished, but writing the pass to this device failed. That usually means
               this browser is blocking storage (private browsing does this). Recording a
               baseline for {athlete.name} stays locked until a pass is recorded. You can run
               the practice again to retry.
@@ -249,7 +249,7 @@ export default function PracticeSummaryPage() {
           ))}
         </div>
         <p className="mt-4 text-body text-ink-secondary">
-          Practice numbers are first-attempt numbers — the exact thing a baseline must not
+          Practice numbers are first-attempt numbers, the exact thing a baseline must not
           contain, which is why they are shown once and thrown away. No cut-offs were applied
           and nothing here says anything about anyone&apos;s health.
         </p>
@@ -258,7 +258,7 @@ export default function PracticeSummaryPage() {
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Button onClick={done}>Done</Button>
         <Button variant="secondary" onClick={practiceAgain}>
-          Practise again
+          Practice again
         </Button>
       </div>
     </PageShell>

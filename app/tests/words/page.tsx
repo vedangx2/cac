@@ -134,7 +134,7 @@ export default function WordLearningPage() {
       <InstrumentHeader
         title="Word learning"
         step={battery.loaded ? battery.stepLabel : undefined}
-        instruction={`Remember ${WORDS_PER_FORM} words — you will be asked about them twice.`}
+        instruction={`Remember ${WORDS_PER_FORM} words. You will be asked about them twice.`}
       >
         <SittingLabel session={battery.session} />
       </InstrumentHeader>

@@ -464,7 +464,7 @@ describe('#7 results screen — a crossed measurement on an unflagged screen is 
   });
 
   it('says out loud that this is not a "no change" result, and still ends in a referral', () => {
-    expect(RESULTS_SRC).toContain('Change found — below the flag rule');
+    expect(RESULTS_SRC).toContain('Change found. Below the flag rule');
     // The branch must carry its own referral — every headline state on this screen does.
     const branch = RESULTS_SRC.slice(
       RESULTS_SRC.indexOf(') : belowFlagRule ? ('),

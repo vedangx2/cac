@@ -178,7 +178,7 @@ export default function AthleteDetailPage() {
       <div className="mb-8">
         <Notice tone="loud" title="What a result can and cannot judge right now">
           Only two measurements have tested cut-offs so far: the symptom score, and the go/no-go
-          response time — whose cut-off comes from one student&apos;s self-collected data, not
+          response time, whose cut-off comes from one student&apos;s self-collected data, not
           from clinical evidence. Everything else is recorded, shown, and marked{' '}
           <strong>not judged</strong>. The screen flags on a rise in symptoms alone, or on two
           modules changing together.
@@ -204,14 +204,14 @@ export default function AthleteDetailPage() {
                 {baseline ? 'Record a new baseline' : 'Record a baseline'}
               </h3>
               <p className="mt-2 text-body text-ink-secondary">
-                Do this while {athlete.name} is well and rested — ideally before the season
+                Do this while {athlete.name} is well and rested. Ideally before the season
                 starts. It is the reference every later check is measured against.
               </p>
 
               {baseline && (
                 <div className="mt-4">
                   {/*
-                    An athlete has one baseline, so a new one replaces it — and past checks were
+                    An athlete has one baseline, so a new one replaces it, and past checks were
                     never measured against a baseline that did not exist yet. The engine refuses
                     those comparisons rather than silently re-scoring old results, so say that
                     here instead of letting it surprise someone later.
@@ -236,7 +236,7 @@ export default function AthleteDetailPage() {
                 <div className="mt-4">
                   <Notice title="One practice pass first">
                     A baseline recorded on {athlete.name}&apos;s very first attempt would read
-                    worse than their true normal — later sittings improve just from
+                    worse than their true normal. Later sittings improve just from
                     familiarity, and that improvement can hide a real decline on the day it
                     matters. Nothing from the practice run is saved.
                   </Notice>
@@ -277,7 +277,7 @@ export default function AthleteDetailPage() {
                 <div className="mt-4">
                   {/*
                     We warn here rather than blocking. Someone standing on a sideline with a
-                    hurt kid should not be stopped by our app — but they should know, before
+                    hurt kid should not be stopped by our app, but they should know, before
                     spending three minutes on tests, that there is nothing to compare against.
                   */}
                   <Notice tone="loud" title="There is no baseline to compare against">
@@ -364,7 +364,7 @@ export default function AthleteDetailPage() {
                 <p className="text-body text-ink-secondary">
                   Saves {athlete.name}&apos;s {results.length}{' '}
                   {results.length === 1 ? 'sitting' : 'sittings'} to a JSON file on this device,
-                  exactly as stored. Nothing is uploaded — the app has no server to send it to.
+                  exactly as stored. Nothing is uploaded. The app has no server to send it to.
                 </p>
                 <p className="mt-3 text-meta text-ink-secondary">
                   <strong className="text-ink">The file includes {athlete.name}&apos;s name</strong>{' '}
