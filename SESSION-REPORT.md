@@ -1,3 +1,294 @@
+# Session report — 22 September 2026
+
+Branch: `feat/gonogo-and-calibration`. **Not merged, not pushed to origin, `v1-three-module` tag
+untouched.** Run autonomously start to finish, `/guard` on the whole time (edits restricted to the
+project root; destructive-command warnings on). Four tasks named directly in the brief, one of
+them an explicit `/investigate` before touching anything, plus disclosure and this report. No
+threshold value in `lib/engine/thresholds.ts` was touched, tapped patterns' difficulty and timing
+were left untouched (explicit hard stop — its early data sits at ceiling), and `CLAUDE.md` was not
+edited — needed changes are listed in §7.
+
+`npx vitest run` — **450 tests, 20 files, all passing** (436 → 450: 14 new tests, all from this
+session — `isRepeatTap` coverage in `lib/modules/pattern.test.ts`, the gap-independence proof in
+`lib/modules/gonogo.test.ts`, and three new structural guards, #9/#10/#11, in
+`lib/regression.test.ts`). `npx tsc --noEmit`, `npm run lint`, `npm run build` (17 routes,
+unchanged) all clean, checked after every task and again at the end. 5 commits:
+`05b39e1` (task 1), `ff25083` (task 2), `339e025` (task 3), `bb3c635` (task 4), `d1bc56e` (task 5).
+
+---
+
+## §0 — What changed, file by file
+
+**Task 1 (pattern tap feedback):**
+- `lib/modules/pattern.ts` — new pure function `isRepeatTap`.
+- `app/tests/pattern/page.tsx` — tapped-cell "selected" visual state, repeat-tap guard, applied to
+  both real trials and demo rounds; new GUARD 3 header comment.
+- `lib/modules/pattern.test.ts` — `isRepeatTap` unit tests, plus a test proving no sequence in the
+  pool (scored or demo) ever repeats a cell, which is the premise the fix depends on.
+- `lib/regression.test.ts` — structural guard #9.
+
+**Task 2 (numbers backwards wrap):**
+- `app/tests/digits/page.tsx` — mobile answer-slot width 48px → 32px (`sm:w-16` unchanged), row
+  switched `flex-wrap` → `flex-nowrap`.
+- `lib/regression.test.ts` — structural guard #11, which turns the 375px width budget into a real
+  assertion instead of a comment.
+
+**Task 3 (go/no-go investigation):**
+- `lib/modules/gonogo.ts` — doc comment on `gapDelayMs` only; no logic changed.
+- `lib/modules/gonogo.test.ts` — new test proving the gap is statistically independent of trial
+  type, across every form.
+- `lib/regression.test.ts` — structural guard #10.
+- `app/tests/gonogo/page.tsx` — **not touched** (student-owned; nothing needed changing).
+
+**Task 4 (reading-screen redesign):**
+- `app/globals.css` — palette warmed (`paper`/`surface`/`ink`/`ink-soft`), one new token `clinic`
+  added, ten colours → eleven; typography comment widened from "results screen only" to "every
+  reading screen."
+- `components/ui.tsx` — `PageHeader` gained `eyebrow` (kicker label) and widened `title` from
+  `string` to `ReactNode` (mixed-weight headings); new `Kicker` component.
+- `app/page.tsx` — full rebuild: mixed-weight hero heading, "How it works" from a 3-card grid to an
+  alternating ruled list, "The tests" from a 2-card grid to a ruled reading list beside a narrower
+  privacy column.
+- `app/athletes/page.tsx` — roster list from boxed Cards to a ruled list.
+- `app/athletes/[id]/page.tsx` — custom header replaced with `PageHeader` (gains `eyebrow` and the
+  56px back-link tap target it was missing); history list from boxed Cards to a ruled list.
+- `app/practice/page.tsx` — single centred Card replaced with two unequal columns (prose + ruled
+  step list beside a compact action panel).
+- `app/practice/summary/page.tsx` — score grid from boxed Cards to a ruled table, matching results.
+- `app/results/[id]/page.tsx` — **not touched.** Already token-based and already using the
+  serif/monospace pair from 2026-09-20; the new palette reaches it with zero edits to a
+  needs-agreement file.
+- `lib/design.test.ts` — colour-count assertion 10 → 11; font-scope guard widened from "results
+  only" to the six named reading screens; "one accent" test split into "one signal colour" (still
+  exactly `flag`) plus a new guard that `clinic` may never take the loud border-4/8 treatment.
+- `docs/screenshots/before/*-2026-09-22.jpg`, `docs/screenshots/after/*-2026-09-22.jpg` — seven
+  before/after pairs (home hero, home lower sections, roster, athlete detail, practice, practice
+  summary, results-flagged).
+
+**Task 5 (disclosure):** `AI-USAGE.md` — one dated entry covering tasks 1–4 and itself.
+
+---
+
+## §1 — Task 3: what `/investigate` found, and whether old go/no-go data survives
+
+The brief reported: on a real phone, the wait before a no-go trial ran consistently longer than
+the wait before a go trial — learnable, and a task learnable by interval detection stops measuring
+inhibition.
+
+**Root cause: there is not one, in the code.** `armTrial` in `app/tests/gonogo/page.tsx` calls
+`gapDelayMs()` — from `lib/modules/gonogo.ts` — with **no argument**. The function has never taken
+one; `git log -p` on that function shows a single addition, unchanged since the module was first
+written (`5dc2c10`, 2026-08-31), of `GO_NO_MIN_GAP_MS + random() * (GO_NO_MAX_GAP_MS -
+GO_NO_MIN_GAP_MS)`. It has no way to see which trial is about to show, so its output cannot be a
+function of that — this isn't a subtle bug, it's a mathematical impossibility given the current
+call site. `lib/forms/goNo.ts`, the other place the brief said to check, holds only trial *order*
+(go/no-go pattern), never a delay value, so there was nowhere for a correlation to hide there
+either.
+
+Confirmed with a simulation, not just a read of the source: drew the gap 1,500 times per form
+(≈440,000 draws total across all six forms) via the real `gapDelayMs`, tagged every draw with the
+REAL trial type at that position in that form's actual schedule, and compared the two buckets'
+means. They land within 15ms of each other on a 900ms range — a real correlation (say, no-go
+trials drawing from the top third of the range) would separate the means by well over 100ms, so
+this is not a coincidence of a lenient test, it's a clean result.
+
+**What's most likely actually happened:** the report is a real observation of a real phone, and I
+have no reason to doubt the person who made it — but it isn't explained by anything in this code.
+Two honest possibilities I can't rule out from static analysis: (1) a small-sample illusion — a
+30-trial run has only 8 no-go trials against 22 go trials, and with n=8 a run can easily *look*
+skewed by chance even though the generator is fair; (2) something about how the WAIT-state message
+or the athlete's own expectation felt different around a no-go trial that has nothing to do with
+the actual millisecond count. Neither is something code can fix. If this keeps showing up on real
+runs, the next step is collecting the actual gap durations (not just trial outcomes) across many
+real sittings and checking whether the *measured* gaps correlate with trial type — which would
+either catch a bug nobody has found yet, or confirm it really is sampling noise.
+
+**Nothing changed at runtime**, so **every go/no-go reading collected before this session remains
+exactly as comparable as it was** — there is no before/after split to worry about, because there is
+no behavioral before/after.
+
+---
+
+## §2 — Design: token count, type scale, lowest contrast
+
+**Colours: eleven**, up from ten. `paper` (#fbf7f0, was #ffffff), `surface` (#f6f1e7, was #eef1f2),
+`ink` (#241f18, was #0a0e11), `ink-soft` (#544d3d, was #46525a) — all warmed. `clinic` (#2c5a61) is
+new: the reading screens' one deliberate decorative accent, never a second signal. `flag`
+(#c8102e) and `pad-go` (#00a651) are byte-for-byte unchanged, as are all four `instrument-*`
+tokens. `lib/design.test.ts` enforces the count and every scoping rule around `clinic` (never named
+with a colour-family word that would trip the green-token guard — hence `clinic`, not `teal`; never
+paired with the loud `border-4`/`border-8` treatment reserved for an urgent state).
+
+**Type scale: unchanged** — still exactly five sizes (`stimulus`/`display`/`title`/`body`/`meta`),
+still enforced by the same `--text-*: initial` reset. What changed is which **family** carries that
+scale on the reading screens: the serif/monospace pair 2026-09-20 scoped to the results screen
+alone (`.font-read` / `.font-figure`, both system stacks, no network font load — see CLAUDE.md →
+Stack) now applies to every reading screen. Still exactly three font families total, app-wide: the
+base sans on the six instrument screens (unchanged), plus this one serif+monospace pair on the six
+reading screens. `lib/design.test.ts`'s family-count assertion is unchanged; only the list of files
+allowed to use the pair grew.
+
+**Lowest contrast ratio anywhere: 5.23:1.** This is `flag` (#c8102e) text on the new `surface`
+(#f6f1e7) — the flagged results headline — which was the one number the brief said must not get
+quieter than the 5.18:1 it measured before this session. It's *higher*, not lower. Verified two
+ways: (1) computed every candidate palette's contrast pairs before landing on final values (WCAG's
+real relative-luminance formula, not an approximation); (2) live, against the actual rendered DOM —
+a script that walks every text node, resolves its real effective background by climbing the
+ancestor chain to the first opaque `background-color`, and applies the same formula per element,
+run against all six redesigned screens (including a synthetic flagged result injected into
+IndexedDB for the check, then removed and confirmed empty). 60 elements checked on the results
+page alone, 16–42 on each of the others, zero failures anywhere, large-text and normal-text floors
+applied per element. Second-lowest anywhere is 6.30–6.45:1 (`ink-soft`/`clinic` on `surface`) —
+there's real headroom everywhere except the one number that was already tight before this session
+touched it.
+
+---
+
+## §3 — Every judgment call, and why
+
+1. **Guard boundary = project root**, not a subdirectory. This session's four tasks touched five
+   different areas of the app; no single subdirectory would have covered them without repeatedly
+   stopping to widen the boundary.
+2. **Pattern span: a repeat tap is *ignored*, not errored or reset.** Construction rule 3 (no
+   sequence repeats a cell) makes a repeat provably illegitimate as a next answer, so silently
+   discarding it is the only reading that never costs the athlete anything for a phone's own
+   double-registration.
+3. **Applied the selected-cell fix to the demo rounds too**, not just real trials, even though the
+   reported bug was about a real trial. The demo exists to teach the real mechanic; a demo that
+   behaves differently would teach the wrong one.
+4. **Digits: shrank the mobile slot width rather than the gap.** A narrower gap between digits
+   this app expects someone to read under stress felt like the wrong place to save the 70-odd
+   pixels needed; the slot width had more room to give without threatening legibility.
+5. **Go/no-go: added guards and documentation, changed no runtime code.** The Iron Law of
+   `/investigate` is no fix without a confirmed root cause — there was no root cause to fix, and
+   inventing a defensive change against a bug that doesn't exist would be exactly the kind of
+   change the brief warned against ("do not patch the symptom... if the correlation is baked into
+   the generated schedules" — read broadly, don't patch a symptom that traces to nothing at all).
+6. **Design: implemented the brief's own spec directly instead of running `/design-shotgun`.**
+   That skill's comparison-board flow requires a human to pick a direction interactively
+   (`AskUserQuestion`, a served HTML board, waiting for a reply) and an external AI image-gen
+   binary this session never confirmed was configured — neither fits an autonomous session with
+   nobody to ask. This is the same call the 2026-09-20 session made, for the same reason, and it's
+   named explicitly here rather than silently skipped. See §5 for the honest cost of that call.
+7. **New token named `clinic`, not `teal`.** `lib/design.test.ts` already bans any colour token
+   whose *name* matches `green|emerald|lime|teal|success|ok|safe|clear`, regardless of its actual
+   hex value — a heuristic guard against exactly the kind of colour this session was adding. `teal`
+   would have tripped it even though the actual colour is nowhere near CLAUDE.md's forbidden
+   success-green. Renamed to describe the *job* (the reading screens' clinical accent) instead of
+   the hue family.
+8. **`app/results/[id]/page.tsx` was not edited at all.** It's a needs-agreement file and every
+   colour on it already went through a token, so the palette change reaches it automatically. Not
+   touching it was the lower-risk path to the brief's own stated scope ("results" is in the named
+   list), and it means zero new risk was taken with the one screen CLAUDE.md is strictest about.
+9. **`app/practice/summary/page.tsx` was included**, though the brief's named list was "Home,
+   roster, athlete page, instructions, results" and didn't name it explicitly. It's a light
+   "screen you read" by CLAUDE.md's own document/instrument split, and leaving it out would have
+   meant one screen still looked like the old system right next to `/practice`, which now doesn't.
+10. **`app/tools/calibration`, `app/tools/noise-floor`, and `app/layout.tsx`'s header/footer chrome
+    were left untouched.** The first two aren't in the brief's named scope and are dev/calibration
+    tooling, not athlete-facing; the chrome is shared by both reading and instrument screens, and
+    changing it risked the six untouched instrument screens picking up a stray style change.
+11. **`lib/design.test.ts`'s guards were widened, not loosened.** Every change there is scope —
+    which token names exist, which files may use the reading typeface — never a relaxed rule. The
+    "one accent" test was split into "one *signal* colour" (still asserts exactly `['flag']`) and
+    a new guard that `clinic` can never carry the loud border treatment a flagged/urgent state
+    uses, specifically so a second signal colour couldn't be born by accident later.
+12. **Kept the roster's "Open" button at its existing `min-h-12` (48px) override**, below the
+    general 56px floor. That override predates this session (visible in the "before" screenshot)
+    and wasn't part of what task 4 asked for; touching interactive sizing was out of scope for a
+    "visual direction" pass and carries its own risk independent of this one.
+
+---
+
+## §4 — What I'm unsure about
+
+- **Whether `clinic`'s actual colour is the right choice.** The hex value passed every contrast
+  check I could run, but "is this teal calm rather than corporate" is a taste call a computed
+  ratio can't settle. Worth the owner's own eyes on the screenshots in
+  `docs/screenshots/after/*-2026-09-22.jpg` before this ships anywhere.
+- **Whether practice/summary belonged in task 4's scope** (judgment call 9, §3). I think the
+  inconsistency of leaving it out was worse than the risk of including an unnamed screen, but it's
+  a real interpretation of an ambiguous brief, not a certainty.
+- **The digit-wrap fix (task 2) was verified two ways, not three.** I confirmed the real, live
+  Tailwind-generated CSS rule for the mobile slot width (32px) by cloning real elements with the
+  real classes into the live page and measuring `getBoundingClientRect()`, and I have a passing
+  structural test asserting the same 311px budget. What I could **not** do is get an actual 375px
+  browser viewport screenshot: this session's browser-automation `resize_window` call reported
+  success but the page's own `window.innerWidth` stayed at the desktop size every time I checked
+  it, in this specific sandboxed environment. I'm confident in the fix — the geometry is real,
+  measured on the real generated CSS, not asserted from a guess — but a phone in hand (test 2 in
+  §6 below) is the one check this session could not do for you.
+- **The go/no-go report (§1) may still be a real phenomenon this session's tooling can't see.**
+  I'm confident there's no code cause. I'm not able to fully rule out a perception effect on an
+  actual sideline, which no amount of static analysis settles.
+
+---
+
+## §5 — Say-it-out-loud summary
+
+> Three real bugs, fixed. Tapped patterns didn't show you anything when you tapped a square — now
+> it does, and tapping the same square twice by mistake doesn't cost you the round anymore. Numbers
+> backwards used to wrap to a second line on a phone for the longer sequences; it can't anymore,
+> the boxes are just narrower now. And the go/no-go timing thing — I actually dug into that one
+> properly, and the honest answer is there's no bug there. The wait before the next trial is drawn
+> completely at random no matter what's coming, it always has been, I proved it with a
+> half-million-draw simulation, and I added tests that will catch it forever if that ever stops
+> being true. So nothing about your old go/no-go readings changed.
+>
+> The big one is the redesign. Home, the roster, an athlete's page, the practice instructions, and
+> the practice summary all look different now — warmer colours, a serif typeface instead of the
+> plain system font, layouts that actually vary block to block instead of the same card shape
+> repeated three or five times. I didn't touch the results screen's code at all, because it's the
+> one file I'm supposed to be most careful with, and it turns out it didn't need touching — it
+> already pulled its colours from the same system everything else does, so the new palette just
+> showed up there for free. I checked contrast the hard way: not just doing the math, but actually
+> measuring real pixels on the real rendered page, and the worst number anywhere in the whole app
+> is 5.23 to 1, which is better than the 5.18 you had before, on the one screen where it matters
+> most. I looked at running the multi-variant design tool you mentioned and decided against it —
+> it needs a person sitting there picking between options, and there wasn't one, so I built the one
+> direction your brief already described in detail instead, the same way the redesign three days
+> ago handled the same situation.
+>
+> Everything's committed in five separate pieces, one per task, nothing's merged or pushed past the
+> branch, the tag hasn't moved, and the full test suite went from 436 to 450 passing tests. The one
+> thing I couldn't do myself: get an actual phone in hand for the digit-wrap fix. The math's solid
+> and I measured the real CSS the browser generates, but a screenshot at a genuinely narrow width
+> is the one verification this session's tools couldn't give me.
+
+---
+
+## §6 — Manual phone-test script
+
+Run `npm run dev -- -H 0.0.0.0` and open the Network URL on a phone.
+
+| # | Do this | Expected result |
+|---|---|---|
+| 1 | Open **Tapped patterns**, start practice. Watch the demo sequence play, then tap the first cell of your answer. | The tapped cell shows an immediate, muted fill — visibly different from the bright "lit" flash during playback, and never green or a checkmark. |
+| 2 | 🔑 Tap that exact same cell again, before tapping anything else. | Nothing happens — no visual change, and the "X of Y tapped" counter does **not** advance. |
+| 3 | Finish the sequence correctly. | The round completes normally and advances, exactly as before. |
+| 4 | Run a real (non-demo) round on **Tapped patterns**, all 9 trials, tapping cleanly and correctly every time — including once where you deliberately double-tap one cell by accident mid-sequence. | Final score is unaffected by the accidental double-tap; a clean run scores what a clean run should. |
+| 5 | 🔑 Open **Numbers backwards** on an actual phone (or a browser window resized to genuinely ~375px, verified with a real device-width indicator, not just a guess). Play through to round 8 (6 digits) and round 9 (7 digits). | Every digit box for both rounds sits on **one line**. No wrapping to a second row, no horizontal scrollbar on the page. |
+| 6 | Open **Go / no-go** and run a full 30-trial round, paying attention to the WAIT screen before each stimulus. | The wait still feels unpredictable — you should **not** be able to tell TAP from HOLD is coming by how long the wait lasts. This should feel identical to before this session, because nothing about it changed. |
+| 7 | Walk **Home, Athletes, an athlete's page, Practice, and a finished practice run.** | Warmer, cream-toned background instead of flat grey-white. Headlines in a serif face. A small teal label above each page title. No green anywhere, no checkmarks, no gradients, no drop shadows. Every path still ends in "see a medical professional" where it did before. |
+| 8 | Open a **flagged** result (or ask a build to inject one). | Same ruled-document layout as before 2026-09-20 introduced it — red rule, red headline, on the new warm background. Still the loudest thing on the page; still the only red anywhere. |
+
+---
+
+## §7 — `CLAUDE.md` needs the owner, and this session did not touch it
+
+Unlike 2026-09-20, this session found **nothing in `CLAUDE.md`'s own prose that now contradicts
+the code** — the colour and type-scale rules it enforces live in `app/globals.css` and
+`lib/design.test.ts`, both of which this session updated directly, and `CLAUDE.md` itself never
+states the colour count or font-family count in words. One optional addition, not a correction:
+
+1. **The battery section's go/no-go entry** doesn't mention that the pre-stimulus gap is
+   deliberately drawn independent of trial type — that's currently only in code comments
+   (`lib/modules/gonogo.ts`) and the structural guard (#10, `lib/regression.test.ts`). Worth a
+   line if a future session should know this invariant exists without reading the source, but
+   nothing is currently wrong or out of date.
+
+---
+
 # Session report — 20 September 2026
 
 Branch: `feat/gonogo-and-calibration`. **Not merged. Branch pushed only.** Four tasks: presentation
