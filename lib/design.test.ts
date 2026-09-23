@@ -88,14 +88,43 @@ describe('red means flagged and appears nowhere else', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('has exactly one accent colour defined in the theme', () => {
-    // 'flag' is the accent. 'pad-go' is a stimulus, not an accent — it is a target to hit and
-    // never appears on a screen that reports anything.
-    const accents = [...GLOBALS.matchAll(/--color-([a-z-]+):/g)]
+  it('has exactly one SIGNAL colour defined in the theme', () => {
+    // 'flag' is the one colour that means something. 'pad-go' is a stimulus, not a signal —
+    // it is a target to hit and never appears on a screen that reports anything. 'clinic'
+    // (added 2026-09-22, task 4) is decoration, not a signal either — see the next test.
+    const signals = [...GLOBALS.matchAll(/--color-([a-z-]+):/g)]
       .map((match) => match[1])
-      .filter((name) => !['paper', 'surface', 'ink', 'ink-soft', 'instrument', 'instrument-panel', 'instrument-ink', 'instrument-ink-soft', 'pad-go'].includes(name));
+      .filter(
+        (name) =>
+          ![
+            'paper',
+            'surface',
+            'ink',
+            'ink-soft',
+            'clinic',
+            'instrument',
+            'instrument-panel',
+            'instrument-ink',
+            'instrument-ink-soft',
+            'pad-go',
+          ].includes(name),
+      );
 
-    expect(accents).toEqual(['flag']);
+    expect(signals).toEqual(['flag']);
+  });
+
+  it('the one decorative accent never dresses up as flag — same border/panel weight everywhere it is used', () => {
+    // `clinic` is allowed to appear anywhere on the reading screens, but it must never be
+    // paired with the heavy ink-panel or border-4/border-8 treatment this codebase uses for
+    // an urgent or flagged state — that combination is exactly how a second signal colour
+    // would be born by accident. A thin rule or small-print label only.
+    const offenders = FILES.filter(([, source]) =>
+      /\bborder-(?:4|8)\b[^\n]{0,40}\bborder-clinic\b|\bborder-clinic\b[^\n]{0,40}\bborder-(?:4|8)\b/.test(
+        source,
+      ),
+    ).map(([name]) => name);
+
+    expect(offenders).toEqual([]);
   });
 });
 
@@ -130,13 +159,18 @@ describe('there is no success green and no checkmark anywhere', () => {
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
 describe('the palette and the type scale are the size we say they are', () => {
-  it('defines exactly ten colours', () => {
+  it('defines exactly eleven colours', () => {
+    // Widened from ten to eleven 2026-09-22 (task 4): `clinic`, the one deliberate
+    // decorative accent added for the reading-screen redesign. See the comment above
+    // --color-clinic in globals.css for what it is and, just as importantly, what it must
+    // never become.
     const colours = [...GLOBALS.matchAll(/^\s*(?:\/\* \d+ \*\/ )?--color-([a-z-]+):/gm)].map(
       (match) => match[1],
     );
 
     expect(colours.sort()).toEqual(
       [
+        'clinic',
         'flag',
         'ink',
         'ink-soft',
@@ -311,25 +345,47 @@ describe('the app is one font family, with one deliberate, scoped exception', ()
     expect(bodyBlock).toMatch(stack);
   });
 
-  it('names exactly the base sans stack plus the results screen\'s reading/figures pair', () => {
-    // Added 2026-09-20. The results screen is the one deliberate exception to "one font
-    // family" — see the comment above .font-read / .font-figure in globals.css. Any THIRD
-    // family, or a fourth, means something drifted in without the same deliberate scoping.
+  it('names exactly the base sans stack plus the reading/figures pair', () => {
+    // Added 2026-09-20 for the results screen alone; widened 2026-09-22 (task 4) to every
+    // reading screen — see the comment above .font-read / .font-figure in globals.css.
+    // Any THIRD family, or a fourth, means something drifted in without the same
+    // deliberate scoping.
     const families = [...GLOBALS.matchAll(/font-family:\s*([^;]+);/g)].map((m) =>
       m[1].trim().split(',')[0].trim(),
     );
     expect(new Set(families)).toEqual(new Set(['ui-sans-serif', 'ui-serif', 'ui-monospace']));
   });
 
-  it('keeps .font-read and .font-figure out of every screen except the results screen', () => {
+  /**
+   * Every screen you READ, as opposed to every screen you PERFORM. Kept as one named list
+   * (rather than "everything under app/ that isn't a test module") so adding a new reading
+   * screen is a deliberate, visible edit here — not an assumption that a directory scan
+   * will keep classifying it correctly forever.
+   */
+  const READING_SCREENS = [
+    'app/results/[id]/page.tsx',
+    'app/page.tsx',
+    'app/athletes/page.tsx',
+    'app/athletes/[id]/page.tsx',
+    'app/practice/page.tsx',
+    'app/practice/summary/page.tsx',
+  ];
+
+  it('keeps .font-read and .font-figure out of every screen except the reading screens', () => {
     // The scoping promise made in the globals.css comment, machine-checked: these two
-    // classes may not appear anywhere else, or the "one font family" rule has quietly
-    // become "however many fonts anyone reaches for."
+    // classes may not appear anywhere else — especially not in the six instrument
+    // screens — or the "two worlds of type" rule has quietly become "however many fonts
+    // anyone reaches for."
     const offenders = FILES.filter(
-      ([name, source]) =>
-        name !== 'app/results/[id]/page.tsx' && /\bfont-(?:read|figure)\b/.test(source),
+      ([name, source]) => !READING_SCREENS.includes(name) && /\bfont-(?:read|figure)\b/.test(source),
     ).map(([name]) => name);
 
     expect(offenders).toEqual([]);
+  });
+
+  it('every reading screen actually uses the reading face — the exception is not dead code', () => {
+    for (const path of READING_SCREENS) {
+      expect(sourceOf(path), path).toMatch(/\bfont-read\b/);
+    }
   });
 });

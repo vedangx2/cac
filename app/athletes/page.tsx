@@ -70,18 +70,25 @@ export default function AthletesPage() {
   };
 
   return (
-    <PageShell>
+    <PageShell className="font-read">
       <PageHeader
+        eyebrow="Roster"
         title="Athletes"
         subtitle="Each athlete is compared only against their own baseline. Add everyone you cover, then record a baseline for each of them while they are well."
       />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start">
-        {/* ── The roster ─────────────────────────────────────────────────────────── */}
         {/*
+          ── The roster ─────────────────────────────────────────────────────────────
           The roster comes first on every screen size, including phones. The moment this page
           matters most is when someone has just been hit and you need to find their name fast —
           making them scroll past a "add an athlete" form to get there would be exactly wrong.
+
+          A RULED LIST, not a stack of boxed Cards (changed 2026-09-22, task 4): a roster reads
+          as a directory, and a directory is rows on a page, not a grid of tiles. It also gives
+          this column a visibly different weight from the boxed "Add an athlete" form beside it —
+          the varying-weight-by-block the brief asked for, rather than every block on the page
+          using the identical container.
         */}
         <section aria-labelledby="roster-heading">
           <h2 id="roster-heading" className="sr-only">
@@ -104,71 +111,69 @@ export default function AthletesPage() {
             </Notice>
           )}
 
-          <ul className="space-y-3">
+          <ul className="divide-y divide-ink/10 border-t border-ink/10">
             {athletes?.map((athlete) => (
-              <li key={athlete.id}>
-                <Card>
-                  <div className="sm:flex sm:items-center sm:justify-between sm:gap-4">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/athletes/${athlete.id}`}
-                        className="text-title font-bold text-ink underline decoration-ink/40 decoration-2 underline-offset-4 hover:decoration-ink"
-                      >
-                        {athlete.name}
-                      </Link>
-                      <p className="mt-1 text-meta text-ink-soft">
-                        {athlete.baselineId ? 'Baseline recorded' : 'No baseline yet'}
-                        {' · '}
-                        {athlete.checkIds.length}{' '}
-                        {athlete.checkIds.length === 1 ? 'check' : 'checks'}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex shrink-0 gap-2 sm:mt-0">
-                      <ButtonLink
-                        href={`/athletes/${athlete.id}`}
-                        className="!min-h-12 !px-4 !text-body"
-                      >
-                        Open
-                      </ButtonLink>
-                    </div>
+              <li key={athlete.id} className="py-5">
+                <div className="sm:flex sm:items-center sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
+                    <Link
+                      href={`/athletes/${athlete.id}`}
+                      className="text-title font-bold text-ink underline decoration-clinic decoration-2 underline-offset-4 hover:decoration-ink"
+                    >
+                      {athlete.name}
+                    </Link>
+                    <p className="mt-1 text-meta text-ink-soft">
+                      {athlete.baselineId ? 'Baseline recorded' : 'No baseline yet'}
+                      {' · '}
+                      {athlete.checkIds.length}{' '}
+                      {athlete.checkIds.length === 1 ? 'check' : 'checks'}
+                    </p>
                   </div>
 
-                  {/*
-                    Deleting an athlete also deletes all of their results, and there is no
-                    server-side copy to restore from — so it asks first, inline.
-                  */}
-                  {confirmingDelete === athlete.id ? (
-                    <div className="mt-4 rounded-xl border-2 border-ink p-4">
-                      <p className="text-meta font-semibold text-ink">
-                        Delete {athlete.name} and all of their recorded results? This cannot be
-                        undone.
-                      </p>
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <Button
-                          variant="primary"
-                          onClick={() => void removeAthlete(athlete.id)}
-                        >
-                          Delete permanently
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setConfirmingDelete(null)}
-                        >
-                          Keep
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingDelete(athlete.id)}
-                      className="mt-3 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+                  <div className="mt-4 flex shrink-0 gap-2 sm:mt-0">
+                    <ButtonLink
+                      href={`/athletes/${athlete.id}`}
+                      className="!min-h-12 !px-4 !text-body"
                     >
-                      Delete {athlete.name}
-                    </button>
-                  )}
-                </Card>
+                      Open
+                    </ButtonLink>
+                  </div>
+                </div>
+
+                {/*
+                  Deleting an athlete also deletes all of their results, and there is no
+                  server-side copy to restore from — so it asks first, inline.
+                */}
+                {confirmingDelete === athlete.id ? (
+                  <div className="mt-4 rounded-xl border-2 border-ink p-4">
+                    <p className="text-meta font-semibold text-ink">
+                      Delete {athlete.name} and all of their recorded results? This cannot be
+                      undone.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        variant="primary"
+                        onClick={() => void removeAthlete(athlete.id)}
+                      >
+                        Delete permanently
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setConfirmingDelete(null)}
+                      >
+                        Keep
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(athlete.id)}
+                    className="mt-3 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+                  >
+                    Delete {athlete.name}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

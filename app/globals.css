@@ -23,9 +23,9 @@
        screen is the brightest object on the display, and it must not be.
 
   ─────────────────────────────────────────────────────────────────────────────────────
-  THE COLOUR RULE — ONE ACCENT, ONE MEANING
+  THE COLOUR RULE — ONE COLOUR MEANS SOMETHING, EVERYTHING ELSE IS JUST PALETTE
   ─────────────────────────────────────────────────────────────────────────────────────
-  There is exactly ONE accent colour in this app:
+  There is exactly ONE colour in this app that is a SIGNAL rather than decoration:
 
       RED  =  this screening found a change worth a human looking at.
 
@@ -36,7 +36,7 @@
 
   Everything that used to be blue is now ink or paper. Everything that used to be a red
   warning is now a heavy ink panel, which on a white page is at least as loud and costs
-  the accent nothing.
+  the signal nothing.
 
   THERE IS NO SUCCESS GREEN AND NO SUCCESS STATE. This app has nothing to report that a
   green would be right for. See CLAUDE.md → THE HARD RULE.
@@ -44,6 +44,15 @@
   The single green in the codebase is the GO stimulus on the two timed pads. That is a
   physical target to hit, on screen for under two seconds, and it never appears on a
   results screen. It says nothing about anybody's health. Do not "fix" it.
+
+  ADDED 2026-09-22, task 4 of that session's brief: a second, purely DECORATIVE colour,
+  `clinic` — a muted teal/blue-green, used only on the reading screens (home, roster,
+  athlete page, practice, practice summary, results) to give the document surface a
+  deliberate, warm, clinical character instead of flat neutral grey. It is not a second
+  signal. It never appears filled behind a primary action, never stands in for red, and
+  never implies anything about anyone's health — it marks a kicker label, a thin rule
+  between sections, a step number. If you are ever tempted to reach for `clinic` to mean
+  something (a status, a state, a verdict), stop: that is `flag`'s job and `flag`'s alone.
 
   ─────────────────────────────────────────────────────────────────────────────────────
   WHY THE NAMESPACES ARE RESET TO `initial`
@@ -53,34 +62,44 @@
   font sizes that exist are the ones defined below. A stray `text-blue-500`, `bg-white` or
   `text-xs` is not a style slip that survives review — it fails the build.
 
-  The count is the point. Ten colours, five sizes, and the compiler enforces both.
+  The count is the point. Eleven colours, five sizes, and the compiler enforces both.
 */
 
 @theme {
-  /* ═══ COLOUR — exactly ten, and every one has a job ════════════════════════════ */
+  /* ═══ COLOUR — exactly eleven, and every one has a job ═════════════════════════ */
   --color-*: initial;
 
-  /* -- The document surface (screens you read) -- */
-  /* 1 */ --color-paper: #ffffff; /* cards, and the light page itself */
-  /* 2 */ --color-surface: #eef1f2; /* the page behind the cards, so cards have an edge */
-  /* 3 */ --color-ink: #0a0e11; /* all primary text on light; primary buttons */
-  /* 4 */ --color-ink-soft: #46525a; /* secondary text on light. 8.0:1 on paper */
+  /*
+    -- The document surface (screens you read) --
+    Warmed 2026-09-22 (task 4): a warm off-white and a warm neutral ink, replacing a
+    flatter cool grey/near-black pairing, so the reading screens read as a clinic's
+    patient-facing site rather than software chrome. Every contrast ratio below was
+    recomputed against the new values before landing — see SESSION-REPORT.md for the
+    numbers, including `flag`-on-`surface`, which must never get quieter than 5.18:1.
+  */
+  /* 1 */ --color-paper: #fbf7f0; /* cards, and the light page itself. warm ivory, was #ffffff */
+  /* 2 */ --color-surface: #f6f1e7; /* page behind the cards. warm sand, was #eef1f2 */
+  /* 3 */ --color-ink: #241f18; /* primary text on light; primary buttons. warm near-black, was #0a0e11 */
+  /* 4 */ --color-ink-soft: #544d3d; /* secondary text on light. 7.4:1 on surface, 7.9:1 on paper */
 
-  /* -- The instrument surface (screens you perform) -- */
-  /* 5 */ --color-instrument: #080b0d; /* the dark page, and the app chrome */
-  /* 6 */ --color-instrument-panel: #161c21; /* a raised panel on the dark page */
-  /* 7 */ --color-instrument-ink: #f4f6f7; /* primary text on dark. 18.0:1 */
-  /* 8 */ --color-instrument-ink-soft: #a9b6be; /* secondary text on dark. 8.3:1 on panel */
+  /* -- The one decorative accent, reading screens only — see the comment above -- */
+  /* 5 */ --color-clinic: #2c5a61; /* muted teal/blue-green. 6.8:1 on surface, 7.2:1 on paper */
+
+  /* -- The instrument surface (screens you perform) — UNCHANGED by task 4 -- */
+  /* 6 */ --color-instrument: #080b0d; /* the dark page, and the app chrome */
+  /* 7 */ --color-instrument-panel: #161c21; /* a raised panel on the dark page */
+  /* 8 */ --color-instrument-ink: #f4f6f7; /* primary text on dark. 18.0:1 */
+  /* 9 */ --color-instrument-ink-soft: #a9b6be; /* secondary text on dark. 8.3:1 on panel */
 
   /* -- Meaning -- */
-  /* 9 */ --color-flag: #c8102e; /* THE accent. Flagged, and nothing else, ever. */
+  /* 10 */ --color-flag: #c8102e; /* THE signal. Flagged, and nothing else, ever. */
 
   /* -- Stimulus (a target to hit, not a verdict) -- */
-  /* 10 */ --color-pad-go: #00a651; /* the GO signal on the two timed pads */
+  /* 11 */ --color-pad-go: #00a651; /* the GO signal on the two timed pads */
 
   /*
     Borders are not their own colours. They are ink or instrument-ink at low opacity, so a
-    divider can never drift away from the text it sits beside, and the palette stays at ten.
+    divider can never drift away from the text it sits beside, and the palette stays at eleven.
   */
 
   /* ═══ TYPE — exactly five sizes ═════════════════════════════════════════════════
@@ -189,23 +208,30 @@
 
 /*
   ─────────────────────────────────────────────────────────────────────────────────────
-  THE RESULTS SCREEN'S TWO TYPEFACES — added 2026-09-20, deliberately scoped
+  THE READING SCREENS' TWO TYPEFACES — added 2026-09-20 for the results screen alone,
+  WIDENED 2026-09-22 (task 4) to every reading screen
   ─────────────────────────────────────────────────────────────────────────────────────
-  Every other screen in this app is ONE font family — see "there is exactly one font
-  family" above, and lib/design.test.ts, which still enforces that for the app as a
-  whole. The results screen (app/results/[id]/page.tsx) is the single, deliberate
-  exception: it is the one screen built to read like a clinical results document —
-  a lab report, a discharge summary — rather than software chrome, and that reference
-  class pairs a reading face with a figures face.
+  The app is still, deliberately, only TWO worlds of type: the six test modules stay the
+  base sans stack set on <body> — software you are operating, unchanged by this session —
+  and every screen you READ (home, roster, athlete page, practice, practice summary,
+  results) now uses this reading/figures pair instead. Nothing in the app uses a THIRD
+  family. See "there is exactly one font family, with one deliberate, scoped exception" in
+  lib/design.test.ts, which enforces the total count of families (still exactly three:
+  the sans base, this serif, this monospace) — the "exception" is now a whole surface of
+  the app rather than one screen, which is why that test's name reads slightly loosely
+  now; the count it actually checks has not changed.
+
+  Every reading screen reads like a clinical document — a lab report, a discharge summary,
+  a patient handout — rather than software chrome, and that reference class pairs a
+  reading face with a figures face.
 
   Both are SYSTEM stacks, not a webfont: this app makes no external network calls at
   runtime (see CLAUDE.md → Stack), and loading a font from a CDN at runtime would be
   exactly that. Every name in each stack ships on some real, current OS.
 
   Scope is machine-checked, not just commented: lib/design.test.ts asserts these two
-  class names appear NOWHERE outside app/results/[id]/page.tsx, so this exception
-  cannot silently spread to the rest of the app the way a shared component change
-  could.
+  class names appear ONLY inside the named reading-screen files, so this exception cannot
+  silently spread into the six instrument screens the way a shared component change could.
 */
 .font-read {
   /* The reading face — headlines, module names, safety copy. A serif reads as a

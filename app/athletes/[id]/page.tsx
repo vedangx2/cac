@@ -12,7 +12,7 @@
 import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button, ButtonLink, Card, Notice, PageShell } from '@/components/ui';
+import { Button, ButtonLink, Card, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete, getResultsFor } from '@/lib/storage';
 import { isCurrentSchema } from '@/lib/schema';
@@ -73,7 +73,7 @@ export default function AthleteDetailPage() {
 
   if (loading) {
     return (
-      <PageShell>
+      <PageShell className="font-read">
         <p className="text-title text-ink-soft">Loading athlete…</p>
       </PageShell>
     );
@@ -81,7 +81,7 @@ export default function AthleteDetailPage() {
 
   if (!athlete) {
     return (
-      <PageShell>
+      <PageShell className="font-read">
         <h1 className="text-display font-bold text-ink">Athlete not found</h1>
         <p className="mt-3 text-ink-soft">
           This athlete isn&apos;t saved in this browser. Data lives only on the device that
@@ -107,21 +107,18 @@ export default function AthleteDetailPage() {
   const baselineOutOfDate = baseline !== null && !isCurrentSchema(baseline);
 
   return (
-    <PageShell>
-      <header className="mb-8">
-        <Link
-          href="/athletes"
-          className="mb-4 inline-flex items-center gap-1 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
-        >
-          <span aria-hidden="true">←</span> All athletes
-        </Link>
-        <h1 className="text-display font-bold tracking-tight text-ink sm:text-display">{athlete.name}</h1>
-        <p className="mt-2 text-body text-ink-soft">
-          {baseline
+    <PageShell className="font-read">
+      <PageHeader
+        eyebrow="Athlete"
+        title={athlete.name}
+        subtitle={
+          baseline
             ? `Baseline recorded ${formatDateTime(baseline.takenAt)}`
-            : 'No baseline recorded yet'}
-        </p>
-      </header>
+            : 'No baseline recorded yet'
+        }
+        backHref="/athletes"
+        backLabel="All athletes"
+      />
 
       {justSavedBaseline && (
         <div className="mb-6">
@@ -304,7 +301,12 @@ export default function AthleteDetailPage() {
           </div>
         </section>
 
-        {/* ── History ────────────────────────────────────────────────────────────── */}
+        {/*
+          ── History ────────────────────────────────────────────────────────────────
+          A ruled list rather than boxed Cards (2026-09-22, task 4) — a case history reads
+          as a record, and it gives this column a visibly lighter weight than the boxed
+          action cards beside it, instead of both columns using the identical container.
+        */}
         <section aria-labelledby="history-heading">
           <h2 id="history-heading" className="text-title font-bold text-ink">
             Past sideline checks
@@ -313,22 +315,20 @@ export default function AthleteDetailPage() {
           {checks.length === 0 ? (
             <p className="mt-4 text-ink-soft">No sideline checks recorded yet.</p>
           ) : (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 divide-y divide-ink/10 border-t border-ink/10">
               {checks.map((check) => {
                 const modules = completedModules(check.scores);
                 return (
-                  <li key={check.id}>
-                    <Card>
-                      <Link
-                        href={`/results/${check.id}`}
-                        className="text-title font-bold text-ink underline decoration-ink/40 decoration-2 underline-offset-4 hover:decoration-ink"
-                      >
-                        {formatDateTime(check.takenAt)}
-                      </Link>
-                      <p className="mt-1 text-meta text-ink-soft">
-                        {modules.length > 0 ? modules.join(' · ') : 'No tests recorded'}
-                      </p>
-                    </Card>
+                  <li key={check.id} className="py-4">
+                    <Link
+                      href={`/results/${check.id}`}
+                      className="text-title font-bold text-ink underline decoration-clinic decoration-2 underline-offset-4 hover:decoration-ink"
+                    >
+                      {formatDateTime(check.takenAt)}
+                    </Link>
+                    <p className="mt-1 text-meta text-ink-soft">
+                      {modules.length > 0 ? modules.join(' · ') : 'No tests recorded'}
+                    </p>
                   </li>
                 );
               })}

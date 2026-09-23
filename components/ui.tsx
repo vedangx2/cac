@@ -43,14 +43,28 @@ export function PageShell({
   );
 }
 
-/** Page title, optional supporting line, and an optional "back" link above it. */
+/**
+ * Page title, optional supporting line, and an optional "back" link above it.
+ *
+ * `title` takes a ReactNode rather than a plain string (added 2026-09-22, task 4) so a
+ * page can mix weights in one heading — a bold phrase followed by a regular-weight
+ * continuation — instead of one uniform black slab. A plain string still works exactly
+ * as before; nothing that already calls this changes.
+ *
+ * `eyebrow` (added 2026-09-22) is the small tracked label above the title — a section
+ * kicker, in `clinic`, the one decorative accent the reading-screen redesign added. It is
+ * always small print, never a verdict, and it is the only place on these screens `clinic`
+ * is allowed to carry text — see the comment above --color-clinic in globals.css.
+ */
 export function PageHeader({
+  eyebrow,
   title,
   subtitle,
   backHref,
   backLabel,
 }: {
-  title: string;
+  eyebrow?: ReactNode;
+  title: ReactNode;
   subtitle?: ReactNode;
   backHref?: string;
   backLabel?: string;
@@ -65,6 +79,9 @@ export function PageHeader({
           <span aria-hidden="true">←</span> {backLabel ?? 'Back'}
         </Link>
       )}
+      {eyebrow && (
+        <p className="mb-2 text-meta font-bold uppercase tracking-widest text-clinic">{eyebrow}</p>
+      )}
       <h1 className="text-display font-black text-ink">{title}</h1>
       {subtitle && <p className="mt-3 max-w-2xl text-body text-ink-soft">{subtitle}</p>}
     </header>
@@ -78,6 +95,17 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
       {children}
     </div>
   );
+}
+
+/**
+ * A small tracked label in `clinic`, the reading screens' one decorative accent. Added
+ * 2026-09-22 (task 4) for section headings that want the same kicker treatment as
+ * PageHeader's `eyebrow` prop but sit inside the body of a page rather than at its top —
+ * e.g. "How it works", "The tests". Never a verdict, never anything about anyone's
+ * health — see the comment above --color-clinic in globals.css.
+ */
+export function Kicker({ children }: { children: ReactNode }) {
+  return <p className="text-meta font-bold uppercase tracking-widest text-clinic">{children}</p>;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────────────

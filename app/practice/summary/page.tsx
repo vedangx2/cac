@@ -18,7 +18,7 @@
 
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, ButtonLink, Card, Notice, PageHeader, PageShell } from '@/components/ui';
+import { Button, ButtonLink, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete } from '@/lib/storage';
 import {
@@ -94,7 +94,7 @@ export default function PracticeSummaryPage() {
 
   if (loading) {
     return (
-      <PageShell>
+      <PageShell className="font-read">
         <p className="text-title text-ink-soft">Loading practice run…</p>
       </PageShell>
     );
@@ -102,7 +102,7 @@ export default function PracticeSummaryPage() {
 
   if (state.status === 'no-run') {
     return (
-      <PageShell>
+      <PageShell className="font-read">
         <PageHeader title="No practice run to show" backHref="/" backLabel="Home" />
         <Notice title="There is no finished practice run in this tab">
           A practice run&apos;s scores live only in this browser tab and are thrown away when it
@@ -117,7 +117,7 @@ export default function PracticeSummaryPage() {
 
   if (state.status === 'incomplete') {
     return (
-      <PageShell>
+      <PageShell className="font-read">
         <PageHeader title="This practice run is not finished" backHref="/" backLabel="Home" />
         <Notice title={`Next up: ${state.nextLabel}`}>
           The run has modules left to do, so there is nothing to sum up yet. Carry on where it
@@ -184,8 +184,9 @@ export default function PracticeSummaryPage() {
   ];
 
   return (
-    <PageShell>
+    <PageShell className="font-read">
       <PageHeader
+        eyebrow="Practice"
         title="Practice run complete"
         subtitle="Every number below is a record of what happened, judged against nothing. None of it is saved — it exists only on this screen."
       />
@@ -225,19 +226,28 @@ export default function PracticeSummaryPage() {
         </div>
       )}
 
+      {/*
+        A RULED TABLE, not a grid of score Cards (2026-09-22, task 4) — the same "lab report,
+        not a dashboard" convention the results screen adopted 2026-09-20. This screen and
+        that one are the same kind of moment (here is what happened, module by module), so
+        they now share a visual language instead of one being a card grid and the other a
+        ruled document.
+      */}
       <section aria-labelledby="scores-heading">
         <h2 id="scores-heading" className="text-title font-bold text-ink">
           What happened, module by module
         </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 divide-y divide-ink/10 border-t border-ink/10">
           {rows.map((row) => (
-            <Card key={row.label}>
-              <p className="text-meta font-black uppercase tracking-widest text-ink-soft">
-                {row.label}
+            <div key={row.label} className="flex items-baseline justify-between gap-4 py-4">
+              <div className="min-w-0">
+                <p className="font-bold text-ink">{row.label}</p>
+                <p className="mt-1 text-meta text-ink-soft">{row.detail}</p>
+              </div>
+              <p className="font-figure tabular shrink-0 text-title font-bold text-ink">
+                {row.value}
               </p>
-              <p className="tabular mt-2 text-display font-black text-ink">{row.value}</p>
-              <p className="mt-2 text-meta text-ink-soft">{row.detail}</p>
-            </Card>
+            </div>
           ))}
         </div>
         <p className="mt-4 text-body text-ink-soft">
