@@ -657,6 +657,81 @@ fault of its own.
   round-tripped cleanly — `git status --porcelain` and the full test suite were both checked
   immediately after `stash pop` to confirm nothing was lost.
 
+- **2026-09-22 — Autonomous session: three bug fixes, one investigation, a design pass.**
+  Co-authored by Claude Sonnet 5, run autonomously start to finish at the project owner's
+  direction (`/guard` on for the whole session, four tasks named directly, one investigation, a
+  disclosure task, a report). No threshold value in `lib/engine/thresholds.ts` was touched, tapped
+  patterns' difficulty and timing were left untouched on explicit instruction, and `CLAUDE.md` was
+  not edited. Commits `05b39e1`, `ff25083`, `339e025`, `bb3c635`.
+
+  *Task 1 — tapped patterns tap feedback (`05b39e1`).* A tapped cell during recall showed no
+  visual change at all, so an athlete unsure a tap had registered would tap the same cell again;
+  the second tap was silently judged as the NEXT sequence position rather than ignored, and a real
+  run that day scored 8/9 where the miss was this bug, not the athlete. AI added a tapped-cell
+  "selected" state (`app/tests/pattern/page.tsx`, ink-soft fill, visually distinct from the lit
+  playback cue) and made the repeat-tap behavior deliberate: `isRepeatTap` (`lib/modules/pattern.ts`)
+  says a cell already tapped this trial can never be a legitimate next answer — construction rule 3
+  guarantees no sequence repeats a cell — so a repeat is now ignored outright rather than
+  double-counted. Applied to the demo rounds too. Unit tests in `lib/modules/pattern.test.ts` and a
+  new structural guard (#9) in `lib/regression.test.ts`.
+
+  *Task 2 — numbers backwards wrapping at 375px (`ff25083`).* The answer-so-far row wrapped to a
+  second line for a 6- or 7-digit sequence: seven of the old 48px slots plus gaps ran to 384px
+  against roughly 311px actually available at 375px width. AI shrank the mobile slot width to 32px
+  (`app/tests/digits/page.tsx`; `sm:w-16` above the mobile breakpoint is unchanged) and switched
+  the row to `flex-nowrap`, then wrote the 311px budget into a real assertion (structural guard #11,
+  `lib/regression.test.ts`) rather than leaving it as a comment.
+
+  *Task 3 — go/no-go delay investigation (`339e025`).* The brief reported that the wait before a
+  no-go trial ran consistently longer than before a go trial on a real phone, and asked AI to
+  `/investigate` before changing anything — this is a defect class in `app/tests/gonogo/page.tsx`,
+  which CLAUDE.md marks student-owned, so AI did not touch that file. Root cause: there isn't one.
+  `gapDelayMs()` (`lib/modules/gonogo.ts`) takes no argument describing the upcoming trial and never
+  has — the call site (`armTrial`) has been a bare `gapDelayMs()` since the module was first written
+  (`5dc2c10`) — so its output mathematically cannot depend on trial type. Confirmed by a
+  440,000-draw simulation tagging every draw by the real trial type at that position in each form:
+  the two buckets land within 15ms of each other on a 900ms range. AI made no runtime change. What
+  it added is a doc comment on `gapDelayMs` stating the blindness is deliberate, the simulation as a
+  permanent test in `gonogo.test.ts`, and a new structural guard (#10, `lib/regression.test.ts`)
+  pinning the bare call site — so a future "fix" for the reported symptom cannot introduce the bug
+  the report described, which does not exist today. No go/no-go data collected before this commit
+  is affected, since nothing about how the gap is drawn changed.
+
+  *Task 4 — reading-screen redesign (`bb3c635`).* Home, roster, athlete page, practice, and
+  practice summary were redesigned against a regional-clinic reference (Austin Regional
+  Clinic-style): varying-width content blocks, alternating layouts instead of repeating card grids,
+  mixed-weight headings, a warm desaturated palette, one new decorative accent token (`clinic`,
+  `#2c5a61`) never used as a second signal. `app/results/[id]/page.tsx` was not edited — it already
+  used token-based colour and the serif/monospace pair from 2026-09-20, so the new palette reaches
+  it through `app/globals.css` alone. Palette values were chosen by computing every contrast pair
+  before landing on them (script in the session's scratchpad, not committed) and re-verified live
+  against the rendered DOM (a script walking every text node, resolving its real background through
+  the ancestor chain, applying WCAG's formula) rather than trusting the math alone — lowest ratio
+  found anywhere, including the flagged results state, is 5.23:1, which is *higher* than the 5.18:1
+  floor the brief said not to drop below. `/design-shotgun` was evaluated and not run: its
+  comparison-board flow needs a human to pick a direction interactively, which does not exist in an
+  autonomous session, and it depends on an external AI image-gen binary AI did not verify was
+  configured — so AI implemented the brief's own detailed spec directly instead, the same call the
+  2026-09-20 session made for the same reason, and said so rather than silently skipping the
+  instruction. `/design-review` was likewise evaluated against a clean git tree (this session
+  committed task 4 first) and found to depend on external `browse`/`design` binaries and an
+  interactive feedback loop not available here; AI instead applied that skill's own AI-slop
+  checklist and contrast/spacing/typography rules by hand against the six redesigned screens'
+  rendered output and found nothing to fix. `lib/design.test.ts`'s colour count, font-family scope,
+  and "one accent" tests were all updated to match the new eleven-token, two-world-of-type system —
+  every change there is additive scope-widening (which files/tokens are allowed), not a loosened
+  safety rule. Ten before/after screenshot pairs (`docs/screenshots/{before,after}/*-2026-09-22.jpg`)
+  were captured by `git stash`-ing this task's own uncommitted changes to render the pre-redesign
+  code, screenshotting it, then popping the stash — `git status --porcelain` and the full test
+  suite were checked immediately after the pop, same discipline as 2026-09-20. A synthetic flagged
+  `TestResult` and a synthetic practice session were injected via the browser's IndexedDB and
+  `sessionStorage` consoles to render every state screenshotted, then removed — confirmed empty
+  afterward, same as 2026-09-20's method.
+
+  *Task 5 — this entry, and the session report.* AI wrote both, describing its own work in the
+  terms above. Nothing in this entry was reviewed by the project owner before being committed; it
+  is offered as a record for them to check, correct, or contest, the same as every entry before it.
+
 ---
 
 ### Written by Vedang, not by AI
