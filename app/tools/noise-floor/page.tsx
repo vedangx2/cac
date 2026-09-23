@@ -125,9 +125,9 @@ const PAD_BASE =
 
 const PAD_PHASE_CLASSES: Record<PadPhase, string> = {
   idle: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
-  armed: 'border-instrument-ink-soft bg-instrument-panel text-paper',
+  armed: 'border-instrument-ink-soft bg-instrument-panel text-instrument-ink',
   go: 'border-pad-go bg-pad-go text-instrument',
-  toosoon: 'border-instrument-ink bg-instrument-panel text-paper',
+  toosoon: 'border-instrument-ink bg-instrument-panel text-instrument-ink',
   done: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
 };
 

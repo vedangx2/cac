@@ -15,6 +15,9 @@
 //     and reports honestly whether that write actually happened, instead of assuming it did.
 //   • Leaving through "Done" clears the sitting, so a finished practice run does not linger
 //     in the tab and reopen test screens into a completed session.
+//
+// REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
+// Restyling only; no copy changed in this pass.
 
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -94,15 +97,15 @@ export default function PracticeSummaryPage() {
 
   if (loading) {
     return (
-      <PageShell className="font-read">
-        <p className="text-title text-ink-soft">Loading practice run…</p>
+      <PageShell>
+        <p className="text-title text-ink-secondary">Loading practice run…</p>
       </PageShell>
     );
   }
 
   if (state.status === 'no-run') {
     return (
-      <PageShell className="font-read">
+      <PageShell>
         <PageHeader title="No practice run to show" backHref="/" backLabel="Home" />
         <Notice title="There is no finished practice run in this tab">
           A practice run&apos;s scores live only in this browser tab and are thrown away when it
@@ -117,7 +120,7 @@ export default function PracticeSummaryPage() {
 
   if (state.status === 'incomplete') {
     return (
-      <PageShell className="font-read">
+      <PageShell>
         <PageHeader title="This practice run is not finished" backHref="/" backLabel="Home" />
         <Notice title={`Next up: ${state.nextLabel}`}>
           The run has modules left to do, so there is nothing to sum up yet. Carry on where it
@@ -184,7 +187,7 @@ export default function PracticeSummaryPage() {
   ];
 
   return (
-    <PageShell className="font-read">
+    <PageShell>
       <PageHeader
         eyebrow="Practice"
         title="Practice run complete"
@@ -227,30 +230,25 @@ export default function PracticeSummaryPage() {
       )}
 
       {/*
-        A RULED TABLE, not a grid of score Cards (2026-09-22, task 4) — the same "lab report,
-        not a dashboard" convention the results screen adopted 2026-09-20. This screen and
-        that one are the same kind of moment (here is what happened, module by module), so
-        they now share a visual language instead of one being a card grid and the other a
-        ruled document.
+        A RULED TABLE — the same "lab report, not a dashboard" convention the results screen
+        uses.
       */}
       <section aria-labelledby="scores-heading">
-        <h2 id="scores-heading" className="text-title font-bold text-ink">
+        <h2 id="scores-heading" className="text-title font-semibold text-ink">
           What happened, module by module
         </h2>
-        <div className="mt-4 divide-y divide-ink/10 border-t border-ink/10">
+        <div className="mt-4 divide-y divide-hairline border-t border-hairline">
           {rows.map((row) => (
             <div key={row.label} className="flex items-baseline justify-between gap-4 py-4">
               <div className="min-w-0">
-                <p className="font-bold text-ink">{row.label}</p>
-                <p className="mt-1 text-meta text-ink-soft">{row.detail}</p>
+                <p className="font-semibold text-ink">{row.label}</p>
+                <p className="mt-1 text-meta text-ink-secondary">{row.detail}</p>
               </div>
-              <p className="font-figure tabular shrink-0 text-title font-bold text-ink">
-                {row.value}
-              </p>
+              <p className="tabular shrink-0 text-title font-semibold text-ink">{row.value}</p>
             </div>
           ))}
         </div>
-        <p className="mt-4 text-body text-ink-soft">
+        <p className="mt-4 text-body text-ink-secondary">
           Practice numbers are first-attempt numbers — the exact thing a baseline must not
           contain, which is why they are shown once and thrown away. No cut-offs were applied
           and nothing here says anything about anyone&apos;s health.

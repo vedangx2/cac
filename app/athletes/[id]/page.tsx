@@ -8,11 +8,15 @@
 // This is where a sitting actually begins. Pressing either button writes a "battery session"
 // to sessionStorage and sends the athlete to the first test; see lib/session.ts for why the
 // in-progress sitting is kept separate from the saved database.
+//
+// REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
+// The boxed action Cards are now plain blocks separated by hairlines rather than rounded,
+// bordered panels — restyling only; no copy changed in this pass.
 
 import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button, ButtonLink, Card, Notice, PageHeader, PageShell } from '@/components/ui';
+import { Button, ButtonLink, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete, getResultsFor } from '@/lib/storage';
 import { isCurrentSchema } from '@/lib/schema';
@@ -73,17 +77,19 @@ export default function AthleteDetailPage() {
 
   if (loading) {
     return (
-      <PageShell className="font-read">
-        <p className="text-title text-ink-soft">Loading athlete…</p>
+      <PageShell>
+        <p className="text-title text-ink-secondary">Loading athlete…</p>
       </PageShell>
     );
   }
 
   if (!athlete) {
     return (
-      <PageShell className="font-read">
-        <h1 className="text-display font-bold text-ink">Athlete not found</h1>
-        <p className="mt-3 text-ink-soft">
+      <PageShell>
+        <h1 className="text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+          Athlete not found
+        </h1>
+        <p className="mt-3 text-ink-secondary">
           This athlete isn&apos;t saved in this browser. Data lives only on the device that
           recorded it.
         </p>
@@ -107,7 +113,7 @@ export default function AthleteDetailPage() {
   const baselineOutOfDate = baseline !== null && !isCurrentSchema(baseline);
 
   return (
-    <PageShell className="font-read">
+    <PageShell>
       <PageHeader
         eyebrow="Athlete"
         title={athlete.name}
@@ -188,16 +194,16 @@ export default function AthleteDetailPage() {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         {/* ── Actions ────────────────────────────────────────────────────────────── */}
         <section aria-labelledby="actions-heading">
-          <h2 id="actions-heading" className="text-title font-bold text-ink">
+          <h2 id="actions-heading" className="text-title font-semibold text-ink">
             Run the tests
           </h2>
 
-          <div className="mt-4 space-y-4">
-            <Card>
-              <h3 className="text-title font-bold text-ink">
+          <div className="mt-4 divide-y divide-hairline border-t border-hairline">
+            <div className="py-6">
+              <h3 className="text-title font-semibold text-ink">
                 {baseline ? 'Record a new baseline' : 'Record a baseline'}
               </h3>
-              <p className="mt-2 text-body text-ink-soft">
+              <p className="mt-2 text-body text-ink-secondary">
                 Do this while {athlete.name} is well and rested — ideally before the season
                 starts. It is the reference every later check is measured against.
               </p>
@@ -254,15 +260,15 @@ export default function AthleteDetailPage() {
                   </ButtonLink>
                 </div>
               ) : (
-                <p className="mt-2 text-meta font-semibold text-ink-soft">
+                <p className="mt-2 text-meta font-semibold text-ink-secondary">
                   Practice pass completed {formatDateTime(athlete.practiceCompletedAt)}.
                 </p>
               )}
-            </Card>
+            </div>
 
-            <Card>
-              <h3 className="text-title font-bold text-ink">Sideline check</h3>
-              <p className="mt-2 text-body text-ink-soft">
+            <div className="py-6">
+              <h3 className="text-title font-semibold text-ink">Sideline check</h3>
+              <p className="mt-2 text-body text-ink-secondary">
                 Run this after a possible head impact. It is the same six tests, compared
                 against {athlete.name}&apos;s own baseline.
               </p>
@@ -297,36 +303,34 @@ export default function AthleteDetailPage() {
               >
                 Start sideline check
               </Button>
-            </Card>
+            </div>
           </div>
         </section>
 
         {/*
           ── History ────────────────────────────────────────────────────────────────
-          A ruled list rather than boxed Cards (2026-09-22, task 4) — a case history reads
-          as a record, and it gives this column a visibly lighter weight than the boxed
-          action cards beside it, instead of both columns using the identical container.
+          A ruled list — a case history reads as a record.
         */}
         <section aria-labelledby="history-heading">
-          <h2 id="history-heading" className="text-title font-bold text-ink">
+          <h2 id="history-heading" className="text-title font-semibold text-ink">
             Past sideline checks
           </h2>
 
           {checks.length === 0 ? (
-            <p className="mt-4 text-ink-soft">No sideline checks recorded yet.</p>
+            <p className="mt-4 text-ink-secondary">No sideline checks recorded yet.</p>
           ) : (
-            <ul className="mt-4 divide-y divide-ink/10 border-t border-ink/10">
+            <ul className="mt-4 divide-y divide-hairline border-t border-hairline">
               {checks.map((check) => {
                 const modules = completedModules(check.scores);
                 return (
                   <li key={check.id} className="py-4">
                     <Link
                       href={`/results/${check.id}`}
-                      className="text-title font-bold text-ink underline decoration-clinic decoration-2 underline-offset-4 hover:decoration-ink"
+                      className="text-title font-semibold text-ink hover:text-link"
                     >
-                      {formatDateTime(check.takenAt)}
+                      {formatDateTime(check.takenAt)} <span aria-hidden="true">›</span>
                     </Link>
-                    <p className="mt-1 text-meta text-ink-soft">
+                    <p className="mt-1 text-meta text-ink-secondary">
                       {modules.length > 0 ? modules.join(' · ') : 'No tests recorded'}
                     </p>
                   </li>
@@ -337,15 +341,13 @@ export default function AthleteDetailPage() {
 
           {baseline && (
             <div className="mt-6">
-              <h3 className="text-meta font-black uppercase tracking-widest text-ink-soft">
-                Current baseline
-              </h3>
-              <Card className="mt-2">
-                <p className="font-bold text-ink">{formatDateTime(baseline.takenAt)}</p>
-                <p className="mt-1 text-meta text-ink-soft">
+              <h3 className="text-meta font-semibold text-ink-secondary">Current baseline</h3>
+              <div className="mt-2 border-t border-hairline pt-3">
+                <p className="font-semibold text-ink">{formatDateTime(baseline.takenAt)}</p>
+                <p className="mt-1 text-meta text-ink-secondary">
                   {completedModules(baseline.scores).join(' · ') || 'No tests recorded'}
                 </p>
-              </Card>
+              </div>
             </div>
           )}
 
@@ -357,16 +359,14 @@ export default function AthleteDetailPage() {
           */}
           {results.length > 0 && (
             <div className="mt-8">
-              <h3 className="text-meta font-black uppercase tracking-widest text-ink-soft">
-                Export raw records
-              </h3>
-              <Card className="mt-2">
-                <p className="text-body text-ink-soft">
+              <h3 className="text-meta font-semibold text-ink-secondary">Export raw records</h3>
+              <div className="mt-2 border-t border-hairline pt-3">
+                <p className="text-body text-ink-secondary">
                   Saves {athlete.name}&apos;s {results.length}{' '}
                   {results.length === 1 ? 'sitting' : 'sittings'} to a JSON file on this device,
                   exactly as stored. Nothing is uploaded — the app has no server to send it to.
                 </p>
-                <p className="mt-3 text-meta text-ink-soft">
+                <p className="mt-3 text-meta text-ink-secondary">
                   <strong className="text-ink">The file includes {athlete.name}&apos;s name</strong>{' '}
                   and is not anonymised, so treat it as personal data once it leaves this phone.
                   It is not a medical record and contains no diagnosis.
@@ -374,7 +374,7 @@ export default function AthleteDetailPage() {
                 <Button variant="secondary" className="mt-4 w-full sm:w-auto" onClick={exportResults}>
                   Download JSON
                 </Button>
-              </Card>
+              </div>
             </div>
           )}
         </section>

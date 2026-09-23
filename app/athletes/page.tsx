@@ -9,10 +9,15 @@
 // Layout note: on a laptop this is a genuine two-column page, with the roster taking the wide
 // column and "add an athlete" pinned beside it. Below `lg` the columns stack, so a phone gets
 // the form first and then the list.
+//
+// REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
+// The boxed "Add an athlete" form is now a plain block with a hairline top rule instead of a
+// rounded, bordered Card — the spec's "no card" rule applies to every panel, not just the
+// full-width bands. Restyling only; no copy changed in this pass.
 
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
-import { Button, ButtonLink, Card, Notice, PageHeader, PageShell } from '@/components/ui';
+import { Button, ButtonLink, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { deleteAthlete, getAthletes, saveAthlete } from '@/lib/storage';
 import type { Athlete } from '@/lib/types';
@@ -70,7 +75,7 @@ export default function AthletesPage() {
   };
 
   return (
-    <PageShell className="font-read">
+    <PageShell>
       <PageHeader
         eyebrow="Roster"
         title="Athletes"
@@ -80,22 +85,16 @@ export default function AthletesPage() {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start">
         {/*
           ── The roster ─────────────────────────────────────────────────────────────
-          The roster comes first on every screen size, including phones. The moment this page
-          matters most is when someone has just been hit and you need to find their name fast —
-          making them scroll past a "add an athlete" form to get there would be exactly wrong.
-
-          A RULED LIST, not a stack of boxed Cards (changed 2026-09-22, task 4): a roster reads
-          as a directory, and a directory is rows on a page, not a grid of tiles. It also gives
-          this column a visibly different weight from the boxed "Add an athlete" form beside it —
-          the varying-weight-by-block the brief asked for, rather than every block on the page
-          using the identical container.
+          A ruled list: a roster reads as a directory, and a directory is rows on a page.
+          Comes first on every screen size, including phones — the moment this page matters
+          most is when someone has just been hit and you need to find their name fast.
         */}
         <section aria-labelledby="roster-heading">
           <h2 id="roster-heading" className="sr-only">
             Saved athletes
           </h2>
 
-          {loading && <p className="text-ink-soft">Loading athletes…</p>}
+          {loading && <p className="text-ink-secondary">Loading athletes…</p>}
 
           {storageError && (
             <Notice tone="loud" title="Could not open on-device storage">
@@ -111,18 +110,18 @@ export default function AthletesPage() {
             </Notice>
           )}
 
-          <ul className="divide-y divide-ink/10 border-t border-ink/10">
+          <ul className="divide-y divide-hairline border-t border-hairline">
             {athletes?.map((athlete) => (
               <li key={athlete.id} className="py-5">
                 <div className="sm:flex sm:items-center sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     <Link
                       href={`/athletes/${athlete.id}`}
-                      className="text-title font-bold text-ink underline decoration-clinic decoration-2 underline-offset-4 hover:decoration-ink"
+                      className="text-title font-semibold text-ink hover:text-link"
                     >
-                      {athlete.name}
+                      {athlete.name} <span aria-hidden="true">›</span>
                     </Link>
-                    <p className="mt-1 text-meta text-ink-soft">
+                    <p className="mt-1 text-meta text-ink-secondary">
                       {athlete.baselineId ? 'Baseline recorded' : 'No baseline yet'}
                       {' · '}
                       {athlete.checkIds.length}{' '}
@@ -133,7 +132,7 @@ export default function AthletesPage() {
                   <div className="mt-4 flex shrink-0 gap-2 sm:mt-0">
                     <ButtonLink
                       href={`/athletes/${athlete.id}`}
-                      className="!min-h-12 !px-4 !text-body"
+                      className="!min-h-11 !px-4 !text-body"
                     >
                       Open
                     </ButtonLink>
@@ -145,7 +144,7 @@ export default function AthletesPage() {
                   server-side copy to restore from — so it asks first, inline.
                 */}
                 {confirmingDelete === athlete.id ? (
-                  <div className="mt-4 rounded-xl border-2 border-ink p-4">
+                  <div className="mt-4 rounded-lg border border-ink p-4">
                     <p className="text-meta font-semibold text-ink">
                       Delete {athlete.name} and all of their recorded results? This cannot be
                       undone.
@@ -169,7 +168,7 @@ export default function AthletesPage() {
                   <button
                     type="button"
                     onClick={() => setConfirmingDelete(athlete.id)}
-                    className="mt-3 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+                    className="mt-3 text-meta font-semibold text-ink-secondary underline underline-offset-4 hover:text-ink"
                   >
                     Delete {athlete.name}
                   </button>
@@ -181,12 +180,12 @@ export default function AthletesPage() {
 
         {/* ── Add an athlete ─────────────────────────────────────────────────────── */}
         <section aria-labelledby="add-heading" className="lg:sticky lg:top-6">
-          <Card>
-            <h2 id="add-heading" className="text-title font-bold text-ink">
+          <div className="border-t border-hairline pt-6">
+            <h2 id="add-heading" className="text-title font-semibold text-ink">
               Add an athlete
             </h2>
             <form onSubmit={addAthlete} className="mt-4">
-              <label htmlFor="athlete-name" className="block text-meta font-bold text-ink">
+              <label htmlFor="athlete-name" className="block text-meta font-semibold text-ink">
                 Name
               </label>
               <input
@@ -199,13 +198,13 @@ export default function AthletesPage() {
                 }}
                 autoComplete="off"
                 placeholder="e.g. Jordan Reyes"
-                // The placeholder uses the full ink-soft colour rather than a faded version of
-                // it: at 60% opacity it fell to roughly 2.9:1 against white, below the 4.5:1
-                // contrast floor, which matters most in the bright sunlight this gets used in.
-                className="mt-2 min-h-14 w-full rounded-xl border-2 border-ink/15 bg-paper px-4 text-title text-ink placeholder:text-ink-soft focus:border-ink"
+                // Full ink-secondary colour rather than a faded version of it: at reduced
+                // opacity this fell below the 4.5:1 contrast floor, which matters most in the
+                // bright sunlight this gets used in.
+                className="mt-2 min-h-11 w-full rounded-lg border border-hairline bg-canvas px-4 text-title text-ink placeholder:text-ink-secondary focus:border-ink"
               />
               {error && (
-                <p role="alert" className="mt-2 text-meta font-bold text-ink">
+                <p role="alert" className="mt-2 text-meta font-semibold text-ink">
                   {error}
                 </p>
               )}
@@ -214,11 +213,11 @@ export default function AthletesPage() {
               </Button>
             </form>
 
-            <p className="mt-4 text-meta text-ink-soft">
+            <p className="mt-4 text-meta text-ink-secondary">
               Names are stored only in this browser. Use whatever your team already uses — a
               first name and last initial is plenty.
             </p>
-          </Card>
+          </div>
         </section>
       </div>
     </PageShell>

@@ -25,10 +25,14 @@
 // judged, its scores are never written to the database (the compiler enforces that — a
 // practice session does not fit finishSession), and it never says a word about anyone's
 // health.
+//
+// REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
+// The single centred Card is now a plain block with a hairline top rule — restyling only;
+// no copy changed in this pass.
 
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ButtonLink, Button, Card, Kicker, Notice, PageHeader, PageShell } from '@/components/ui';
+import { ButtonLink, Button, Kicker, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete } from '@/lib/storage';
 import { BATTERY_STEPS, STEP_LABELS, STEP_PATHS, startPracticeSession } from '@/lib/session';
@@ -65,7 +69,7 @@ export default function PracticePage() {
   };
 
   return (
-    <PageShell className="font-read">
+    <PageShell>
       <PageHeader
         eyebrow="Instructions"
         title="Practice run"
@@ -86,26 +90,24 @@ export default function PracticePage() {
       )}
 
       {/*
-        Two unequal columns rather than one centred Card (2026-09-22, task 4): the reasoning
-        and the step-by-step run as open, generous prose on the wide side — reading matter,
-        not a checklist boxed for its own sake — and the action itself (start / pick someone
-        first) stays a compact, boxed panel on the narrow side, so the one thing you actually
-        DO on this screen is visually distinct from everything explaining why.
+        Two unequal columns rather than one centred Card: the reasoning and the step-by-step
+        run as open, generous prose on the wide side, and the action itself (start / pick
+        someone first) stays a compact panel on the narrow side.
       */}
       <div className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start lg:gap-16">
         <div>
           <Kicker>Why practise before recording a baseline</Kicker>
-          <p className="mt-2 max-w-2xl text-title text-ink-soft">
+          <p className="mt-2 max-w-2xl text-title text-ink-secondary">
             A baseline recorded on someone&apos;s very first attempt reads worse than their
             true normal — later sittings improve just from familiarity, and that improvement
             can cancel out a real decline and hide it on the day it matters.
           </p>
 
-          <h2 className="mt-10 text-title font-bold text-ink">What happens</h2>
-          <ol className="mt-4 divide-y divide-ink/10 border-t border-ink/10">
+          <h2 className="mt-10 text-title font-semibold text-ink">What happens</h2>
+          <ol className="mt-4 divide-y divide-hairline border-t border-hairline">
             {BATTERY_STEPS.map((step, index) => (
-              <li key={step} className="flex gap-4 py-3 text-body text-ink-soft">
-                <span className="tabular font-figure shrink-0 text-ink">
+              <li key={step} className="flex gap-4 py-3 text-body text-ink-secondary">
+                <span className="tabular shrink-0 text-ink">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <span>
@@ -115,7 +117,7 @@ export default function PracticePage() {
               </li>
             ))}
           </ol>
-          <p className="mt-6 max-w-2xl text-body text-ink-soft">
+          <p className="mt-6 max-w-2xl text-body text-ink-secondary">
             Each screen is marked as practice while you are on it. At the end you see every
             module&apos;s score once, and then it is thrown away — practice numbers are
             first-attempt numbers, which is exactly what a baseline must not contain.
@@ -123,7 +125,7 @@ export default function PracticePage() {
         </div>
 
         <div className="mt-10 lg:mt-0">
-          <Card>
+          <div className="border-t border-hairline pt-6">
             {athlete ? (
               <Notice title={`Practising as ${athlete.name}`}>
                 Finishing this run counts as {athlete.name}&apos;s practice pass and unlocks
@@ -132,7 +134,7 @@ export default function PracticePage() {
               </Notice>
             ) : (
               !athleteMissing && (
-                <p className="text-body text-ink-soft">
+                <p className="text-body text-ink-secondary">
                   No athlete is attached, and nothing about this run will be recorded anywhere.
                   To unlock recording a baseline for a specific athlete, start practice from
                   their page instead.
@@ -148,7 +150,7 @@ export default function PracticePage() {
                 Pick an athlete first
               </ButtonLink>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </PageShell>

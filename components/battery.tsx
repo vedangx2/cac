@@ -181,7 +181,7 @@ export function SaveErrorNotice({ message, tone = 'dark' }: { message: string; t
   const box =
     tone === 'dark'
       ? 'bg-instrument-ink text-instrument'
-      : 'bg-ink text-paper';
+      : 'bg-ink text-canvas';
   return (
     <div role="alert" className={`mt-6 rounded-xl p-4 ${box}`}>
       <p className="text-title font-black">Not saved</p>
@@ -222,10 +222,10 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
           link: 'text-instrument-ink',
         }
       : {
-          box: 'border-2 border-ink/30 bg-paper',
+          box: 'border border-hairline bg-canvas',
           title: 'text-ink',
-          body: 'text-ink-soft',
-          link: 'text-ink',
+          body: 'text-ink-secondary',
+          link: 'text-link',
         };
 
   return (
@@ -271,7 +271,7 @@ export function SittingLabel({
   tone?: 'dark' | 'light';
 }) {
   if (!session) return null;
-  const soft = tone === 'dark' ? 'text-instrument-ink-soft' : 'text-ink-soft';
+  const soft = tone === 'dark' ? 'text-instrument-ink-soft' : 'text-ink-secondary';
   const strong = tone === 'dark' ? 'text-instrument-ink' : 'text-ink';
 
   if (session.kind === 'practice') {

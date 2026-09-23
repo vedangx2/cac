@@ -7,14 +7,13 @@
 // ═════════════════════════════════════════════════════════════════════════════════════
 // THE RULES THESE COMPONENTS ENFORCE — see app/globals.css for the reasoning
 // ═════════════════════════════════════════════════════════════════════════════════════
-//   • TEN colours exist. Anything else fails the build.
-//   • FIVE type sizes exist: stimulus, display, title, body, meta. Same.
-//   • Spacing comes from 4/8/12/16/24/32/48/64 only (Tailwind steps 1/2/3/4/6/8/12/16).
+//   • The reading palette is Apple's, exactly seven colours plus flag. Anything else fails
+//     the build.
 //   • RED IS NOT AVAILABLE HERE. It means "flagged" and lives only on the results screen.
 //     A warning, an error and a destructive action all use a heavy ink panel instead, which
 //     on a white page is at least as loud and costs the accent nothing.
-//   • Every interactive control is at least 56px tall, because this gets pressed on a
-//     sideline, one-handed, by somebody in a hurry.
+//   • Reading-screen buttons are pill-shaped and at least 44px tall. Instrument buttons keep
+//     their own rounded-rectangle shape and 56px floor — see the tap-target comment below.
 //
 // None of these use React hooks, so they drop into a server or client component either way.
 
@@ -22,23 +21,55 @@ import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 
 /* ────────────────────────────────────────────────────────────────────────────────────
-   Layout — the document surface
+   Layout — the reading surface
    ──────────────────────────────────────────────────────────────────────────────────── */
 
-/** The standard light "document" page wrapper: centred, capped width, comfortable padding. */
+/**
+ * The standard reading-screen wrapper: capped at 980px, left-aligned content, comfortable
+ * padding. Replaces the old centred 896px ("max-w-4xl") shell — see CLAUDE.md's spec for the
+ * exact number.
+ */
 export function PageShell({
   children,
   className = '',
 }: {
   children: ReactNode;
-  /** Extra classes on the wrapper. Added 2026-09-20 so the results screen alone can apply its
-   * own reading typeface (see the two-typeface classes in app/globals.css) without every other
-   * screen that uses this shell picking them up too. */
   className?: string;
 }) {
   return (
-    <div className={`mx-auto w-full max-w-4xl px-4 py-8 sm:px-8 sm:py-12 ${className}`}>
+    <div className={`mx-auto w-full max-w-[980px] px-4 py-8 sm:px-8 sm:py-12 ${className}`}>
       {children}
+    </div>
+  );
+}
+
+/**
+ * A full-width background band with 980px-capped, left-aligned content inside it —
+ * Apple's own way of separating sections: alternating canvas/surface bands, never a
+ * floating box. Use on pages that have more than one distinct section (the home page);
+ * a single-section screen can use PageShell directly and skip this.
+ */
+export function Section({
+  tone = 'canvas',
+  divider = false,
+  children,
+  className = '',
+  ...rest
+}: {
+  tone?: 'canvas' | 'surface';
+  /** A full-width hairline along the top edge, for two adjacent bands of the same tone. */
+  divider?: boolean;
+  children: ReactNode;
+  className?: string;
+} & ComponentProps<'div'>) {
+  return (
+    <div
+      className={`${tone === 'surface' ? 'bg-surface' : 'bg-canvas'} ${divider ? 'border-t border-hairline' : ''}`}
+      {...rest}
+    >
+      <div className={`mx-auto w-full max-w-[980px] px-4 py-16 sm:px-8 sm:py-24 ${className}`}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -46,15 +77,12 @@ export function PageShell({
 /**
  * Page title, optional supporting line, and an optional "back" link above it.
  *
- * `title` takes a ReactNode rather than a plain string (added 2026-09-22, task 4) so a
- * page can mix weights in one heading — a bold phrase followed by a regular-weight
- * continuation — instead of one uniform black slab. A plain string still works exactly
- * as before; nothing that already calls this changes.
+ * `title` takes a ReactNode rather than a plain string so a page can mix weights in one
+ * heading — a bold phrase followed by a regular-weight continuation.
  *
- * `eyebrow` (added 2026-09-22) is the small tracked label above the title — a section
- * kicker, in `clinic`, the one decorative accent the reading-screen redesign added. It is
- * always small print, never a verdict, and it is the only place on these screens `clinic`
- * is allowed to carry text — see the comment above --color-clinic in globals.css.
+ * `eyebrow` is the small label above the title. Sentence case, semibold, in the secondary
+ * text colour — NOT all-caps, NOT letter-spaced. See CLAUDE.md's typography spec: an
+ * eyebrow like "Sideline concussion screening aid" is small print, not a shouted kicker.
  */
 export function PageHeader({
   eyebrow,
@@ -74,62 +102,58 @@ export function PageHeader({
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 inline-flex min-h-14 items-center gap-2 text-meta font-bold text-ink-soft underline underline-offset-4 hover:text-ink"
+          className="mb-4 inline-flex min-h-11 items-center gap-2 text-meta font-semibold text-ink-secondary hover:text-link"
         >
           <span aria-hidden="true">←</span> {backLabel ?? 'Back'}
         </Link>
       )}
-      {eyebrow && (
-        <p className="mb-2 text-meta font-bold uppercase tracking-widest text-clinic">{eyebrow}</p>
-      )}
-      <h1 className="text-display font-black text-ink">{title}</h1>
-      {subtitle && <p className="mt-3 max-w-2xl text-body text-ink-soft">{subtitle}</p>}
+      {eyebrow && <p className="mb-2 text-meta font-semibold text-ink-secondary">{eyebrow}</p>}
+      <h1 className="text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+        {title}
+      </h1>
+      {subtitle && <p className="mt-3 max-w-2xl text-body text-ink-secondary">{subtitle}</p>}
     </header>
   );
 }
 
-/** A white panel on the light grey page background. The basic content container. */
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-xl border border-ink/15 bg-paper p-4 sm:p-6 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
 /**
- * A small tracked label in `clinic`, the reading screens' one decorative accent. Added
- * 2026-09-22 (task 4) for section headings that want the same kicker treatment as
- * PageHeader's `eyebrow` prop but sit inside the body of a page rather than at its top —
- * e.g. "How it works", "The tests". Never a verdict, never anything about anyone's
- * health — see the comment above --color-clinic in globals.css.
+ * A small sentence-case label in the secondary text colour. For a section heading that
+ * wants the same small-print treatment as PageHeader's `eyebrow` but sits inside the body
+ * of a page rather than at its top — e.g. "How it works", "The tests".
  */
 export function Kicker({ children }: { children: ReactNode }) {
-  return <p className="text-meta font-bold uppercase tracking-widest text-clinic">{children}</p>;
+  return <p className="text-meta font-semibold text-ink-secondary">{children}</p>;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────────────
    Actions
    ──────────────────────────────────────────────────────────────────────────────────── */
 
-// min-h-14 is 56px. That number comes from the tap-target rule rather than the spacing
-// scale: on a sideline, one-handed, in a hurry, a control smaller than this gets mis-hit,
-// and on a test screen a mis-hit is recorded as a wrong answer.
 const buttonBase =
-  'inline-flex min-h-14 items-center justify-center gap-2 rounded-xl px-6 py-4 text-center ' +
-  'text-body font-bold leading-tight transition-colors disabled:cursor-not-allowed ' +
-  'disabled:opacity-40';
+  'inline-flex items-center justify-center gap-2 text-center text-body font-semibold ' +
+  'leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-40';
 
 const buttonVariants = {
-  /** Primary action on a light document screen. Ink, not an accent — red is not for buttons. */
-  primary: 'bg-ink text-paper hover:bg-ink-soft',
-  /** Secondary action on a light screen. */
-  secondary: 'border-2 border-ink bg-paper text-ink hover:bg-surface',
-  /** Primary action on a dark instrument screen. */
-  instrument: 'bg-instrument-ink text-instrument hover:bg-instrument-ink-soft',
-  /** Secondary action on a dark instrument screen. */
+  /**
+   * Primary action on a reading screen. Pill-shaped, #0071e3 fill, white text. 44px is
+   * the reading-screen tap-target floor (see CLAUDE.md) — smaller than the instrument
+   * floor below because a reading screen is tapped once, calmly, not repeatedly under
+   * time pressure.
+   */
+  primary: 'min-h-11 rounded-full bg-action px-6 py-2 text-canvas hover:opacity-90',
+  /** Secondary action on a reading screen. Transparent, 1px #0071e3 border and text. */
+  secondary:
+    'min-h-11 rounded-full border border-action bg-transparent px-6 py-2 text-action hover:bg-surface',
+  /**
+   * Primary action on a dark instrument screen. Unchanged shape and size from before this
+   * pass — 56px tall, rounded rectangle — because a test screen is pressed one-handed, in a
+   * hurry, on a sideline, and a mis-hit there is recorded as an answer. Only the colours
+   * moved (see app/globals.css); this class name and its geometry did not.
+   */
+  instrument: 'min-h-14 rounded-xl px-6 py-4 bg-instrument-ink text-instrument hover:bg-instrument-ink-soft',
+  /** Secondary action on a dark instrument screen. Same geometry note as above. */
   'instrument-quiet':
-    'border-2 border-instrument-ink-soft bg-instrument-panel text-instrument-ink hover:border-instrument-ink',
+    'min-h-14 rounded-xl px-6 py-4 border-2 border-instrument-ink-soft bg-instrument-panel text-instrument-ink hover:border-instrument-ink',
 } as const;
 
 type ButtonVariant = keyof typeof buttonVariants;
@@ -159,7 +183,7 @@ export function ButtonLink({
  * A callout for disclaimers, refusals, warnings and errors.
  *
  * TONES, and note what is NOT here:
- *   'neutral' — an outlined panel. Context you should read.
+ *   'neutral' — a hairline-outlined panel. Context you should read.
  *   'loud'    — a solid ink panel with reversed type. Something is wrong, or switched off,
  *               or refused. On a white page this is the most dominant object available.
  *
@@ -177,13 +201,13 @@ export function Notice({
   children: ReactNode;
 }) {
   const tones = {
-    neutral: 'border-2 border-ink/30 bg-paper text-ink',
-    loud: 'border-2 border-ink bg-ink text-paper',
+    neutral: 'border border-hairline bg-canvas text-ink',
+    loud: 'border border-ink bg-ink text-canvas',
   } as const;
 
   return (
-    <div className={`rounded-xl p-4 ${tones[tone]}`}>
-      {title && <p className="mb-2 text-title font-black">{title}</p>}
+    <div className={`rounded-lg p-4 ${tones[tone]}`}>
+      {title && <p className="mb-2 text-title font-semibold">{title}</p>}
       <div className="text-body">{children}</div>
     </div>
   );
@@ -215,17 +239,14 @@ export function ThresholdDisclaimer() {
 /**
  * Full-bleed dark wrapper for a test screen.
  *
+ * UNCHANGED BY THIS PASS except for the colours the `instrument` tokens now resolve to
+ * (see app/globals.css) — the six test modules keep their dark instrument treatment, and
+ * every class name and every pixel of geometry here is exactly what it was before.
+ *
  * The `instrument` class re-colours the keyboard focus ring to near-white (see globals.css)
  * so it stays visible against near-black.
  */
 export function InstrumentShell({ children }: { children: ReactNode }) {
-  /*
-    `flex-1` rather than a min-height calculation. The old version guessed at the height of the
-    chrome with an arbitrary calc(), and when a module's content was short — the digit-span
-    instruction screen, say — the page background showed through as a pale band between the
-    dark screen and the dark footer. On an instrument screen the brightest thing on the display
-    has to be the stimulus, and a stripe of light grey is not it.
-  */
   return (
     <div className="instrument flex flex-1 flex-col bg-instrument text-instrument-ink">
       <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-8 sm:py-8">{children}</div>
@@ -307,7 +328,7 @@ export function ModuleIntro({
 }
 
 /**
- * A panel on a dark instrument screen. The dark counterpart of Card.
+ * A panel on a dark instrument screen.
  */
 export function InstrumentPanel({
   children,

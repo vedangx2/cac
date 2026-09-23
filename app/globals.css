@@ -23,20 +23,24 @@
        screen is the brightest object on the display, and it must not be.
 
   ─────────────────────────────────────────────────────────────────────────────────────
+  REPLACED 2026-09-23 — the reading-screen half of this system is now Apple's web
+  design language, applied as a spec (exact values), not an aesthetic (adjectives). This
+  is a REPLACEMENT of the warm/serif/teal system from 2026-09-22, not a layer on top of
+  it. Removed outright: the serif reading face, the monospace figures face, the warm
+  ivory/sand palette, and the `clinic` decorative accent. See SESSION-REPORT.md for the
+  full list of what was deleted and why.
+
+  ─────────────────────────────────────────────────────────────────────────────────────
   THE COLOUR RULE — ONE COLOUR MEANS SOMETHING, EVERYTHING ELSE IS JUST PALETTE
   ─────────────────────────────────────────────────────────────────────────────────────
   There is exactly ONE colour in this app that is a SIGNAL rather than decoration:
 
-      RED  =  this screening found a change worth a human looking at.
+      RED (flag)  =  this screening found a change worth a human looking at.
 
   It appears on the results screen and NOWHERE ELSE. Not on buttons, not on links, not on
   errors, not on warnings, not on a destructive action, not on a "wait" state. The moment
   red also means "delete" or "heads up", it stops meaning "flagged", and the one screen
   where it has to land hardest is the one that loses.
-
-  Everything that used to be blue is now ink or paper. Everything that used to be a red
-  warning is now a heavy ink panel, which on a white page is at least as loud and costs
-  the signal nothing.
 
   THERE IS NO SUCCESS GREEN AND NO SUCCESS STATE. This app has nothing to report that a
   green would be right for. See CLAUDE.md → THE HARD RULE.
@@ -45,14 +49,10 @@
   physical target to hit, on screen for under two seconds, and it never appears on a
   results screen. It says nothing about anybody's health. Do not "fix" it.
 
-  ADDED 2026-09-22, task 4 of that session's brief: a second, purely DECORATIVE colour,
-  `clinic` — a muted teal/blue-green, used only on the reading screens (home, roster,
-  athlete page, practice, practice summary, results) to give the document surface a
-  deliberate, warm, clinical character instead of flat neutral grey. It is not a second
-  signal. It never appears filled behind a primary action, never stands in for red, and
-  never implies anything about anyone's health — it marks a kicker label, a thin rule
-  between sections, a step number. If you are ever tempted to reach for `clinic` to mean
-  something (a status, a state, a verdict), stop: that is `flag`'s job and `flag`'s alone.
+  `action` (#0071e3) is a UI colour, not a signal — it is what a button or a live link
+  looks like, the same job blue always did in this app, and it never appears on the
+  results screen's verdict. `link` (#0066cc) is the same job for inline text links.
+  Neither may ever stand in for `flag`.
 
   ─────────────────────────────────────────────────────────────────────────────────────
   WHY THE NAMESPACES ARE RESET TO `initial`
@@ -62,58 +62,64 @@
   font sizes that exist are the ones defined below. A stray `text-blue-500`, `bg-white` or
   `text-xs` is not a style slip that survives review — it fails the build.
 
-  The count is the point. Eleven colours, five sizes, and the compiler enforces both.
+  The count is the point.
 */
 
 @theme {
-  /* ═══ COLOUR — exactly eleven, and every one has a job ═════════════════════════ */
+  /* ═══ COLOUR — the reading palette is Apple's, exactly ═══════════════════════════ */
   --color-*: initial;
 
   /*
-    -- The document surface (screens you read) --
-    Warmed 2026-09-22 (task 4): a warm off-white and a warm neutral ink, replacing a
-    flatter cool grey/near-black pairing, so the reading screens read as a clinic's
-    patient-facing site rather than software chrome. Every contrast ratio below was
-    recomputed against the new values before landing — see SESSION-REPORT.md for the
-    numbers, including `flag`-on-`surface`, which must never get quieter than 5.18:1.
+    -- The reading surface (screens you read) --
+    These seven values are the spec, verbatim. No cream, no warm off-white, no teal, no
+    decorative accent — see SESSION-REPORT.md for the full list of what this replaced.
   */
-  /* 1 */ --color-paper: #fbf7f0; /* cards, and the light page itself. warm ivory, was #ffffff */
-  /* 2 */ --color-surface: #f6f1e7; /* page behind the cards. warm sand, was #eef1f2 */
-  /* 3 */ --color-ink: #241f18; /* primary text on light; primary buttons. warm near-black, was #0a0e11 */
-  /* 4 */ --color-ink-soft: #544d3d; /* secondary text on light. 7.4:1 on surface, 7.9:1 on paper */
+  --color-canvas: #ffffff; /* the page itself */
+  --color-surface: #f5f5f7; /* alternating full-width section bands, never a floating box */
+  --color-ink: #1d1d1f; /* all primary text */
+  --color-ink-secondary: #6e6e73; /* captions, secondary text, the eyebrow */
+  --color-hairline: #d2d2d7; /* 1px dividers only — never a fill */
+  --color-action: #0071e3; /* primary buttons, and nothing else */
+  --color-link: #0066cc; /* inline text links only */
 
-  /* -- The one decorative accent, reading screens only — see the comment above -- */
-  /* 5 */ --color-clinic: #2c5a61; /* muted teal/blue-green. 6.8:1 on surface, 7.2:1 on paper */
-
-  /* -- The instrument surface (screens you perform) — UNCHANGED by task 4 -- */
-  /* 6 */ --color-instrument: #080b0d; /* the dark page, and the app chrome */
-  /* 7 */ --color-instrument-panel: #161c21; /* a raised panel on the dark page */
-  /* 8 */ --color-instrument-ink: #f4f6f7; /* primary text on dark. 18.0:1 */
-  /* 9 */ --color-instrument-ink-soft: #a9b6be; /* secondary text on dark. 8.3:1 on panel */
+  /* -- The instrument surface (screens you perform) — Apple's dark values -- */
+  --color-instrument: #000000; /* the dark page, and the app chrome */
+  --color-instrument-panel: #1d1d1f; /* a raised panel on the dark page */
+  --color-instrument-ink: #f5f5f7; /* primary text on dark */
+  --color-instrument-ink-soft: #86868b; /* secondary text on dark */
 
   /* -- Meaning -- */
-  /* 10 */ --color-flag: #c8102e; /* THE signal. Flagged, and nothing else, ever. */
+  --color-flag: #c8102e; /* THE signal. Flagged, and nothing else, ever. Unchanged by this pass. */
 
   /* -- Stimulus (a target to hit, not a verdict) -- */
-  /* 11 */ --color-pad-go: #00a651; /* the GO signal on the two timed pads */
+  --color-pad-go: #00a651; /* the GO signal on the two timed pads. Unchanged by this pass. */
 
   /*
-    Borders are not their own colours. They are ink or instrument-ink at low opacity, so a
-    divider can never drift away from the text it sits beside, and the palette stays at eleven.
+    Borders are not their own colours. `hairline` is the one exception — a literal 1px
+    rule colour, because Apple's own dividers are a named grey, not "ink at some opacity".
   */
 
-  /* ═══ TYPE — exactly five sizes ═════════════════════════════════════════════════
-     One family (the system UI stack, set on body below), five sizes, no more.
+  /* ═══ TYPE — one family everywhere, plus the shared instrument scale ═══════════════
+     Reading screens use exactly ONE new size beyond the shared scale: `hero`, the
+     largest headline on the page (48px desktop). Everything else on a reading screen —
+     row titles, body copy, captions — reuses `title` / `body` / `meta` below, restyled
+     with weight, tracking and case rather than a new pixel value each.
+
+     The SIX INSTRUMENT SCREENS keep every one of these five sizes and their pixel
+     values completely unchanged by this pass — only their colours moved (see above).
+     `stimulus` in particular is now used ONLY on instrument screens: the reading-screen
+     verdict headlines that used to reuse it now use `hero` instead, so the two worlds'
+     type no longer overlaps at all.
 
        stimulus  64px — the thing you react to. The pad word, a digit, a score readout.
-       display   32px — the name of the screen you are on.
-       title     22px — a heading inside a screen.
+                        INSTRUMENT ONLY as of this pass.
+       hero      48px — NEW. The largest headline on a reading screen (the home hero,
+                        the results verdict). Never used on an instrument screen.
+       display   32px — the name of the screen you are on (both worlds — an instrument
+                        module's H1, and a reading screen's hero/title on mobile widths).
+       title     22px — a heading inside a screen, or a row title in a list.
        body      17px — every sentence in the app. Never smaller, on any viewport.
-       meta      16px — uppercase tracked labels only, never a sentence.
-
-     `meta` is one step below body and is still 16px, because the floor for readable text
-     on a phone held at arm's length in the sun is 16px and a "small print" size would be
-     used for exactly the thing somebody needs to read while rattled.
+       meta      16px — captions and small labels. Never smaller — see body's comment.
      ══════════════════════════════════════════════════════════════════════════════ */
   --text-*: initial;
 
@@ -121,9 +127,13 @@
   --text-stimulus--line-height: 1;
   --text-stimulus--letter-spacing: -0.02em;
 
+  --text-hero: 3rem;
+  --text-hero--line-height: 1.1;
+  --text-hero--letter-spacing: -0.02em;
+
   --text-display: 2rem;
   --text-display--line-height: 1.1;
-  --text-display--letter-spacing: -0.01em;
+  --text-display--letter-spacing: -0.02em;
 
   --text-title: 1.375rem;
   --text-title--line-height: 1.25;
@@ -138,14 +148,12 @@
 @layer base {
   html {
     /*
-      ONE FAMILY, declared on the root as well as on body.
-
-      Tailwind's own reset puts a different stack on <html>, and although only <body> and its
-      descendants are ever visible, that left two font stacks in the document and made "one font
-      family" true by inheritance rather than by intent. Anything that ever escaped body — a
-      portal, a dialog mounted on the root — would have rendered in a different face.
+      ONE FAMILY, everywhere, declared on the root as well as on body — see the note on
+      body below for why both. This is Apple's own system-font stack: no serif, no
+      monospace, no webfont. Every reading screen and every instrument screen now share
+      this one family; only the type SCALE differs by world (see the @theme block above).
     */
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     /* Never let a stray wide element cause sideways scrolling on a phone. */
     overflow-x: hidden;
     /* Stop iOS from silently inflating type in landscape. */
@@ -153,10 +161,9 @@
   }
 
   body {
-    background-color: var(--color-surface);
+    background-color: var(--color-canvas);
     color: var(--color-ink);
-    /* ONE family. The system UI stack, so it renders in the native face on every phone. */
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     font-size: var(--text-body);
     line-height: 1.5;
     /* Removes the ~300ms double-tap-to-zoom delay, which would otherwise make every
@@ -199,7 +206,10 @@
   }
 
   /* Timing numbers must not jitter as digits change. Tabular figures keep every digit the
-     same width, so a live stopwatch counts up without the layout dancing. */
+     same width, so a live stopwatch counts up without the layout dancing. Also used for
+     reading-screen figure columns (baseline/check/change), replacing the old monospace
+     figures face — Apple's own approach is tabular figures IN the one system face, not a
+     second typeface. */
   .tabular {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
@@ -208,48 +218,6 @@
 
 /*
   ─────────────────────────────────────────────────────────────────────────────────────
-  THE READING SCREENS' TWO TYPEFACES — added 2026-09-20 for the results screen alone,
-  WIDENED 2026-09-22 (task 4) to every reading screen
-  ─────────────────────────────────────────────────────────────────────────────────────
-  The app is still, deliberately, only TWO worlds of type: the six test modules stay the
-  base sans stack set on <body> — software you are operating, unchanged by this session —
-  and every screen you READ (home, roster, athlete page, practice, practice summary,
-  results) now uses this reading/figures pair instead. Nothing in the app uses a THIRD
-  family. See "there is exactly one font family, with one deliberate, scoped exception" in
-  lib/design.test.ts, which enforces the total count of families (still exactly three:
-  the sans base, this serif, this monospace) — the "exception" is now a whole surface of
-  the app rather than one screen, which is why that test's name reads slightly loosely
-  now; the count it actually checks has not changed.
-
-  Every reading screen reads like a clinical document — a lab report, a discharge summary,
-  a patient handout — rather than software chrome, and that reference class pairs a
-  reading face with a figures face.
-
-  Both are SYSTEM stacks, not a webfont: this app makes no external network calls at
-  runtime (see CLAUDE.md → Stack), and loading a font from a CDN at runtime would be
-  exactly that. Every name in each stack ships on some real, current OS.
-
-  Scope is machine-checked, not just commented: lib/design.test.ts asserts these two
-  class names appear ONLY inside the named reading-screen files, so this exception cannot
-  silently spread into the six instrument screens the way a shared component change could.
-*/
-.font-read {
-  /* The reading face — headlines, module names, safety copy. A serif reads as a
-     document being reported to you; the sans stack everywhere else reads as software
-     you are operating. That distinction is the whole point of this screen's redesign. */
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-}
-
-.font-figure {
-  /* The figures face — baseline/check/change/threshold values only, never prose.
-     Monospace digits hold their width as they change, so a column of numbers stays a
-     column instead of re-flowing every time a check produces a different-width value. */
-  font-family:
-    ui-monospace, "Cascadia Code", "Segoe UI Mono", "SF Mono", Consolas, "Roboto Mono",
-    monospace;
-}
-
-/*
   ACCESSIBILITY FLOOR — respect reduced motion.
   Someone who has just taken a hit to the head may be motion-sensitive, which makes this
   more than a nicety here.

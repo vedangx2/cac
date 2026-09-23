@@ -27,6 +27,12 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDeviceData } from '@/components/use-device-data';
 import { ButtonLink, Notice, PageShell, ThresholdDisclaimer } from '@/components/ui';
+// REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
+// This is a needs-agreement file; the brief that authorised this pass names "results"
+// explicitly in its scope, which is the agreement CLAUDE.md asks for — see SESSION-REPORT.md.
+// Colours, weights and the verdict headline's size token changed. Every word of copy, the
+// branch ordering, and every safety-copy string are byte-for-byte unchanged in this commit —
+// a separate, later pass removes em dashes and British spelling (see SESSION-REPORT.md).
 import { getAthlete, getResult } from '@/lib/storage';
 import {
   type ComparisonRow,
@@ -155,8 +161,8 @@ export default function ResultPage() {
   /* ── Loading ──────────────────────────────────────────────────────────────────── */
   if (state.status === 'loading') {
     return (
-      <PageShell className="font-read">
-        <p className="text-title text-ink-soft">Loading result…</p>
+      <PageShell>
+        <p className="text-title text-ink-secondary">Loading result…</p>
       </PageShell>
     );
   }
@@ -164,7 +170,7 @@ export default function ResultPage() {
   /* ── Result doesn't exist ─────────────────────────────────────────────────────── */
   if (state.status === 'not-found') {
     return (
-      <PageShell className="font-read">
+      <PageShell>
         <PageHeaderLite title="Result not found" />
         <Notice tone="loud" title="We couldn't find this result">
           It may have been recorded on a different device or in a different browser. Because
@@ -181,7 +187,7 @@ export default function ResultPage() {
   /* ── Someone opened a baseline recording ──────────────────────────────────────── */
   if (state.status === 'baseline') {
     return (
-      <PageShell className="font-read">
+      <PageShell>
         <PageHeaderLite
           title="Baseline recording"
           subtitle={`${state.athlete?.name ?? 'Athlete'} · recorded ${formatDateTime(state.result.takenAt)}`}
@@ -207,7 +213,7 @@ export default function ResultPage() {
     const name = state.athlete?.name ?? 'this athlete';
 
     return (
-      <PageShell className="font-read">
+      <PageShell>
         <PageHeaderLite
           title="This check could not be compared"
           subtitle={`${state.athlete?.name ?? 'Athlete'} · ${formatDateTime(state.check.takenAt)}`}
@@ -226,8 +232,10 @@ export default function ResultPage() {
           different news; giving it the accent too would blunt the accent on the one panel
           where it has to land hardest.
         */}
-        <div className="border-t-4 border-ink pt-6">
-          <p className="text-display font-black text-ink">No comparison was possible</p>
+        <div className="border-t-2 border-ink pt-6">
+          <p className="text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+            No comparison was possible
+          </p>
 
           {state.fromFuture ? (
             <p className="mt-3 text-title text-ink">
@@ -248,10 +256,10 @@ export default function ResultPage() {
             </p>
           )}
 
-          <p className="mt-4 text-title font-bold text-ink">
+          <p className="mt-4 text-title font-semibold text-ink">
             This is not a result. It does not mean anything was found, and it does not mean
             nothing is wrong. If {name} may have hit their head,{' '}
-            <span className="underline decoration-ink decoration-4 underline-offset-4">
+            <span className="underline underline-offset-4">
               have them seen by a medical professional.
             </span>
           </p>
@@ -295,7 +303,7 @@ export default function ResultPage() {
   /* ── We could not compare — an ERROR, never a pass ────────────────────────────── */
   if (state.status === 'cannot-compare') {
     return (
-      <PageShell className="font-read">
+      <PageShell>
         <PageHeaderLite
           title="This check could not be compared"
           subtitle={
@@ -306,13 +314,15 @@ export default function ResultPage() {
           backHref={state.athlete ? `/athletes/${state.athlete.id}` : '/athletes'}
         />
 
-        <div className="border-t-4 border-ink pt-6">
-          <p className="text-display font-black text-ink">No comparison was possible</p>
+        <div className="border-t-2 border-ink pt-6">
+          <p className="text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+            No comparison was possible
+          </p>
           <p className="mt-3 text-title text-ink">{state.message}</p>
-          <p className="mt-4 text-title font-bold text-ink">
+          <p className="mt-4 text-title font-semibold text-ink">
             This is not a result. It does not mean anything was found, and it does not mean
             nothing is wrong. If this athlete may have hit their head,{' '}
-            <span className="underline decoration-ink decoration-4 underline-offset-4">
+            <span className="underline underline-offset-4">
               have them seen by a medical professional.
             </span>
           </p>
@@ -384,7 +394,7 @@ export default function ResultPage() {
   const belowFlagRule = !outcome.flagged && crossedRows.length > 0;
 
   return (
-    <PageShell className="font-read">
+    <PageShell>
       <PageHeaderLite
         title="Sideline check result"
         subtitle={`${name} · ${formatDateTime(check.takenAt)} · compared against baseline from ${formatDateTime(baseline.takenAt)}`}
@@ -402,9 +412,9 @@ export default function ResultPage() {
       */}
       {nothingCompared ? (
         // Neither sitting has overlapping modules. Loud and distinct from "no change".
-        <section className="border-t-8 border-ink pt-6" aria-live="polite">
-          <p className="text-meta font-semibold text-ink-soft">Nothing could be compared</p>
-          <h2 className="mt-2 text-display font-black leading-tight text-ink sm:text-stimulus">
+        <section className="border-t-2 border-ink pt-6" aria-live="polite">
+          <p className="text-meta font-semibold text-ink-secondary">Nothing could be compared</p>
+          <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
             No tests in common with {name}&apos;s baseline
           </h2>
           <p className="mt-4 text-title text-ink">
@@ -422,13 +432,13 @@ export default function ResultPage() {
         */
         <section className="border-t-8 border-flag pt-6" aria-live="polite">
           <p className="text-meta font-semibold text-flag">Flagged</p>
-          <h2 className="mt-2 text-display font-black leading-tight text-flag sm:text-stimulus">
+          <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-flag sm:text-hero">
             Significant change from {name}&apos;s baseline
           </h2>
-          <p className="mt-4 text-title font-bold text-ink">
+          <p className="mt-4 text-title font-semibold text-ink">
             Stop activity now and have {name} evaluated by a medical professional.
           </p>
-          <p className="mt-3 text-body text-ink-soft">
+          <p className="mt-3 text-body text-ink-secondary">
             This screen cannot tell you whether {name} has a concussion. It can only tell you
             that something measured differently than it did when they were well — and that is
             reason enough for a trained person to take a look.
@@ -446,16 +456,16 @@ export default function ResultPage() {
           No green. No checkmark. It does not say "no change detected", because a change WAS
           detected. Every path out still ends with a medical professional.
         */
-        <section className="border-t-8 border-ink pt-6" aria-live="polite">
-          <p className="text-meta font-semibold text-ink-soft">Change found — below the flag rule</p>
-          <h2 className="mt-2 text-display font-black leading-tight text-ink sm:text-stimulus">
+        <section className="border-t-2 border-ink pt-6" aria-live="polite">
+          <p className="text-meta font-semibold text-ink-secondary">Change found — below the flag rule</p>
+          <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
             {crossedRows.length === 1
               ? 'One of the measurements moved past its cut-off.'
               : 'Measurements moved past their cut-off.'}
           </h2>
 
           <div className="mt-4 space-y-3 text-body text-ink sm:text-title">
-            <p className="font-bold">This is not a &ldquo;no change&rdquo; result.</p>
+            <p className="font-semibold">This is not a &ldquo;no change&rdquo; result.</p>
             <p>
               {crossedRows.map((row) => row.label).join(', ')} changed more than the tested
               cut-off for that measurement, and is marked in the table below. On its own that
@@ -469,14 +479,14 @@ export default function ResultPage() {
                 Treat those as unread, not as normal.
               </p>
             )}
-            <p className="font-bold">
+            <p className="font-semibold">
               Treat this as a reason to watch {name} closely. If they may have hit their head,{' '}
-              <span className="underline decoration-ink decoration-4 underline-offset-4">
+              <span className="underline underline-offset-4">
                 have them seen by a medical professional
               </span>{' '}
               — and if anything feels off at any point, seek care straight away.
             </p>
-            <p className="text-ink-soft">
+            <p className="text-ink-secondary">
               This screen is not a clearance to return to play, and it does not rule out a
               concussion. Only a medical professional can make that call.
             </p>
@@ -494,15 +504,15 @@ export default function ResultPage() {
           No green. No checkmark. It does not say "no change detected", because that would claim
           a verdict on measurements that never got one.
         */
-        <section className="border-t-8 border-ink pt-6" aria-live="polite">
-          <p className="text-meta font-semibold text-ink-soft">No verdict available</p>
-          <h2 className="mt-2 text-display font-black leading-tight text-ink sm:text-stimulus">
+        <section className="border-t-2 border-ink pt-6" aria-live="polite">
+          <p className="text-meta font-semibold text-ink-secondary">No verdict available</p>
+          <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
             This screen could not judge {outcome.unevaluated.length === 1 ? 'one of' : 'several of'}{' '}
             {name}&apos;s results.
           </h2>
 
           <div className="mt-4 space-y-3 text-body text-ink sm:text-title">
-            <p className="font-bold">This is not a &ldquo;no change&rdquo; result.</p>
+            <p className="font-semibold">This is not a &ldquo;no change&rdquo; result.</p>
             <p>
               Some of these tests are too new for us to know how much a healthy athlete&apos;s
               score moves around on its own, so we have no tested cut-off to compare against yet.
@@ -514,14 +524,14 @@ export default function ResultPage() {
                 <li key={label}>{label}</li>
               ))}
             </ul>
-            <p className="font-bold">
+            <p className="font-semibold">
               Because of that, this screen cannot tell you whether anything has changed. If{' '}
               {name} may have hit their head,{' '}
-              <span className="underline decoration-ink decoration-4 underline-offset-4">
+              <span className="underline underline-offset-4">
                 have them seen by a medical professional.
               </span>
             </p>
-            <p className="text-ink-soft">
+            <p className="text-ink-secondary">
               This screen is not a clearance to return to play, and this does not rule out a
               concussion. Only a medical professional can make that call.
             </p>
@@ -535,21 +545,21 @@ export default function ResultPage() {
           about a "no change" result that deserves a heavier, more alarming surface than a
           refusal gets, and nothing about it that deserves a lighter one either.
         */
-        <section className="border-t-8 border-ink pt-6" aria-live="polite">
-          <p className="text-meta font-semibold text-ink-soft">No change detected</p>
-          <h2 className="mt-2 text-display font-black leading-tight text-ink sm:text-stimulus">
+        <section className="border-t-2 border-ink pt-6" aria-live="polite">
+          <p className="text-meta font-semibold text-ink-secondary">No change detected</p>
+          <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
             This screen found no significant change from {name}&apos;s baseline.
           </h2>
 
           <div className="mt-4 space-y-3 text-body text-ink sm:text-title">
-            <p className="font-bold">This does not rule out a concussion.</p>
+            <p className="font-semibold">This does not rule out a concussion.</p>
             <p>
               A concussion can be present even when these tests look unchanged, and symptoms
               can take hours to appear. Keep monitoring {name}, and{' '}
               <strong>see a medical professional if anything feels off</strong> — including
               later today or tomorrow.
             </p>
-            <p className="text-ink-soft">
+            <p className="text-ink-secondary">
               This screen is not a clearance to return to play. Only a medical professional
               can make that call.
             </p>
@@ -559,7 +569,7 @@ export default function ResultPage() {
 
       {/* ── Plain-language explanations from the engine ───────────────────────────── */}
       <section className="mt-10">
-        <h2 className="text-title font-bold text-ink">What we compared</h2>
+        <h2 className="text-title font-semibold text-ink">What we compared</h2>
         <ul className="mt-4 space-y-2">
           {outcome.explanations.map((line, index) => (
             <li key={index} className="text-body text-ink">
@@ -583,7 +593,7 @@ export default function ResultPage() {
         headline.
       */}
       <section className="mt-10">
-        <h2 className="text-title font-bold text-ink">Measurement by measurement</h2>
+        <h2 className="text-title font-semibold text-ink">Measurement by measurement</h2>
 
         <table className="mt-4 w-full border-collapse text-left">
           <caption className="sr-only">
@@ -592,25 +602,25 @@ export default function ResultPage() {
           </caption>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.label} className="border-b border-ink/15">
+              <tr key={row.label} className="border-b border-hairline">
                 <th scope="row" className="w-full py-4 pr-4 align-top font-normal">
                   <p className="text-body text-ink">
                     {row.label}
-                    {row.flagged && <span className="ml-2 font-bold text-flag">flagged</span>}
+                    {row.flagged && <span className="ml-2 font-semibold text-flag">flagged</span>}
                     {/*
                       An unjudged row shows a real change with no verdict. Without this it would
                       read exactly like a row that was checked and found unremarkable.
                     */}
                     {row.unevaluated && (
-                      <span className="ml-2 italic text-ink-soft">not judged</span>
+                      <span className="ml-2 italic text-ink-secondary">not judged</span>
                     )}
                   </p>
-                  <p className="mt-1 text-meta text-ink-soft">
+                  <p className="mt-1 text-meta text-ink-secondary">
                     {row.baselineText} &rarr; {row.checkText} &middot; {row.thresholdText}
                   </p>
                 </th>
                 <td
-                  className={`font-figure whitespace-nowrap py-4 text-right align-top text-body font-bold ${
+                  className={`tabular whitespace-nowrap py-4 text-right align-top text-body font-semibold ${
                     row.flagged ? 'text-flag' : 'text-ink'
                   }`}
                 >
@@ -668,13 +678,13 @@ function PageHeaderLite({
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 inline-flex min-h-14 items-center gap-2 text-meta font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+          className="mb-4 inline-flex min-h-11 items-center gap-2 text-meta font-semibold text-ink-secondary underline underline-offset-4 hover:text-ink"
         >
           <span aria-hidden="true">←</span> Back
         </Link>
       )}
-      <h1 className="text-display font-bold tracking-tight text-ink">{title}</h1>
-      {subtitle && <p className="mt-2 text-body text-ink-soft">{subtitle}</p>}
+      <h1 className="text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">{title}</h1>
+      {subtitle && <p className="mt-2 text-body text-ink-secondary">{subtitle}</p>}
     </header>
   );
 }
