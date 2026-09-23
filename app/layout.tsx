@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="flex min-h-full flex-col bg-surface text-ink antialiased">
+      <body className="flex min-h-full flex-col bg-canvas text-ink antialiased">
         {/*
           ACCESSIBILITY: a skip link is the first thing in the tab order, so a keyboard user
           can jump straight past the navigation instead of tabbing through it on every page.
