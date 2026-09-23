@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ButtonLink, Kicker, Notice, Section } from '@/components/ui';
 
@@ -71,50 +72,82 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────────────────── */}
-      <Section tone="canvas">
-        <Kicker>Sideline concussion screening aid</Kicker>
-        <h1 className="mt-3 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
-          Compare an athlete to themselves.
-          <br />
-          <span className="text-ink-secondary">Not to everyone else.</span>
-        </h1>
-        <p className="mt-5 max-w-2xl text-title text-ink-secondary">
-          A slow reaction time only means something next to how fast that athlete normally
-          is. This app records a healthy baseline, then re-runs the same tests after a hard
-          hit and shows you exactly what moved.
-        </p>
+      <Section tone="canvas" className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-center lg:gap-16">
+        <div>
+          <Kicker>Sideline concussion screening aid</Kicker>
+          <h1 className="mt-3 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
+            Compare an athlete to themselves.
+            <br />
+            <span className="text-ink-secondary">Not to everyone else.</span>
+          </h1>
+          <p className="mt-5 max-w-2xl text-title text-ink-secondary">
+            A slow reaction time only means something next to how fast that athlete normally
+            is. This app records a healthy baseline, then re-runs the same tests after a hard
+            hit and shows you exactly what moved.
+          </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink href="/athletes">Get started</ButtonLink>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <ButtonLink href="/athletes">Get started</ButtonLink>
+            {/*
+              The practice run: all six tests in order, scored and shown once, saved nowhere.
+              Deliberately reachable with no athlete profile — and it is also how an athlete
+              earns their practice pass, which a baseline requires (the first-exposure guard).
+            */}
+            <ButtonLink href="/practice" variant="secondary">
+              Run a practice battery
+            </ButtonLink>
+          </div>
+
           {/*
-            The practice run: all six tests in order, scored and shown once, saved nowhere.
-            Deliberately reachable with no athlete profile — and it is also how an athlete
-            earns their practice pass, which a baseline requires (the first-exposure guard).
+            WHAT THE APP CAN AND CANNOT JUDGE — said here, on the first screen, rather than
+            left for someone to discover on a results screen. Recording was re-enabled on
+            2026-09-10 (see app/athletes/[id]/page.tsx for the conditions and the practice
+            gate); the honest caveat now is about how few measurements carry a tested cut-off.
           */}
-          <ButtonLink href="/practice" variant="secondary">
-            Run a practice battery
-          </ButtonLink>
+          <div className="mt-8 max-w-2xl">
+            <Notice tone="loud" title="Early days — most measurements are not judged yet">
+              Recording works: an athlete runs one practice pass, records a baseline while well,
+              and can be checked after a hit. But only two measurements have tested cut-offs so
+              far — the symptom score, and go/no-go response time, whose cut-off comes from one
+              student&apos;s self-collected data. Everything else is measured, shown, and marked
+              as not judged.{' '}
+              <strong>
+                This app never diagnoses and never clears anyone. If an athlete may have hit
+                their head, have them seen by a medical professional — whatever any screen here
+                says.
+              </strong>
+            </Notice>
+          </div>
         </div>
 
         {/*
-          WHAT THE APP CAN AND CANNOT JUDGE — said here, on the first screen, rather than
-          left for someone to discover on a results screen. Recording was re-enabled on
-          2026-09-10 (see app/athletes/[id]/page.tsx for the conditions and the practice
-          gate); the honest caveat now is about how few measurements carry a tested cut-off.
+          ── Product image ─────────────────────────────────────────────────────────
+          Apple lets product imagery carry visual weight while the surrounding UI stays
+          monochrome. This app has no photography, but its dark instrument screens are its
+          product — so a genuine screenshot of one, in a plain phone frame, stands in for it.
+
+          The image is a real screenshot (public/images/pattern-span-screenshot.png) of the
+          Tapped patterns module mid-practice-run, captured 2026-09-23 — not a mockup or an
+          illustration, and no athlete data is visible in it (a practice run saves nothing and
+          this one was never attached to an athlete).
         */}
-        <div className="mt-8 max-w-2xl">
-          <Notice tone="loud" title="Early days — most measurements are not judged yet">
-            Recording works: an athlete runs one practice pass, records a baseline while well,
-            and can be checked after a hit. But only two measurements have tested cut-offs so
-            far — the symptom score, and go/no-go response time, whose cut-off comes from one
-            student&apos;s self-collected data. Everything else is measured, shown, and marked
-            as not judged.{' '}
-            <strong>
-              This app never diagnoses and never clears anyone. If an athlete may have hit
-              their head, have them seen by a medical professional — whatever any screen here
-              says.
-            </strong>
-          </Notice>
+        <div className="mt-12 flex justify-center lg:mt-0 lg:justify-end">
+          <div className="w-full max-w-[280px] rounded-[2.5rem] border-[10px] border-ink bg-ink">
+            <div className="relative overflow-hidden rounded-[2rem]">
+              <div
+                aria-hidden="true"
+                className="absolute left-1/2 top-0 z-10 h-5 w-24 -translate-x-1/2 rounded-b-2xl bg-ink"
+              />
+              <Image
+                src="/images/pattern-span-screenshot.png"
+                alt="The Tapped patterns test in progress on a phone: a 3-by-3 grid of squares, one square selected after being tapped, mid practice run."
+                width={600}
+                height={674}
+                className="h-auto w-full"
+                priority
+              />
+            </div>
+          </div>
         </div>
       </Section>
 
