@@ -100,7 +100,14 @@ export default function SymptomTestPage() {
                 {symptom}
               </p>
 
-              <div className="flex gap-2">
+              {/*
+                An iOS-style segmented control (2026-09-27), replacing four separate bordered
+                chips. `bg-instrument` (pure black) is a recessed track sitting inside the
+                lighter `bg-instrument-panel` card around it, and the selected value is a
+                near-white `rounded-lg` thumb inside that track — the same visual idea as a
+                native segmented control's sliding selection, built from existing tokens only.
+              */}
+              <div className="flex gap-1 rounded-xl bg-instrument p-1">
                 {SYMPTOM_SCALE.map((step) => {
                   const selected = scores[index] === step.value;
                   return (
@@ -110,14 +117,14 @@ export default function SymptomTestPage() {
                         min-h-14 is 56px — the tap-target floor for anything in a test module.
                         A mis-hit here is recorded as a symptom the athlete does not have.
 
-                        A selected chip is near-white on near-black: the strongest contrast the
-                        palette has, and deliberately not a colour. There is no accent available
-                        for "chosen" — red means flagged and nothing else.
+                        A selected segment is near-white on near-black: the strongest contrast
+                        the palette has, and deliberately not a colour. There is no accent
+                        available for "chosen" — red means flagged and nothing else.
                       */
-                      className={`flex min-h-14 flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border-2 px-2 py-2 text-center transition-colors ${
+                      className={`flex min-h-14 flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-2 py-2 text-center transition-colors ${
                         selected
-                          ? 'border-instrument-ink bg-instrument-ink text-instrument'
-                          : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink-soft hover:border-instrument-ink-soft'
+                          ? 'bg-instrument-ink text-instrument'
+                          : 'text-instrument-ink-soft hover:bg-instrument-ink-soft/10'
                       }`}
                     >
                       <input

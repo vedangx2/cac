@@ -263,13 +263,20 @@ export default function DigitSpanPage() {
             </div>
           </div>
 
+          {/*
+            Circular keys, like the iOS Phone dial pad — a dark grey filled circle on the black
+            instrument surface, rather than the rounded-square keys every other AI-styled test
+            screen tends to default to. `aspect-square` makes each key a true circle at whatever
+            width the 3-column grid gives it; `min-h-16` is the same 64px tap-target floor the
+            square keys already had, so this is a shape change only, not a size change.
+          */}
           <div className="mt-4 grid grid-cols-3 gap-3">
             {KEYPAD.map((digit) => (
               <button
                 key={digit}
                 type="button"
                 onClick={() => press(digit)}
-                className="tabular min-h-16 rounded-xl border-2 border-instrument-ink/20 bg-instrument-panel text-display font-black text-instrument-ink hover:border-instrument-ink-soft"
+                className="tabular flex aspect-square min-h-16 items-center justify-center rounded-full bg-instrument-panel text-display font-light text-instrument-ink hover:bg-instrument-ink-soft/30"
               >
                 {digit}
               </button>

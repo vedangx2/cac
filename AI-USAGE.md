@@ -826,6 +826,119 @@ check, correct, or contest, the same as every entry before it.
 
 ---
 
+## 2026-09-27 — iOS system-style restyle of the six test modules
+
+Co-authored by Claude Sonnet 5, run at the project owner's direct pasted instruction. The brief:
+the six dark instrument screens still read as generic AI-generated controls (a uniform grid of
+rounded squares); restyle each to match a specific named iOS system reference — the Phone
+keypad, the Stopwatch Start button, and an iOS segmented control — with colours, timing, logic
+and scoring explicitly frozen. `/guard` ran for the whole session, scoped to the repo root
+(a judgment call — the task spans `app/tests/**`, `docs/screenshots/`, and this file, so a
+narrower freeze directory would have blocked legitimate work). Only styling classes and JSX
+nesting changed; no threshold value, no `lib/engine/*` logic, and no test/scoring code was
+touched. `CLAUDE.md` was not edited.
+
+**What changed, file by file — every change is a class-string edit, nothing structural to the
+logic:**
+
+- `app/tests/digits/page.tsx` — the nine number keys went from `rounded-xl` bordered squares to
+  `rounded-full` filled circles (`aspect-square`, unchanged `min-h-16` floor), `font-black` →
+  `font-light` numerals, on `bg-instrument-panel` (dark grey) over the black instrument surface —
+  the iOS Phone dial pad's own colour and weight language. The entered-digits display slots
+  (the boxes showing what was typed so far) are untouched — the brief said "keypad," not the
+  whole screen, and `lib/regression.test.ts`'s guard #11 pins that row's exact class string.
+- `app/tests/pattern/page.tsx` — one word changed: the grid cell's `rounded-xl` became
+  `rounded-full`. Cell count (9), grid position, `gap-3` spacing, and `aspect-square` sizing are
+  byte-for-byte unchanged, because this geometry is what real trials will measure difficulty
+  against once data collection starts, and the brief said so explicitly. The lit/selected colour
+  ternary (`lib/regression.test.ts` guard #9 pins its exact string) was not touched.
+- `app/tests/words/page.tsx` and `app/tests/words/recall/page.tsx` — the word-grid tile
+  `rounded-xl` became `rounded-full`, which on a wide rectangular button rounds the ends into a
+  pill/stadium shape rather than a circle. The picked-tile fill behaviour (`bg-instrument-ink`
+  when selected) is unchanged; there was no checkmark before this and there is none now.
+- `app/tests/symptom/page.tsx` — the four separate bordered 0-3 chips per symptom became one
+  iOS-style segmented control: a `bg-instrument` (pure black) track holding a `rounded-lg`
+  near-white thumb for the selected value, borders removed entirely. Track radius (`rounded-xl`,
+  12px) minus its `p-1` gap (4px) equals the thumb's own radius (`rounded-lg`, 8px) — the nested-
+  radius relationship a native segmented control actually has. `min-h-14` (56px) is unchanged.
+- `app/tests/gonogo/page.tsx` — **student-owned per `CLAUDE.md`'s ownership table; touched only
+  because this session's brief named it directly and specifically** ("Go/no-go pad: one large
+  circle with a concentric outer ring, like the Start button in iOS Stopwatch"), which is read as
+  the same kind of direct, explicit instruction the table's own precedent (the 2026-08-31 build)
+  describes. The single rectangular pad became two nested elements: a static outer ring
+  (`border-4 border-instrument-ink/20`, never changes) around an inner circle that is exactly the
+  old pad with its border removed and `rounded-2xl` → `rounded-full`. Every ref, every timing
+  line (the synchronous `performance.now()` stamp before `requestAnimationFrame`, the anticipation
+  window, the commission/omission logic, the stimulus token guard against a late rAF callback) is
+  untouched — `lib/regression.test.ts` guards #5, #6 and #10 all still pass unmodified, because
+  none of them read anything this session's diff touched. `PAD_PHASE_CLASSES` lost its `border-*`
+  entries (the border moved to the new outer ring) but kept every colour value byte-for-byte:
+  `bg-pad-go` for go, `bg-instrument-ink` for no-go, `bg-instrument-panel` elsewhere.
+
+**Could any of this affect a score?** No. Nothing in `lib/modules/*`, `lib/engine/*`,
+`lib/forms/*`, or any timing constant changed. The pattern grid's cell count/position/spacing/
+size — the one geometry change that genuinely could have moved difficulty — is explicitly
+unchanged; only its corner radius is. This was verified, not assumed: `npx vitest run` after
+every edit — **460 tests, 20 files, all still passing**, identical count to before this session —
+plus `tsc --noEmit`, `npm run lint`, and `npm run build` (17 routes, unchanged), all clean.
+
+**Verification beyond the test suite.** Every one of the six screens was driven live in a
+browser against the running dev server (practice mode, no athlete attached) to confirm the new
+controls render and respond to taps/clicks correctly, not just that the source compiles.
+One thing surfaced during that verification that is worth recording because it looked, at first,
+like a real regression: a screenshot of the go/no-go pad appeared to show the green "TAP" fill
+with the gap phase's "WAIT" text overlaid, as if the background and label had gone out of sync.
+Polling the live DOM (`className`, computed `background-color`, and the label's `textContent`)
+every 16ms across a 4-second run showed the two were never actually out of sync — every sampled
+state was internally consistent, matching one of the six defined phases exactly. The mismatched
+screenshot was a capture-timing artefact (the screenshot tool grabbing a compositor frame
+slightly behind the true DOM state during a fast state change), not a rendering bug, and it was
+reproduced once and then never again across dozens of further samples. Recorded here rather than
+silently dismissed, per this project's standing rule to verify a surprising result live before
+either fixing it or writing it off. A first attempt at this same check, made while the file was
+still open in the dev server's hot-reload session from mid-edit, DID show a real (but harmless)
+stale paint — Turbopack's Fast Refresh preserving imperative DOM state from before a structural
+JSX change. That is a dev-only artefact of editing a page while it is open, not a defect; a
+production build (`rm -rf .next && npm run build && npm run start`) was checked separately and
+never reproduced it.
+
+**`/design-review` was evaluated, not run to completion** — same call as the 2026-09-20,
+2026-09-22 and 2026-09-23 sessions, for the same reason: its setup wants a first-time `browse`
+binary build, the `codex` CLI, and several first-run `AskUserQuestion` onboarding prompts that do
+not fit a non-interactive session. Its checklist (the AI-slop blacklist, the touch-target floor,
+the nested-radius rule) was read and applied by hand against the six changed screens instead: no
+AI-slop pattern present (no gradient, no icon-in-a-circle decoration, no colour outside the
+existing thirteen-token palette), every changed tap target still >= the app's own 56px floor
+(all comfortably larger), and — noted above because it was actually satisfied, not just checked —
+the symptom control's nested radii follow the rule the checklist names for nested elements.
+No fix was needed as a result of this pass.
+
+**One pre-existing, unrelated defect was found and is reported rather than fixed, because it is
+out of this session's scope (visual restyling only) and touches `lib/modules/words.ts` /
+`lib/shuffle.ts`, neither named in the brief.** `app/tests/words/recall/page.tsx`, when opened
+directly with no session (the standalone-practice path), throws a React hydration-mismatch error
+in the console every time: the word grid's server-rendered order and its client-rendered order
+disagree. Root cause traced live: `buildGrid()` (`lib/modules/words.ts`) shuffles with
+`lib/shuffle.ts`'s Fisher-Yates implementation, which draws from `Math.random()` — genuinely
+unseeded, so the server and client render the same word list in two different orders. React
+recovers by discarding the server-rendered tree and using the client's, so nothing an athlete
+sees is wrong, but the console error is real and would fire in production too. This is a
+correctness issue for whoever picks up the shuffle/threshold work next, not a design issue, and
+`lib/modules/words.ts` is free-to-edit territory per `CLAUDE.md` — flagged here rather than
+touched.
+
+**Screenshots:** `docs/screenshots/{before,after}/{symptom,words,digits,pattern,gonogo,
+words-recall}-2026-09-27.jpg`, one pair per module, captured live against the running app (dev
+server for most; the gonogo pair was re-confirmed against a clean production build after the
+capture-timing investigation above). The browser window could not be resized to a true phone
+viewport in this sandboxed environment (`resize_window` reports success but the captured frame
+stays desktop-width) — the same limitation the 2026-09-23 session hit with the same tool. All
+screenshots were therefore taken at the wider viewport; the shapes, colours and interaction
+states shown are accurate, but the mobile breakpoint layout itself was not visually re-verified
+this session.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my

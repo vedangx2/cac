@@ -133,8 +133,9 @@ export default function WordRecallPage() {
                   type="button"
                   onClick={() => toggle(tile.word)}
                   aria-pressed={picked}
-                  // Heavy border for "picked" — never a green fill, never a tick. See CLAUDE.md.
-                  className={`min-h-16 rounded-xl border-2 px-3 py-4 text-title font-bold transition-colors ${
+                  // Heavy fill for "picked" — never a green fill, never a tick. See CLAUDE.md.
+                  // Pill-shaped chip (2026-09-27) — see app/tests/words/page.tsx for why.
+                  className={`min-h-16 rounded-full border-2 px-3 py-4 text-title font-bold transition-colors ${
                     picked
                       ? 'border-instrument-ink bg-instrument-ink text-instrument'
                       : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'

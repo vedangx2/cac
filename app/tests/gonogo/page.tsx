@@ -94,18 +94,24 @@ type RunState =
 // Static class strings. They have to appear literally in the source: Tailwind builds its
 // stylesheet by scanning these files as text, so a class name assembled at runtime would never
 // make it into the CSS.
+//
+// SHAPE CHANGED 2026-09-27: this used to be one rounded-2xl rectangle. It is now the INNER
+// circle of a two-part pad — see the concentric ring wrapper around <div ref={padRef}> in the
+// JSX below, styled after the Start button in iOS Stopwatch. The border that used to sit on
+// this element moved to that outer ring, which is why PAD_PHASE_CLASSES below is fill-and-text
+// only now; every colour value is byte-identical to before, only the border/shape split changed.
 const PAD_BASE =
-  'flex w-full touch-none cursor-pointer select-none flex-col items-center justify-center ' +
-  'rounded-2xl border-4 p-6 text-center min-h-64 sm:min-h-96';
+  'flex h-full w-full touch-none cursor-pointer select-none flex-col items-center justify-center ' +
+  'rounded-full p-6 text-center';
 
 const PAD_PHASE_CLASSES: Record<PadPhase, string> = {
-  idle: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
+  idle: 'bg-instrument-panel text-instrument-ink',
   // The gap is dim on purpose, so the stimulus arriving is an unmistakable jump in brightness.
-  gap: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink-soft',
-  go: 'border-pad-go bg-pad-go text-instrument',
-  nogo: 'border-instrument-ink bg-instrument-ink text-instrument',
-  message: 'border-instrument-ink bg-instrument-panel text-instrument-ink',
-  done: 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink',
+  gap: 'bg-instrument-panel text-instrument-ink-soft',
+  go: 'bg-pad-go text-instrument',
+  nogo: 'bg-instrument-ink text-instrument',
+  message: 'bg-instrument-panel text-instrument-ink',
+  done: 'bg-instrument-panel text-instrument-ink',
 };
 
 export default function GoNoGoPage() {
@@ -467,19 +473,25 @@ export default function GoNoGoPage() {
       />
 
       {/*
-        THE PAD. Note how little is here: no props that change, no children that change, no
-        conditional classes. React renders this once and then never has a reason to touch it
-        again, which is precisely what keeps renders out of the measurement.
+        THE PAD, now two concentric circles — one large circle with a static outer ring, like the
+        Start button in iOS Stopwatch. The ring (this outer div) is decorative only and never
+        changes; every prop and class on <div ref={padRef}> below is exactly what it was when
+        this was a single rectangle. Note how little is on the inner element: no props that
+        change, no children that change, no conditional classes. React renders it once and never
+        has a reason to touch it again, which is precisely what keeps renders out of the
+        measurement.
       */}
-      <div
-        ref={padRef}
-        className={`${PAD_BASE} ${PAD_PHASE_CLASSES.idle}`}
-        role="button"
-        tabIndex={0}
-        aria-label="Go / no-go pad. Press when it says TAP. Do nothing when it says HOLD."
-      >
-        <span ref={padMainRef} className="tabular text-stimulus font-black tracking-tight sm:text-stimulus" />
-        <span ref={padSubRef} className="mt-4 max-w-md text-body font-semibold opacity-90 sm:text-title" />
+      <div className="mx-auto aspect-square w-full max-w-sm rounded-full border-4 border-instrument-ink/20 p-3">
+        <div
+          ref={padRef}
+          className={`${PAD_BASE} ${PAD_PHASE_CLASSES.idle}`}
+          role="button"
+          tabIndex={0}
+          aria-label="Go / no-go pad. Press when it says TAP. Do nothing when it says HOLD."
+        >
+          <span ref={padMainRef} className="tabular text-stimulus font-black tracking-tight sm:text-stimulus" />
+          <span ref={padSubRef} className="mt-4 max-w-md text-body font-semibold opacity-90 sm:text-title" />
+        </div>
       </div>
 
       {scored && (

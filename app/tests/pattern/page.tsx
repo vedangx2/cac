@@ -444,8 +444,14 @@ export default function PatternSpanPage() {
                     A SELECTED cell (GUARD 3, added 2026-09-22) is a distinct ink-soft fill — never
                     the lit cue's full ink, so "you tapped this" is never confused with "watch this"
                     during playback, and never green or a checkmark, so it never reads as "correct".
+
+                    Circles instead of rounded squares (2026-09-27) — `rounded-xl` became
+                    `rounded-full` and nothing else changed. Cell count, grid position, the gap-3
+                    spacing and the aspect-square size are untouched, because this geometry is
+                    what the real trials measure difficulty against and real data collection
+                    starts on this shape.
                   */
-                  className={`aspect-square touch-none rounded-xl border-4 transition-none ${
+                  className={`aspect-square touch-none rounded-full border-4 transition-none ${
                     lit
                       ? 'border-instrument-ink bg-instrument-ink'
                       : selected

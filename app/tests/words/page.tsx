@@ -186,12 +186,16 @@ export default function WordLearningPage() {
                   onClick={() => toggle(tile.word)}
                   aria-pressed={picked}
                   /*
-                    A picked tile is marked with a heavy white border and bold text — never a
+                    A picked tile is marked with a heavy white fill and bold text — never a
                     green fill and never a tick. See CLAUDE.md: no green, no checkmarks anywhere
                     in this app. "Picked" here is a selection state, and it still must not borrow
                     the visual language of "correct".
+
+                    Pill-shaped chip (2026-09-27): `rounded-full` on a wide rectangular button
+                    rounds the ends into a stadium/pill shape rather than a full circle — the
+                    fill-when-selected behaviour underneath is unchanged.
                   */
-                  className={`min-h-16 rounded-xl border-2 px-3 py-4 text-title font-bold transition-colors ${
+                  className={`min-h-16 rounded-full border-2 px-3 py-4 text-title font-bold transition-colors ${
                     picked
                       ? 'border-instrument-ink bg-instrument-ink text-instrument'
                       : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
