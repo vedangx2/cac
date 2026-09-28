@@ -939,6 +939,83 @@ this session.
 
 ---
 
+## 2026-09-27 (second session) — fix the word-grid hydration bug reported above; one authorized CLAUDE.md edit
+
+Co-authored by Claude Sonnet 5, run at the project owner's direct pasted instruction: fix the
+hydration-mismatch defect flagged (not fixed) in the entry above, and make one explicitly
+authorized edit to `CLAUDE.md`'s ownership table for `app/tests/gonogo/**`. No threshold value
+was touched.
+
+**Task 1 — the shuffle fix.** `lib/shuffle.ts`'s `shuffle()` drew from `Math.random()` at every
+swap; `lib/modules/words.ts`'s `buildGrid()` called it with no seed, so the server and the client
+each got a genuinely different tile order for the identical twenty words. `shuffle()` now takes a
+required `seed: string` and draws its "random" index from `hashString` (the FNV-1a hash
+`lib/forms/index.ts` already used to pick a form deterministically) applied to `${seed}:${i}` at
+each swap step — same seed and same input list, same order, every time, on the server and the
+client alike. `hashString` moved out of `lib/forms/index.ts` into a new `lib/hash.ts` so the two
+call sites share one implementation instead of two copies of the same four lines; `lib/forms/
+index.ts` now imports it. `buildGrid(form)` became `buildGrid(form, seed)` — required, not
+optional, so a future caller cannot silently fall back to randomness by omitting it.
+
+Both word screens now compute a `gridSeed`: the same session-derived base string each already
+used for `pickForm` (`${athleteId}:${startedAt}`, or `'practice'` with no session), with
+`:study-grid` appended on `/tests/words` and `:recall-grid` appended on `/tests/words/recall`.
+Same base so the two screens agree on which sitting they are in; different suffixes so the two
+grids — which hold the identical twenty words — get independent tile orders. Without that, an
+athlete could recall a tile's *position* from the study screen instead of the word that was on
+it, which would inflate a delayed-recall score for a reason that has nothing to do with memory.
+This was a design decision this session made, not something the brief specified, logged here as a
+judgment call: the brief said "derive it deterministically from the session and form," and
+without the suffix, the same session-plus-form would have handed both screens the same order.
+
+Five new tests: `lib/shuffle.test.ts` gained a `describe` block asserting the same seed reproduces
+the same order across 50 repeats, that different seeds diverge, and a spread check across 600
+seeds (the old file's "produces every ordering roughly equally often" test asserted the opposite
+of the new contract — a deterministic function has no distribution across repeated calls with the
+same input — so it was rewritten, not deleted quietly). `lib/modules/words.test.ts` gained three
+tests: same form-and-seed gives the same order every time, the study-grid and recall-grid seeds
+for one sitting give *different* orders, and two different sittings on the same form also differ.
+
+Verified, not assumed: `npx vitest run` — **465 tests, 20 files, all passing** (5 more than the
+prior session's 460). `tsc --noEmit`, `npm run lint`, `npm run build` (17 routes, unchanged) all
+clean. Live-checked against a running dev server: the specific console hydration error reported
+in the prior entry is gone on `/tests/words/recall` across six separate fresh loads (it was
+essentially guaranteed to appear before this fix, since `Math.random()` matching twice by chance
+is astronomically unlikely) — no dev-overlay error badge, clean console. Also live-checked that
+`/tests/words`' study grid and the recall grid now genuinely show the twenty words in two
+different orders in the same standalone run, matching the unit test's claim.
+
+**One thing checked and deliberately NOT changed, reported for the next session:** the recall
+screen's `form` selection itself (which form's words to show, not their order) reads
+`battery.session`, which is `null` until an async `useEffect` resolves it shortly after mount —
+so for a fraction of a second after mount, in a REAL sitting, `form` can briefly take the
+practice-mode fallback value before settling to the recorded form. This is unrelated to the
+shuffle bug (it existed before this session, is about WHICH form shows, not what order its grid
+is in, and produces no hydration-mismatch error since the server and the first client render both
+compute the same fallback), and was investigated only because reasoning through the seed choice
+required understanding it. It was not reproduced as visually observable — `useDeviceData`'s
+`sessionStorage` read resolves inside a microtask, which drains before the browser paints, so the
+practical window is at most one uncommitted render, not a rendered flash. Not fixed because it is
+a different bug from the one asked for, and touching the render-gating logic on this screen felt
+like more change than "fix the shuffle" authorized. Flagged rather than silently left for someone
+to rediscover.
+
+**Task 2 — the CLAUDE.md edit.** The project owner's pasted instruction explicitly authorized
+exactly one change: move `app/tests/gonogo/**` out of the "Student-owned — an AI session must not
+write these" table and record instead that it was written by Claude Code on 2026-08-31 at the
+owner's direction, that the owner is responsible for explaining it, and that normal edit rules now
+apply. The row was deleted from the student-owned table (leaving that table's other two rows
+untouched) and its provenance preserved as a short note under "Free to edit, with the usual
+care," where `app/tests/gonogo/**` was already implicitly covered by the "`app/**` screens other
+than the results screen" line — the note exists so the history is not simply erased. **Judgment
+call:** the brief said "update the row" but the new content ("normal edit rules apply") is
+incompatible with staying in a table titled "must not write" — moving it to the free-to-edit
+section rather than leaving a self-contradictory row was this session's call, not a literal
+reading of "update the row" in place. Nothing else in `CLAUDE.md` was touched — verified with
+`git diff CLAUDE.md` showing exactly this one deletion and one addition.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my

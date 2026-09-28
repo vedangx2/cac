@@ -31,6 +31,7 @@ import { WORD_FORMS } from './wordLists';
 import { DIGIT_FORMS } from './digitSequences';
 import { PATTERN_FORMS } from './patternGrids';
 import { GO_NO_FORMS } from './goNo';
+import { hashString } from '../hash';
 
 export {
   WORD_FORMS,
@@ -132,28 +133,6 @@ export function pickFormBySitting<T extends Identified>(
 /** Look a form up by the id stored on a saved result, or null if the pool no longer has it. */
 export function findFormById<T extends Identified>(forms: readonly T[], id: string): T | null {
   return forms.find((form) => form.id === id) ?? null;
-}
-
-/**
- * A small, boring string hash (the FNV-1a algorithm).
- *
- * We only need "same string in, same number out, spread reasonably across the pool" — this is
- * not security and it is not cryptography. FNV-1a is about four lines, has no dependencies, and
- * is easy to explain out loud, which matters more here than sophistication.
- *
- * The `>>> 0` keeps the value an unsigned 32-bit integer. Without it JavaScript's bitwise
- * operators would let the number go negative, and a negative index modulo the pool length is
- * also negative, which would index off the front of the array and return undefined.
- */
-function hashString(value: string): number {
-  let hash = 0x811c9dc5; // FNV-1a 32-bit offset basis
-
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193) >>> 0; // multiply by the FNV prime, stay unsigned
-  }
-
-  return hash >>> 0;
 }
 
 /**

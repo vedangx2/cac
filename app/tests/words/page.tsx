@@ -60,15 +60,21 @@ export default function WordLearningPage() {
   /*
     The form and the grid are computed ONCE per sitting and then frozen.
 
-    useMemo keyed on the sitting is doing real work here, not micro-optimisation: buildGrid
-    shuffles, so recomputing it on any re-render would reshuffle the tiles under the athlete's
-    finger mid-selection. A tile they had already ticked would jump somewhere else.
+    useMemo keyed on the sitting stops the grid reshuffling on a CLIENT re-render. That alone was
+    never the whole fix for a screen whose grid can appear in server-rendered HTML (the delayed
+    recall screen's does) — see lib/shuffle.ts for the hydration bug that caused. This screen's
+    grid never renders during the initial server pass (it only appears after `runStudy` fires,
+    well after hydration), so it never had that specific bug, but buildGrid's `seed` parameter is
+    required either way now. `:study-grid` here and `:recall-grid` on the recall screen are the
+    same base seed with different suffixes, so the two screens' grids stay independent tile orders
+    for the same twenty words instead of matching each other.
   */
   const seed = battery.session
     ? `${battery.session.athleteId}:${battery.session.startedAt}`
     : 'practice';
   const form = useMemo(() => pickForm(WORD_FORMS, seed), [seed]);
-  const grid = useMemo(() => buildGrid(form), [form]);
+  const gridSeed = `${seed}:study-grid`;
+  const grid = useMemo(() => buildGrid(form, gridSeed), [form, gridSeed]);
 
   /** Walk the study list one word at a time, then move to the grid. */
   const runStudy = useCallback(() => {

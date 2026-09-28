@@ -54,7 +54,19 @@ export default function WordRecallPage() {
     return pickForm(WORD_FORMS, 'practice');
   }, [recordedFormId, battery.session]);
 
-  const grid = useMemo(() => (form ? buildGrid(form) : []), [form]);
+  /*
+    Same seed shape the study screen uses for its own grid (see app/tests/words/page.tsx) — same
+    sitting, same base seed, so the two are always computed the same deterministic way. The
+    `:recall-grid` suffix is the only difference from that screen's `:study-grid` seed, and it is
+    what keeps the two grids' tile ORDER independent of each other: without it, an athlete could
+    recall a tile's position from the study screen instead of the word that was on it, since both
+    grids share the same twenty words.
+  */
+  const seed = battery.session
+    ? `${battery.session.athleteId}:${battery.session.startedAt}`
+    : 'practice';
+  const gridSeed = `${seed}:recall-grid`;
+  const grid = useMemo(() => (form ? buildGrid(form, gridSeed) : []), [form, gridSeed]);
 
   const toggle = (word: string) => {
     setSelected((previous) => {

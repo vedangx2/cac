@@ -43,16 +43,26 @@ export const WORD_EXPOSURE_MS = 3500;
 export const WORD_GAP_MS = 300;
 
 /**
- * Build the recognition grid: every target plus every distractor, in random order.
+ * Build the recognition grid: every target plus every distractor, in shuffled order.
  *
  * Shuffled because an unshuffled grid would put all ten targets first, and an athlete who
  * noticed that could score full marks without remembering a single word.
+ *
+ * `seed` makes the order deterministic and stable for the whole screen — required, not optional,
+ * so a caller cannot silently fall back to a fresh shuffle on every call. See lib/shuffle.ts for
+ * why that matters: an unseeded shuffle here used to reorder the grid out from under an athlete
+ * mid-tap. The study screen and the delayed recall screen each pass their OWN seed (see their
+ * `gridSeed` values) so the two grids stay independent of each other within one sitting — if they
+ * matched, an athlete could recall a tile's position instead of the word that was on it.
  */
-export function buildGrid(form: WordForm): GridWord[] {
-  return shuffle([
-    ...form.targets.map((word) => ({ word, isTarget: true })),
-    ...form.distractors.map((word) => ({ word, isTarget: false })),
-  ]);
+export function buildGrid(form: WordForm, seed: string): GridWord[] {
+  return shuffle(
+    [
+      ...form.targets.map((word) => ({ word, isTarget: true })),
+      ...form.distractors.map((word) => ({ word, isTarget: false })),
+    ],
+    seed,
+  );
 }
 
 export type WordScore = {

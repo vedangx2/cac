@@ -14,7 +14,7 @@ const FORM: WordForm = WORD_FORMS[0];
 
 describe('buildGrid', () => {
   it('contains every target and every distractor', () => {
-    const grid = buildGrid(FORM);
+    const grid = buildGrid(FORM, 'seed-a');
     const words = grid.map((tile) => tile.word);
 
     for (const target of FORM.targets) expect(words).toContain(target);
@@ -22,25 +22,63 @@ describe('buildGrid', () => {
   });
 
   it('is exactly the declared grid size', () => {
-    expect(buildGrid(FORM)).toHaveLength(RECOGNITION_GRID_SIZE);
+    expect(buildGrid(FORM, 'seed-a')).toHaveLength(RECOGNITION_GRID_SIZE);
   });
 
   it('marks targets and distractors correctly', () => {
-    for (const tile of buildGrid(FORM)) {
+    for (const tile of buildGrid(FORM, 'seed-a')) {
       expect(tile.isTarget).toBe(FORM.targets.includes(tile.word));
     }
   });
 
   it('shuffles, so the targets are not simply the first ten tiles', () => {
     // An unshuffled grid would let an athlete score full marks by noticing the layout rather than
-    // remembering a word. Run it several times because one shuffle can coincidentally look sorted.
-    const attempts = Array.from({ length: 20 }, () =>
-      buildGrid(FORM)
+    // remembering a word. Check several different seeds because one shuffle can coincidentally
+    // look sorted.
+    const attempts = Array.from({ length: 20 }, (_, index) =>
+      buildGrid(FORM, `seed-${index}`)
         .slice(0, WORDS_PER_FORM)
         .every((tile) => tile.isTarget),
     );
 
     expect(attempts.some((allTargetsFirst) => !allTargetsFirst)).toBe(true);
+  });
+
+  /*
+    THE REGRESSION THIS GUARDS AGAINST (fixed 2026-09-27): buildGrid used to shuffle with
+    Math.random(), so calling it twice — once on the server, once again when the client hydrated
+    — produced two different tile orders for the identical form. React caught the mismatch and
+    discarded the server-rendered tree, but for a moment the wrong order was on screen and
+    interactive: an athlete tapping a tile by its position could have the tap land on a different
+    word than the one shown there once the client's render won. The fix makes the shuffle a pure
+    function of `form` and `seed` — same two inputs, same order, forever — which is what these
+    tests actually check, not "it looks shuffled."
+  */
+  describe('order stability across repeated calls — the 2026-09-27 hydration fix', () => {
+    it('gives the same form and seed the same tile order, every time', () => {
+      const first = buildGrid(FORM, 'athlete-1:1700000000000:study-grid');
+      for (let attempt = 0; attempt < 20; attempt++) {
+        expect(buildGrid(FORM, 'athlete-1:1700000000000:study-grid')).toEqual(first);
+      }
+    });
+
+    it('gives the study grid and the recall grid different orders for the same sitting', () => {
+      // The two screens derive their seed from the same base (see app/tests/words/page.tsx and
+      // app/tests/words/recall/page.tsx) but append different suffixes. If they ever collapsed
+      // onto the same seed, an athlete could recall a tile's POSITION from the study screen
+      // instead of the word that was on it, since both grids hold the same twenty words.
+      const studyGrid = buildGrid(FORM, 'athlete-1:1700000000000:study-grid');
+      const recallGrid = buildGrid(FORM, 'athlete-1:1700000000000:recall-grid');
+
+      expect(studyGrid.map((tile) => tile.word)).not.toEqual(recallGrid.map((tile) => tile.word));
+    });
+
+    it('gives two different sittings different orders even on the same form', () => {
+      const sittingOne = buildGrid(FORM, 'athlete-1:1700000000000:study-grid');
+      const sittingTwo = buildGrid(FORM, 'athlete-1:1800000000000:study-grid');
+
+      expect(sittingOne.map((tile) => tile.word)).not.toEqual(sittingTwo.map((tile) => tile.word));
+    });
   });
 });
 

@@ -300,7 +300,6 @@ if they are changed carelessly.
 
 | Path | Why |
 |---|---|
-| `app/tests/gonogo/**` | Built in full by an AI session on 2026-08-31, at the project owner's direct written instruction — see the 2026-08-31 task 1 entry in `AI-USAGE.md` and the human-written note at the end of that file. That instruction superseded this row's original blanket ban on AI creating even a stub. Going forward this path is still the student's to own: an AI session should not modify it without that same kind of direct, explicit instruction. |
 | `lib/engine/thresholds.ts` — *the values* | Every number here has to come from collected data. An AI session may add a new threshold **as `null` with `TODO(NEEDS_SOURCE)`**, edit the comments, or type in a value **the human supplies verbatim, together with its derivation** (this happened once: `GO_NO_GO_SLOWER_MS` and `MODULES_REQUIRED_TO_FLAG`, both set 2026-09-10 at the owner's direction — see the comments in the file and `AI-USAGE.md`). An AI session must never itself estimate, tune, or infer a value. |
 | `AI-USAGE.md` — *the students' own entries* | The disclosure log. AI appends its own dated entries and never edits or deletes a human-written one. |
 
@@ -323,6 +322,11 @@ human or AI — should flag the intended change and get a yes before making it.
 
 `app/**` screens other than the results screen, `components/**`, `lib/modules/**`,
 `lib/forms/patternGrids.ts`, `lib/forms/goNo.ts`, `lib/format.ts`, styling, and all test files.
+
+`app/tests/gonogo/**` was written by Claude Code on 2026-08-31 at Vedang's direction. Vedang is
+responsible for explaining it. Normal edit rules apply — moved here 2026-09-27, at Vedang's
+explicit written authorization, from a "student-owned" row that required a fresh direct
+instruction before every edit.
 
 ### The stimulus pools are a special case
 
