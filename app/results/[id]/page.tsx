@@ -23,10 +23,11 @@
 //   be folded into "no change detected": the change happened and gets said out loud.
 
 import { useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDeviceData } from '@/components/use-device-data';
-import { ButtonLink, Notice, PageShell, ThresholdDisclaimer } from '@/components/ui';
+import { ButtonLink, Notice, PageShell as PageShellBase, ThresholdDisclaimer } from '@/components/ui';
 // REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
 // This is a needs-agreement file; the brief that authorised this pass names "results"
 // explicitly in its scope, which is the agreement CLAUDE.md asks for — see SESSION-REPORT.md.
@@ -44,6 +45,20 @@ import {
 } from '@/lib/engine';
 import type { Athlete, FlagOutcome, TestResult } from '@/lib/types';
 import { formatDateTime } from '@/lib/format';
+
+/**
+ * This screen's own PageShell: never fades in on load.
+ *
+ * CLAUDE.md's motion brief is explicit — "the flag outcome headline itself appears IMMEDIATELY
+ * with no delay or animation... a safety verdict must never wait on a transition." Every state
+ * this screen can show (not just the flagged verdict) carries safety-relevant text — the
+ * no-baseline refusal, the schema-mismatch refusal, the "no change" panel's "does not rule out
+ * a concussion" line — so the whole screen opts out of the shared entrance animation rather
+ * than trying to animate everything except one particular branch and risk missing one.
+ */
+function PageShell({ children }: { children: ReactNode }) {
+  return <PageShellBase animate={false}>{children}</PageShellBase>;
+}
 
 type ScreenState =
   | { status: 'loading' }

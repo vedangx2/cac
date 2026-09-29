@@ -31,6 +31,30 @@
   full list of what was deleted and why.
 
   ─────────────────────────────────────────────────────────────────────────────────────
+  TYPEFACE CHANGED 2026-09-28 — Apple's SYSTEM FONT STACK is gone; the one face
+  everywhere is now IBM Plex Sans, self-hosted (@fontsource/ibm-plex-sans, imported in
+  app/layout.tsx). WHY: the system stack rendered as Segoe UI on Windows, which reads as
+  "we didn't pick a font" rather than a deliberate choice, and it looks different on every
+  OS by definition. A self-hosted face ships its own files with the app, so it renders
+  identically on every device instead of falling back to whatever the OS has installed.
+  Only weights 400 and 600 are loaded (see app/layout.tsx) — every place that used to say
+  font-bold (700) or font-black (900) now says font-semibold (600), the heaviest weight
+  this app actually ships, so the class on a screen always matches the weight that paints.
+  The system stack survives ONLY as the fallback chain, for the instant before the
+  self-hosted file loads and for a browser that cannot load it at all.
+
+  NUMBERS: still tabular-nums in the one face, not a second monospace typeface. The
+  brief that asked for this pass allowed either IBM Plex Mono or Plex Sans with
+  tabular-nums, "whichever aligns columns better" — both were installed
+  (@fontsource/ibm-plex-mono is a dependency), but only Plex Sans is actually wired in.
+  Every place this app needs aligned digits is a column of NUMBERS (a typed sequence, a ms
+  readout, the results table), not mixed alphanumeric text — tabular figures make the ten
+  digits equal-width, which is all that alignment needs, without a second family to load,
+  a second set of self-hosted files, or a second value in the "one font family, everywhere"
+  rule below. This is the same call the 2026-09-23 pass already made when it deleted the
+  old monospace figures face; see the note on `.tabular` further down.
+
+  ─────────────────────────────────────────────────────────────────────────────────────
   THE COLOUR RULE — ONE COLOUR MEANS SOMETHING, EVERYTHING ELSE IS JUST PALETTE
   ─────────────────────────────────────────────────────────────────────────────────────
   There is exactly ONE colour in this app that is a SIGNAL rather than decoration:
@@ -149,11 +173,12 @@
   html {
     /*
       ONE FAMILY, everywhere, declared on the root as well as on body — see the note on
-      body below for why both. This is Apple's own system-font stack: no serif, no
-      monospace, no webfont. Every reading screen and every instrument screen now share
-      this one family; only the type SCALE differs by world (see the @theme block above).
+      body below for why both. IBM Plex Sans is self-hosted (see app/layout.tsx); the
+      system stack after it is only the fallback for the instant before that file loads,
+      or for a browser that cannot load it. Every reading screen and every instrument
+      screen share this one family; only the type SCALE differs by world (@theme above).
     */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     /* Never let a stray wide element cause sideways scrolling on a phone. */
     overflow-x: hidden;
     /* Stop iOS from silently inflating type in landscape. */
@@ -163,7 +188,7 @@
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     font-size: var(--text-body);
     line-height: 1.5;
     /* Removes the ~300ms double-tap-to-zoom delay, which would otherwise make every
@@ -214,6 +239,46 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
   }
+
+  /*
+    ENTRANCE MOTION — CLAUDE.md's 2026-09-29 motion pass, reading screens only.
+    PageShell and Section (components/ui.tsx) apply this by default: content fades in with an
+    8px rise on load. A plain CSS animation, not a Tailwind utility, so the exact numbers live
+    in one place. NEVER used on an instrument screen — InstrumentShell does not apply it, and
+    none of the six test modules render it; see CLAUDE.md: "NOTHING animates on the six test
+    module screens". The one screen that opts OUT despite being a reading screen is the
+    results page's flagged verdict, which the brief requires to appear with no delay at all —
+    see the `animate={false}` note on PageShell in components/ui.tsx.
+  */
+  .animate-enter {
+    animation: enter 250ms ease-out both;
+  }
+
+  /*
+    SCROLL REVEAL — the below-the-fold half of the same motion pass. components/reveal.tsx
+    toggles `.is-visible` on, once, via IntersectionObserver, the first time a section scrolls
+    into view, and never removes it again ("once only, never on scroll back"). Fade only, no
+    rise — the brief specifies a rise for the on-load animation above and does not for this
+    one, so this does not invent motion the brief never asked for.
+  */
+  .reveal {
+    opacity: 0;
+    transition: opacity 300ms ease-out;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /*
@@ -222,10 +287,15 @@
   Someone who has just taken a hit to the head may be motion-sensitive, which makes this
   more than a nicety here.
 
-  There is no decorative animation anywhere in this app to switch off. The only motion is a
-  colour change on a control you touched and the stimulus appearing on a test pad, and the
-  stimulus is a state change rather than an animation — it is not affected by this rule and
-  must never become one, because a test whose stimulus fades in would measure the fade.
+  UPDATED 2026-09-29: reading screens now carry real decorative motion — an on-load fade and
+  rise, a scroll-triggered reveal, a button's press feedback, and (once Task 3 lands) the
+  results screen's comparison bars growing to their values. This rule is a BLANKET override,
+  not a list of the motion above: it turns off every animation and transition on the page for
+  anyone who asks, so a later motion addition is covered automatically rather than needing its
+  own line added here. The six test modules still carry none of this to switch off — see
+  CLAUDE.md: "NOTHING animates on the six test module screens" — and the one thing this rule
+  must never reach is the stimulus itself: appearing on a test pad is a state change, not a
+  transition, and a stimulus that faded in would measure the fade instead of the athlete.
 */
 @media (prefers-reduced-motion: reduce) {
   *,

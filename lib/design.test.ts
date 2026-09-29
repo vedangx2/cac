@@ -239,12 +239,14 @@ describe('the type scale is the size we say it is', () => {
 });
 
 describe('there is exactly one font family, everywhere', () => {
-  // Replaced 2026-09-23: the results-screen-only serif/monospace pair from 2026-09-20 is
-  // gone outright — not narrowed, removed. Every screen, reading or instrument, renders in
-  // Apple's system-UI stack.
+  // REPLACED 2026-09-28: Apple's system-UI stack (2026-09-23) is gone. The one face
+  // everywhere is now IBM Plex Sans, self-hosted via @fontsource and imported in
+  // app/layout.tsx — see the comment above the @theme block in globals.css for why (a
+  // system stack renders as Segoe UI on Windows; a self-hosted face does not). The old
+  // system stack survives only as the fallback tail of the same declaration.
 
   it('declares the same one stack on the root and on the body', () => {
-    const stack = /font-family:\s*-apple-system, BlinkMacSystemFont/;
+    const stack = /font-family:\s*"IBM Plex Sans", -apple-system, BlinkMacSystemFont/;
     const htmlBlock = GLOBALS.slice(GLOBALS.indexOf('html {'), GLOBALS.indexOf('body {'));
     const bodyBlock = GLOBALS.slice(GLOBALS.indexOf('body {'));
 
@@ -258,7 +260,7 @@ describe('there is exactly one font family, everywhere', () => {
     const declarations = [...GLOBALS.matchAll(/font-family:\s*([^;]+);/g)];
     expect(declarations).toHaveLength(2);
     for (const [, value] of declarations) {
-      expect(value).toMatch(/^-apple-system, BlinkMacSystemFont/);
+      expect(value).toMatch(/^"IBM Plex Sans", -apple-system, BlinkMacSystemFont/);
     }
   });
 
@@ -274,7 +276,32 @@ describe('there is exactly one font family, everywhere', () => {
   });
 
   it('uses tabular figures, not a monospace face, for numbers that must align', () => {
+    // 2026-09-28: @fontsource/ibm-plex-mono is an installed dependency (the brief asked for
+    // it to be installed and compared), but it is deliberately never imported anywhere —
+    // Plex Sans's own tabular figures are enough to align a column of digits, and using them
+    // keeps the "one font family" rule this whole describe block is named for actually true.
+    // See the comment above the @theme block in globals.css for the full reasoning.
     expect(GLOBALS).toMatch(/font-variant-numeric:\s*tabular-nums;/);
+  });
+
+  it('only weights 400 and 600 are imported, matching the brief', () => {
+    const layout = readFileSync(join(REPO, 'app', 'layout.tsx'), 'utf8');
+    expect(layout).toMatch(/@fontsource\/ibm-plex-sans\/400\.css/);
+    expect(layout).toMatch(/@fontsource\/ibm-plex-sans\/600\.css/);
+    // No other weight file, and no self-hosting of the Mono family — see the test above.
+    expect(layout).not.toMatch(/@fontsource\/ibm-plex-sans\/(?!400|600)\d+\.css/);
+    expect(layout).not.toMatch(/@fontsource\/ibm-plex-mono/);
+  });
+
+  it('uses no weight this app does not self-host (400/600 only — no font-black, no font-bold)', () => {
+    // Requesting font-weight 700 or 900 when only 400 and 600 are registered for this family
+    // does not crash anything — the browser just substitutes the nearest weight it has. But a
+    // class in the source that NAMES a weight the app never loads is misleading to read, which
+    // this codebase treats as a real defect (see CLAUDE.md: "explain every line on camera").
+    const offenders = FILES.filter(([, source]) => /\bfont-(?:black|bold|light|extrabold|medium)\b/.test(source)).map(
+      ([name]) => name,
+    );
+    expect(offenders).toEqual([]);
   });
 });
 

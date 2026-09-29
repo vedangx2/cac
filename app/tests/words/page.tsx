@@ -161,7 +161,7 @@ export default function WordLearningPage() {
           aria-live="polite"
         >
           {studyIndex >= 0 ? (
-            <span className="text-stimulus font-black tracking-tight sm:text-stimulus">
+            <span className="text-stimulus font-semibold tracking-tight sm:text-stimulus">
               {form.targets[studyIndex]}
             </span>
           ) : (
@@ -169,7 +169,7 @@ export default function WordLearningPage() {
             // jump every time a word leaves the screen.
             <span className="sr-only">next word coming</span>
           )}
-          <span className="mt-8 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <span className="mt-8 text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Word {Math.max(1, studyIndex + 1)} of {WORDS_PER_FORM}
           </span>
         </div>
@@ -201,7 +201,7 @@ export default function WordLearningPage() {
                     rounds the ends into a stadium/pill shape rather than a full circle — the
                     fill-when-selected behaviour underneath is unchanged.
                   */
-                  className={`min-h-16 rounded-full border-2 px-3 py-4 text-title font-bold transition-colors ${
+                  className={`min-h-16 rounded-full border-2 px-3 py-4 text-title font-semibold transition-colors ${
                     picked
                       ? 'border-instrument-ink bg-instrument-ink text-instrument'
                       : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
@@ -228,7 +228,7 @@ export default function WordLearningPage() {
       {/* ── Finished ────────────────────────────────────────────────────────────────── */}
       {phase === 'done' && finalScore && (
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <h2 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
           {/*
@@ -237,7 +237,7 @@ export default function WordLearningPage() {
             athlete's baseline is, and even the engine has no tested cut-off for this measurement
             yet. See lib/engine/thresholds.ts.
           */}
-          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
+          <p className="tabular mt-2 text-display font-semibold sm:text-stimulus">
             {finalScore.correct} out of {MAX_WORD_CORRECT}
           </p>
           <p className="mt-3 text-body text-instrument-ink-soft">

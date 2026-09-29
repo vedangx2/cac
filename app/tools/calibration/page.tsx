@@ -222,7 +222,7 @@ function CalibrationTool() {
 
       {/* ── How to use it ────────────────────────────────────────────────────────── */}
       <section className="mt-8">
-        <h2 className="text-display font-bold tracking-tight text-ink">What to paste</h2>
+        <h2 className="text-display font-semibold tracking-tight text-ink">What to paste</h2>
         <div className="mt-3 max-w-3xl space-y-3 text-body text-ink-secondary">
           <p>
             For each measurement, paste repeated readings from{' '}
@@ -262,7 +262,7 @@ function CalibrationTool() {
         <div className={DEV_TOOL_BOX}>
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block">
-              <span className="text-meta font-bold text-ink">Simulated athletes of each kind</span>
+              <span className="text-meta font-semibold text-ink">Simulated athletes of each kind</span>
               <input
                 type="number"
                 value={pairsText}
@@ -271,7 +271,7 @@ function CalibrationTool() {
               />
             </label>
             <label className="block">
-              <span className="text-meta font-bold text-ink">Seed</span>
+              <span className="text-meta font-semibold text-ink">Seed</span>
               <input
                 type="number"
                 value={seedText}
@@ -283,7 +283,7 @@ function CalibrationTool() {
               </span>
             </label>
             <label className="block">
-              <span className="text-meta font-bold text-ink">Curve for</span>
+              <span className="text-meta font-semibold text-ink">Curve for</span>
               <select
                 value={focus}
                 onChange={(event) => setFocus(event.target.value as CalibratedMeasurement)}
@@ -306,7 +306,7 @@ function CalibrationTool() {
 
       {/* ── The per-measurement inputs ───────────────────────────────────────────── */}
       <section className="mt-8">
-        <h2 className="text-display font-bold tracking-tight text-ink">Your measurements</h2>
+        <h2 className="text-display font-semibold tracking-tight text-ink">Your measurements</h2>
         <div className="mt-4 space-y-4">
           {CALIBRATED_MEASUREMENTS.map((measurement) => {
             const shape = MEASUREMENT_SHAPES[measurement];
@@ -316,7 +316,7 @@ function CalibrationTool() {
             return (
               <div key={measurement} className={DEV_TOOL_BOX}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="text-title font-bold text-ink">{shape.label}</h3>
+                  <h3 className="text-title font-semibold text-ink">{shape.label}</h3>
                   <p className="text-meta text-ink-secondary">
                     {shape.unit} ·{' '}
                     {hasData ? (
@@ -332,7 +332,7 @@ function CalibrationTool() {
 
                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <label className="block">
-                    <span className="text-meta font-bold text-ink">
+                    <span className="text-meta font-semibold text-ink">
                       Repeated healthy readings
                     </span>
                     <textarea
@@ -347,7 +347,7 @@ function CalibrationTool() {
 
                   <div className="space-y-4">
                     <label className="block">
-                      <span className="text-meta font-bold text-ink">
+                      <span className="text-meta font-semibold text-ink">
                         Degradation to detect ({shape.unit.replace(/^out of \d+$/, 'units')})
                       </span>
                       <input
@@ -359,7 +359,7 @@ function CalibrationTool() {
                       />
                     </label>
                     <label className="block">
-                      <span className="text-meta font-bold text-ink">
+                      <span className="text-meta font-semibold text-ink">
                         Candidate threshold (for the rule comparison)
                       </span>
                       <input
@@ -376,15 +376,15 @@ function CalibrationTool() {
                 {hasData && (
                   <dl className="tabular mt-4 flex flex-wrap gap-x-8 gap-y-2 text-meta text-ink-secondary">
                     <div>
-                      <dt className="inline font-bold text-ink">Mean </dt>
+                      <dt className="inline font-semibold text-ink">Mean </dt>
                       <dd className="inline">{series.mean.toFixed(1)}</dd>
                     </div>
                     <div>
-                      <dt className="inline font-bold text-ink">Spread of values </dt>
+                      <dt className="inline font-semibold text-ink">Spread of values </dt>
                       <dd className="inline">{series.standardDeviation.toFixed(2)}</dd>
                     </div>
                     <div>
-                      <dt className="inline font-bold text-ink">Within one athlete </dt>
+                      <dt className="inline font-semibold text-ink">Within one athlete </dt>
                       <dd className="inline">
                         {series.withinAthleteSd === null
                           ? 'not separable from unpaired data'
@@ -410,7 +410,7 @@ function CalibrationTool() {
       {/* ── Results ──────────────────────────────────────────────────────────────── */}
       {output && check && (
         <section className="mt-8">
-          <h2 className="text-display font-bold tracking-tight text-ink">Results</h2>
+          <h2 className="text-display font-semibold tracking-tight text-ink">Results</h2>
 
           {!check.ok && (
             <div className="mt-4">
@@ -456,7 +456,7 @@ function CalibrationTool() {
           </div>
 
           {/* The curve */}
-          <h3 className="mt-8 text-title font-bold text-ink">
+          <h3 className="mt-8 text-title font-semibold text-ink">
             {MEASUREMENT_SHAPES[output.focus].label}: the whole tradeoff
           </h3>
           <p className="mt-2 max-w-3xl text-body text-ink-secondary">
@@ -469,16 +469,16 @@ function CalibrationTool() {
             <table className="w-full min-w-max border-collapse text-left">
               <thead>
                 <tr className="border-b-2 border-ink/30 text-meta uppercase tracking-wide text-ink-secondary">
-                  <th className="py-2 pr-4 font-bold">Threshold</th>
-                  <th className="py-2 pr-4 font-bold">Flags a healthy athlete</th>
-                  <th className="py-2 pr-4 font-bold">Misses an impaired one</th>
-                  <th className="py-2 font-bold">Counts</th>
+                  <th className="py-2 pr-4 font-semibold">Threshold</th>
+                  <th className="py-2 pr-4 font-semibold">Flags a healthy athlete</th>
+                  <th className="py-2 pr-4 font-semibold">Misses an impaired one</th>
+                  <th className="py-2 font-semibold">Counts</th>
                 </tr>
               </thead>
               <tbody className="tabular text-body">
                 {output.curve.map((point) => (
                   <tr key={point.threshold} className="border-b border-ink/15">
-                    <td className="py-2 pr-4 font-bold text-ink">{point.threshold}</td>
+                    <td className="py-2 pr-4 font-semibold text-ink">{point.threshold}</td>
                     <td className="py-2 pr-4 text-ink">
                       <span className="inline-flex items-center gap-2">
                         <span
@@ -514,7 +514,7 @@ function CalibrationTool() {
           </div>
 
           {/* The flag rule */}
-          <h3 className="mt-8 text-title font-bold text-ink">
+          <h3 className="mt-8 text-title font-semibold text-ink">
             How the whole screen should decide
           </h3>
           <p className="mt-2 max-w-3xl text-body text-ink-secondary">
@@ -542,19 +542,19 @@ function CalibrationTool() {
             <table className="w-full min-w-max border-collapse text-left">
               <thead>
                 <tr className="border-b-2 border-ink/30 text-meta uppercase tracking-wide text-ink-secondary">
-                  <th className="py-2 pr-4 font-bold">Rule</th>
-                  <th className="py-2 pr-4 font-bold">Flags a healthy athlete</th>
-                  <th className="py-2 font-bold">Misses an impaired one</th>
+                  <th className="py-2 pr-4 font-semibold">Rule</th>
+                  <th className="py-2 pr-4 font-semibold">Flags a healthy athlete</th>
+                  <th className="py-2 font-semibold">Misses an impaired one</th>
                 </tr>
               </thead>
               <tbody className="text-body">
                 {output.rules.map((result) => (
                   <tr key={result.rule} className="border-b border-ink/15">
                     <td className="py-3 pr-4 text-ink">{result.label}</td>
-                    <td className="tabular py-3 pr-4 font-bold text-ink">
+                    <td className="tabular py-3 pr-4 font-semibold text-ink">
                       {percent(result.falsePositiveRate)}
                     </td>
-                    <td className="tabular py-3 font-bold text-ink">
+                    <td className="tabular py-3 font-semibold text-ink">
                       {percent(result.falseNegativeRate)}
                     </td>
                   </tr>

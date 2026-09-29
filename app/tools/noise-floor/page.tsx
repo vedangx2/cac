@@ -351,7 +351,7 @@ export default function NoiseFloorPage() {
         a test of anybody and produces nothing about anybody's health.
       */}
       <div className="mb-6 rounded-lg border-l-4 border-y border-r border-instrument-ink-soft bg-instrument-panel p-4">
-        <p className="font-bold text-instrument-ink">Measurement tool. Not part of the screening battery</p>
+        <p className="font-semibold text-instrument-ink">Measurement tool. Not part of the screening battery</p>
         <p className="mt-1 text-meta text-instrument-ink-soft">
           This page exists so we can measure how much a healthy person&apos;s reaction time
           varies between sittings. It is not a concussion test, it is not scored, it is not
@@ -381,7 +381,7 @@ export default function NoiseFloorPage() {
         tabIndex={0}
         aria-label="Reaction pad. Press when it turns green."
       >
-        <span ref={padMainRef} className="tabular text-stimulus font-black tracking-tight sm:text-stimulus" />
+        <span ref={padMainRef} className="tabular text-stimulus font-semibold tracking-tight sm:text-stimulus" />
         <span ref={padSubRef} className="mt-4 max-w-md text-body font-semibold opacity-90 sm:text-title" />
       </div>
 
@@ -392,7 +392,7 @@ export default function NoiseFloorPage() {
       */}
       {finished && (
         <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <h2 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Run {runNumber} · write these down
           </h2>
 
@@ -402,26 +402,26 @@ export default function NoiseFloorPage() {
                 key={index}
                 className="rounded-xl border border-instrument-ink/20 px-4 py-3 text-center"
               >
-                <span className="block text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+                <span className="block text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
                   Trial {index + 1}
                 </span>
-                <span className="tabular mt-1 block text-display font-black sm:text-display">{value}</span>
+                <span className="tabular mt-1 block text-display font-semibold sm:text-display">{value}</span>
               </li>
             ))}
           </ol>
 
           <dl className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-xl border-2 border-instrument-ink-soft px-4 py-4">
-              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+              <dt className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
                 Median
               </dt>
-              <dd className="tabular mt-1 text-stimulus font-black sm:text-stimulus">{medianMs} ms</dd>
+              <dd className="tabular mt-1 text-stimulus font-semibold sm:text-stimulus">{medianMs} ms</dd>
             </div>
             <div className="rounded-xl border border-instrument-ink/20 px-4 py-4">
-              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+              <dt className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
                 False starts
               </dt>
-              <dd className="tabular mt-1 text-stimulus font-black sm:text-stimulus">{falseStarts}</dd>
+              <dd className="tabular mt-1 text-stimulus font-semibold sm:text-stimulus">{falseStarts}</dd>
             </div>
           </dl>
 

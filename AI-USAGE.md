@@ -1016,6 +1016,131 @@ reading of "update the row" in place. Nothing else in `CLAUDE.md` was touched �
 
 ---
 
+**2026-09-29 — Task 1 of a 7-task design pass: self-hosted typeface (IBM Plex Sans).** The
+project owner's pasted brief for this session covers all seven tasks; each is logged here as
+its own entry as it lands, and each was committed separately.
+
+Replaced Apple's system-font stack (`-apple-system, BlinkMacSystemFont, ...`, from the
+2026-09-23 pass) with IBM Plex Sans, self-hosted via `@fontsource/ibm-plex-sans` and imported
+in `app/layout.tsx` — the brief's reasoning was that the system stack renders as Segoe UI on
+Windows, which reads as "no font was chosen" rather than a deliberate one, and a self-hosted
+face ships its own files instead of depending on whatever the OS has. The old system stack
+survives only as the fallback tail of the same `font-family` declaration. Only weights 400 and
+600 are imported — every `font-black` (900) and `font-bold` (700) utility class in the app was
+swept to `font-semibold` (600), and the one `font-light` (300) instance (the digit-span keypad)
+was removed, because neither weight is self-hosted. **Not a cosmetic nicety:** a class naming a
+weight the app does not ship is not a crash (the browser substitutes its nearest registered
+weight), but it is a false statement sitting in the source, which this codebase treats as a
+real defect given CLAUDE.md's "explain every line of this on camera" standard.
+
+**Judgment call, not a literal reading of the brief:** the brief said to install both
+`@fontsource/ibm-plex-sans` and `@fontsource/ibm-plex-mono` and decide which face to use for
+aligned numbers, "whichever aligns columns better." Both are installed (`ibm-plex-mono` is a
+real `package.json` dependency), but only Plex Sans is actually wired in — Mono's CSS is never
+imported. Reasoning: every place this app needs aligned digits (a typed sequence, a ms
+readout, the results table) is a column of NUMBERS, not mixed alphanumeric text, and Plex
+Sans's own tabular figures (`.tabular`, `font-variant-numeric: tabular-nums`) already make the
+ten digits equal-width, which is all that alignment needs — without a second self-hosted
+family and without breaking the "one font family, everywhere" rule `lib/design.test.ts` pins.
+This is the same call the 2026-09-23 pass already made when it deleted the old monospace
+figures face for the same reason. This was **checked live, not assumed** — see below.
+
+`lib/design.test.ts` updated: the two assertions pinning the old system stack now pin the new
+one; two new tests added (only the 400/600 weight files are imported, and no
+`font-black`/`font-bold`/`font-light`/etc. class exists anywhere in `app/` or `components/`).
+
+Verified, not assumed: `npx vitest run` — **467/467 passing** (2 more than before this task, the
+new weight/import assertions), `tsc --noEmit` clean, `npm run build` clean (same 17 routes).
+Live-checked against the real running dev server with a headless Chromium (Playwright,
+installed to a scratch directory outside this repository — not added as a project dependency —
+specifically to check this and then discarded): built the exact 7-slot digit-answer-row markup
+from `app/tests/digits/page.tsx` inside the real page's DOM (so the real compiled stylesheet
+and the real self-hosted font were in effect) and measured it with the browser's own layout
+engine. Row width 272px against the 311px budget `lib/regression.test.ts`'s guard #11 already
+pins (unchanged — slot width is a fixed CSS value, independent of font). Every digit glyph
+(0-9) in IBM Plex Sans Semibold at the display size measured 18.375px, comfortably inside each
+32px slot. Separately confirmed all ten digits render at the identical 18.375px width under
+`.tabular` — i.e. this font's tabular figures genuinely work, rather than assuming IBM Plex
+supports them because it is a "professional" typeface.
+
+**Task 7, committed alongside Task 1 rather than in numeric order.** CLAUDE.md's brief for
+this pass names exactly two changes the six test modules may carry: "the font in Task 1 and
+the progress bar in Task 7." Both land in the one shared component both changes actually touch
+— `InstrumentHeader` in `components/ui.tsx`, used by all six module screens — so they are
+committed together instead of splitting one file's history into two commits for a rule that is
+naming the same component twice. Added a thin static bar under the existing "Step X of Y" text,
+parsed back out of that same string (`/^Step (\d+) of (\d+)$/`) rather than widening the `step`
+prop's type, so none of the six call sites that pass `step={battery.loaded ?
+battery.stepLabel : undefined}` needed to change — `lib/design.test.ts` already pins that exact
+line for every module and still does. The bar is `aria-hidden` (the text above it already says
+the same thing to a screen reader) and is rendered once when the header mounts; nothing inside
+a module's run touches it again, which is what "never animates" and "never renders inside a
+timed region" require — it sits above the ref-painted stimulus regions those screens use for
+their actual timing (see the note in `app/tests/gonogo/page.tsx`), not inside them.
+
+**Task 2, folded into this same commit.** Reading screens only, CSS transitions and
+IntersectionObserver only, no animation library, per the brief. `PageShell` and `Section`
+(`components/ui.tsx`) gained an `animate` prop, default `true`, applying a new `.animate-enter`
+class (`app/globals.css`): opacity 0→1 with an 8px rise, 250ms ease-out, played once on mount.
+A new component, `components/reveal.tsx`, wraps a below-the-fold section and uses
+`IntersectionObserver` to add a `.is-visible` class the first time it scrolls into view —
+opacity only, 300ms, and the observer disconnects itself after the first reveal so it can never
+re-hide on a scroll back up. Wired onto the home page's three below-the-fold sections for now;
+`Section`'s own `animate` is turned off on those three specifically, since a section already
+fades in on mount by default and a below-the-fold one needs the scroll-triggered version
+instead, never both (see the comment on `Section`'s `animate` prop). Button press feedback
+(`active:scale-[0.98]` plus a quick opacity dip, ~150ms) was added to the two reading-screen
+button variants only (`primary`, `secondary`) — the two instrument variants used on the six
+test modules and the tool pages deliberately did not get it.
+
+**The one line in the brief that could not be done exactly as written, and why:** "Results
+comparison bars (Task 3) grow to their values, about 400ms" is deferred to the Task 3 commit,
+because the bars themselves do not exist until Task 3 builds them — there was nothing yet to
+animate. Task 3's commit message says so again.
+
+**The hard exception, applied as a whole-screen rule rather than a single branch:** the brief
+requires the flagged verdict to "appear IMMEDIATELY with no delay or animation." The results
+screen (`app/results/[id]/page.tsx`) now shadows the imported `PageShell` with a local wrapper
+that always passes `animate={false}` — covering every state that screen can render (not-found,
+baseline, schema-mismatch, cannot-compare, and compared), not just the flagged branch. **Judgment
+call:** the brief names only the flagged headline, but every other state on this screen also
+carries safety-relevant text ("does not rule out a concussion," "do not record a baseline right
+now," the schema-mismatch refusal), and picking out exactly one branch to exempt while animating
+the rest risked missing one later if the branches are ever reordered. Disabling entrance motion
+for the whole screen is the conservative reading and was judged worth the small inconsistency
+with every other reading screen animating on load.
+
+Updated the reduced-motion comment in `app/globals.css`, which previously said "there is no
+decorative animation anywhere in this app to switch off" — no longer true, so the block is now
+described as the blanket override it always was, rather than re-describing every motion it
+covers (a list would need editing every time a new one is added; a blanket over "everything"
+does not).
+
+Verified, not assumed, against the real running dev server with a headless Chromium (same
+scratch setup as Task 1, discarded afterwards): the home page's hero carries
+`animation-name: enter, animation-duration: 0.25s`; the results screen (checked on a
+non-existent id, the "not found" state) contains zero `.animate-enter` elements. Scrolling
+through the home page in small increments (simulating a real scroll rather than a single jump)
+revealed all three below-the-fold sections in turn, and scrolling back to the top afterwards
+left all three still visible — "once only, never on scroll back," confirmed rather than assumed.
+Forcing `prefers-reduced-motion: reduce` collapsed the hero's `animation-duration` to `1e-05s`.
+**One thing checked and found to be a tooling limit, not a defect, reported rather than
+glossed over:** Playwright's synthetic `mouse.down()` did not make the pressed link match
+`:active` in headless Chromium (`document.querySelector(':active')` returned `<html>`, not the
+button — a known limitation of driving `:active` through automation rather than a real pointer
+device), so the press feedback could not be exercised end-to-end this way. Read the compiled
+stylesheet instead to confirm the actual rule: `.active\:scale-\[0\.98\]:active { scale: .98; }`,
+`.active\:opacity-80:active { opacity: .8; }`, and the shared `.transition` utility's property
+list includes `scale` — so the CSS is provably correct, even though this environment could not
+demonstrate the real `:active` interaction visually. A real device or a non-headless browser
+would be needed to see the press itself.
+
+`npx vitest run` — 467/467 passing throughout this task (no test count change: this task is
+pure presentation, nothing here has pure-function behaviour to unit test). `tsc --noEmit` and
+`npm run build` both clean.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my

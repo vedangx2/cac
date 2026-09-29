@@ -215,11 +215,11 @@ export default function DigitSpanPage() {
           aria-live="off"
         >
           {shownDigit >= 0 ? (
-            <span className="tabular text-stimulus font-black">{activeSequence[shownDigit]}</span>
+            <span className="tabular text-stimulus font-semibold">{activeSequence[shownDigit]}</span>
           ) : (
             <span className="sr-only">next number coming</span>
           )}
-          <span className="mt-8 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <span className="mt-8 text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             {phase === 'demoPresenting'
               ? `Practice round ${demoRound + 1} of ${DIGIT_DEMO_SEQUENCES.length} · watch`
               : `Round ${trialIndex + 1} of ${DIGIT_TRIALS_PER_FORM} · watch`}
@@ -231,7 +231,7 @@ export default function DigitSpanPage() {
       {(phase === 'entering' || phase === 'demoEntering') && (
         <div>
           <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4">
-            <p className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+            <p className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
               {phase === 'demoEntering'
                 ? `Practice round ${demoRound + 1} of ${DIGIT_DEMO_SEQUENCES.length} · type it backwards`
                 : `Round ${trialIndex + 1} of ${DIGIT_TRIALS_PER_FORM} · type them backwards`}
@@ -255,7 +255,7 @@ export default function DigitSpanPage() {
               {Array.from({ length: activeSequence.length }, (_, index) => (
                 <span
                   key={index}
-                  className="tabular flex h-16 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-instrument-ink/20 text-display font-black sm:w-16"
+                  className="tabular flex h-16 w-8 shrink-0 items-center justify-center rounded-xl border-2 border-instrument-ink/20 text-display font-semibold sm:w-16"
                 >
                   {entered[index] ?? ''}
                 </span>
@@ -276,7 +276,7 @@ export default function DigitSpanPage() {
                 key={digit}
                 type="button"
                 onClick={() => press(digit)}
-                className="tabular flex aspect-square min-h-16 items-center justify-center rounded-full bg-instrument-panel text-display font-light text-instrument-ink hover:bg-instrument-ink-soft/30"
+                className="tabular flex aspect-square min-h-16 items-center justify-center rounded-full bg-instrument-panel text-display text-instrument-ink hover:bg-instrument-ink-soft/30"
               >
                 {digit}
               </button>
@@ -311,7 +311,7 @@ export default function DigitSpanPage() {
       {/* ── Demo complete — the only door into the scored rounds ──────────────────────── */}
       {phase === 'demoDone' && (
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
-          <h2 className="text-title font-bold">Practice complete</h2>
+          <h2 className="text-title font-semibold">Practice complete</h2>
           <p className="mt-2 text-body text-instrument-ink-soft">
             That was practice. Nothing was recorded. The real test works exactly the same way.
           </p>
@@ -341,14 +341,14 @@ export default function DigitSpanPage() {
       {/* ── Finished ────────────────────────────────────────────────────────────────── */}
       {phase === 'done' && finalScore && (
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <h2 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
           {/*
             Flat statement of the count, no verdict. This screen has no idea what this athlete's
             baseline is, and the engine has no tested cut-off for this measurement yet either.
           */}
-          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
+          <p className="tabular mt-2 text-display font-semibold sm:text-stimulus">
             {finalScore.correct} out of {MAX_DIGIT_CORRECT}
           </p>
           <p className="mt-3 text-body text-instrument-ink-soft">

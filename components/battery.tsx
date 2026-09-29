@@ -184,7 +184,7 @@ export function SaveErrorNotice({ message, tone = 'dark' }: { message: string; t
       : 'bg-ink text-canvas';
   return (
     <div role="alert" className={`mt-6 rounded-xl p-4 ${box}`}>
-      <p className="text-title font-black">Not saved</p>
+      <p className="text-title font-semibold">Not saved</p>
       <p className="mt-2 text-body">{message}</p>
     </div>
   );
@@ -230,7 +230,7 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
 
   return (
     <div className={`mb-6 rounded-xl p-4 ${styles.box}`}>
-      <p className={`text-title font-black ${styles.title}`}>Practice run. Nothing is saved</p>
+      <p className={`text-title font-semibold ${styles.title}`}>Practice run. Nothing is saved</p>
       {practiceRun ? (
         <p className={`mt-2 text-body ${styles.body}`}>
           {practiceRun.athleteName ? (
@@ -251,7 +251,7 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
           No athlete is attached to this run.{' '}
           <Link
             href="/athletes"
-            className={`inline-flex min-h-14 items-center font-bold underline underline-offset-4 ${styles.link}`}
+            className={`inline-flex min-h-14 items-center font-semibold underline underline-offset-4 ${styles.link}`}
           >
             Pick an athlete
           </Link>{' '}
@@ -276,7 +276,7 @@ export function SittingLabel({
 
   if (session.kind === 'practice') {
     return (
-      <p className={`text-meta font-bold ${soft}`}>
+      <p className={`text-meta font-semibold ${soft}`}>
         Practice run
         {session.athleteName && (
           <>
@@ -289,7 +289,7 @@ export function SittingLabel({
   }
 
   return (
-    <p className={`text-meta font-bold ${soft}`}>
+    <p className={`text-meta font-semibold ${soft}`}>
       {session.kind === 'baseline' ? 'Recording baseline' : 'Sideline check'} ·{' '}
       <span className={strong}>{session.athleteName}</span>
     </p>

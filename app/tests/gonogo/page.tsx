@@ -469,7 +469,7 @@ export default function GoNoGoPage() {
       <p
         ref={progressRef}
         aria-live="off"
-        className="tabular mb-3 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft"
+        className="tabular mb-3 text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft"
       />
 
       {/*
@@ -489,37 +489,37 @@ export default function GoNoGoPage() {
           tabIndex={0}
           aria-label="Go / no-go pad. Press when it says TAP. Do nothing when it says HOLD."
         >
-          <span ref={padMainRef} className="tabular text-stimulus font-black tracking-tight sm:text-stimulus" />
+          <span ref={padMainRef} className="tabular text-stimulus font-semibold tracking-tight sm:text-stimulus" />
           <span ref={padSubRef} className="mt-4 max-w-md text-body font-semibold opacity-90 sm:text-title" />
         </div>
       </div>
 
       {scored && (
         <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <h2 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
 
           <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="rounded-xl border-2 border-instrument-ink-soft px-4 py-4">
-              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+              <dt className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
                 Median response
               </dt>
-              <dd className="tabular mt-1 text-display font-black sm:text-stimulus">{scored.medianMs} ms</dd>
+              <dd className="tabular mt-1 text-display font-semibold sm:text-stimulus">{scored.medianMs} ms</dd>
             </div>
             <div className="rounded-xl border border-instrument-ink/20 px-4 py-4">
-              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+              <dt className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
                 Tapped on hold
               </dt>
-              <dd className="tabular mt-1 text-display font-black sm:text-stimulus">
+              <dd className="tabular mt-1 text-display font-semibold sm:text-stimulus">
                 {scored.commissionErrors}
               </dd>
             </div>
             <div className="rounded-xl border border-instrument-ink/20 px-4 py-4">
-              <dt className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+              <dt className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
                 Missed a tap
               </dt>
-              <dd className="tabular mt-1 text-display font-black sm:text-stimulus">
+              <dd className="tabular mt-1 text-display font-semibold sm:text-stimulus">
                 {scored.omissionErrors}
               </dd>
             </div>
@@ -533,7 +533,7 @@ export default function GoNoGoPage() {
             screen and write them down.
           */}
           <div className="mt-6">
-            <h3 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+            <h3 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
               Every go-trial response, in order · not saved, write these down
             </h3>
             <p className="tabular mt-2 text-body break-words">
@@ -557,7 +557,7 @@ export default function GoNoGoPage() {
 
       {runState?.kind === 'unmeasurable' && (
         <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
-          <h2 className="text-title font-bold">Nothing could be measured</h2>
+          <h2 className="text-title font-semibold">Nothing could be measured</h2>
           <p className="mt-3 text-body text-instrument-ink-soft">
             No go trial got a response, so there is no response time to report and nothing has
             been recorded for this test. Run it again.
@@ -570,7 +570,7 @@ export default function GoNoGoPage() {
 
       {runState?.kind === 'abandoned' && (
         <section className="mt-8 rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-8">
-          <h2 className="text-title font-bold">This run was stopped</h2>
+          <h2 className="text-title font-semibold">This run was stopped</h2>
           <p className="mt-3 text-body text-instrument-ink-soft">
             The same round had to be repeated {GO_NO_MAX_TRIAL_REPEATS} times — usually because
             the screen was switched away from, or because taps kept arriving before the signal.

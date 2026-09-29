@@ -409,7 +409,7 @@ export default function PatternSpanPage() {
         phase === 'demoPresenting' ||
         phase === 'demoTapping') && (
         <div>
-          <p className="mb-4 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <p className="mb-4 text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             {phase === 'demoPresenting' || phase === 'demoTapping'
               ? `Practice round ${demoRound + 1} of ${PATTERN_DEMO_SEQUENCES.length}`
               : `Round ${trialIndex + 1} of ${PATTERN_TRIALS_PER_FORM}`}{' '}
@@ -474,7 +474,7 @@ export default function PatternSpanPage() {
       {/* ── Demo complete — the only door into the scored rounds ──────────────────────── */}
       {phase === 'demoDone' && (
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
-          <h2 className="text-title font-bold">Practice complete</h2>
+          <h2 className="text-title font-semibold">Practice complete</h2>
           <p className="mt-2 text-body text-instrument-ink-soft">
             That was practice. Nothing was recorded. The real test works exactly the same way.
           </p>
@@ -503,10 +503,10 @@ export default function PatternSpanPage() {
 
       {phase === 'done' && finalScore && (
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <h2 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
-          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
+          <p className="tabular mt-2 text-display font-semibold sm:text-stimulus">
             {finalScore.correct} out of {MAX_PATTERN_CORRECT}
           </p>
           <p className="mt-3 text-body text-instrument-ink-soft">

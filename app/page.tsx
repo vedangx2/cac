@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ButtonLink, Kicker, Notice, Section } from '@/components/ui';
+import { Reveal } from '@/components/reveal';
 
 // The landing screen. Its job is to get someone to the roster fast, and to be completely
 // unambiguous about what this app is and is not before they ever see a result.
@@ -157,59 +158,68 @@ export default function HomePage() {
         content is safety copy and survives word for word — only its container changed
         from a boxed, rounded, side-column card to a full-bleed section of its own.
       */}
-      <Section tone="canvas" divider>
-        <h2 className="text-title font-semibold text-ink">What this app will never do</h2>
-        <ul className="mt-6 divide-y divide-hairline border-t border-hairline">
-          <li className="py-4 text-body text-ink">
-            It will <strong>never tell you someone is fine</strong>, cleared, or safe to
-            play.
-          </li>
-          <li className="py-4 text-body text-ink">
-            It <strong>cannot diagnose a concussion</strong>. It can only spot that
-            something measured differently than usual.
-          </li>
-          <li className="py-4 text-body text-ink">
-            Every result, including one that finds no change, ends the same way:{' '}
-            <strong>see a medical professional.</strong>
-          </li>
-        </ul>
-      </Section>
+      <Reveal>
+        <Section tone="canvas" divider animate={false}>
+          <h2 className="text-title font-semibold text-ink">What this app will never do</h2>
+          <ul className="mt-6 divide-y divide-hairline border-t border-hairline">
+            <li className="py-4 text-body text-ink">
+              It will <strong>never tell you someone is fine</strong>, cleared, or safe to
+              play.
+            </li>
+            <li className="py-4 text-body text-ink">
+              It <strong>cannot diagnose a concussion</strong>. It can only spot that
+              something measured differently than usual.
+            </li>
+            <li className="py-4 text-body text-ink">
+              Every result, including one that finds no change, ends the same way:{' '}
+              <strong>see a medical professional.</strong>
+            </li>
+          </ul>
+        </Section>
+      </Reveal>
 
       {/*
         ── How it works ──────────────────────────────────────────────────────────────
         Its own full-width surface band, alternating away from the canvas bands around it —
         Apple's own way of separating sections, instead of a card grid or a boxed panel.
       */}
-      <Section tone="surface" aria-labelledby="how-heading">
-        <Kicker>How it works</Kicker>
-        <h2 id="how-heading" className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
-          Three steps, always in the same order
-        </h2>
+      <Reveal>
+        <Section tone="surface" aria-labelledby="how-heading" animate={false}>
+          <Kicker>How it works</Kicker>
+          <h2 id="how-heading" className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+            Three steps, always in the same order
+          </h2>
 
-        <ol className="mt-8 divide-y divide-hairline border-t border-hairline">
-          {STEPS.map((step) => (
-            <li
-              key={step.number}
-              className="flex flex-col gap-4 py-8 sm:flex-row sm:items-baseline sm:gap-8"
-            >
-              <span className="tabular shrink-0 text-title font-semibold text-ink-secondary sm:w-12" aria-hidden="true">
-                {step.number}
-              </span>
-              <div>
-                <h3 className="text-title font-semibold text-ink">{step.title}</h3>
-                <p className="mt-2 max-w-xl text-body text-ink-secondary">{step.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Section>
+          <ol className="mt-8 divide-y divide-hairline border-t border-hairline">
+            {STEPS.map((step) => (
+              <li
+                key={step.number}
+                className="flex flex-col gap-4 py-8 sm:flex-row sm:items-baseline sm:gap-8"
+              >
+                <span className="tabular shrink-0 text-title font-semibold text-ink-secondary sm:w-12" aria-hidden="true">
+                  {step.number}
+                </span>
+                <div>
+                  <h3 className="text-title font-semibold text-ink">{step.title}</h3>
+                  <p className="mt-2 max-w-xl text-body text-ink-secondary">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      </Reveal>
 
       {/*
         ── The tests ─────────────────────────────────────────────────────────────────
         A ruled list — each row is a module name at weight 600 with a trailing chevron,
         a description underneath in the secondary colour, and a hairline between rows.
       */}
-      <Section tone="canvas" className="lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start lg:gap-16">
+      <Reveal>
+        <Section
+          tone="canvas"
+          animate={false}
+          className="lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:items-start lg:gap-16"
+        >
         <div>
           <Kicker>The tests</Kicker>
           <h2 id="tests-heading" className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
@@ -254,7 +264,8 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-      </Section>
+        </Section>
+      </Reveal>
     </>
   );
 }

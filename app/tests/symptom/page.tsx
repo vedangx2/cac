@@ -69,12 +69,12 @@ export default function SymptomTestPage() {
       */}
       <div className="sticky top-0 z-10 -mx-4 mb-6 bg-instrument px-4 py-3 sm:-mx-8 sm:px-8">
         <div className="flex items-baseline justify-between">
-          <span className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <span className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Total
           </span>
-          <span className="tabular text-display font-black" aria-live="polite">
+          <span className="tabular text-display font-semibold" aria-live="polite">
             {total}
-            <span className="text-body font-bold text-instrument-ink-soft">
+            <span className="text-body font-semibold text-instrument-ink-soft">
               {' '}
               / {MAX_SYMPTOM_TOTAL}
             </span>
@@ -96,7 +96,7 @@ export default function SymptomTestPage() {
             */}
             <fieldset>
               <legend className="sr-only">{symptom}</legend>
-              <p aria-hidden="true" className="mb-3 text-title font-bold">
+              <p aria-hidden="true" className="mb-3 text-title font-semibold">
                 {symptom}
               </p>
 
@@ -137,10 +137,10 @@ export default function SymptomTestPage() {
                         // readers while we style the label around it.
                         className="sr-only"
                       />
-                      <span className="tabular text-title font-black leading-none">
+                      <span className="tabular text-title font-semibold leading-none">
                         {step.value}
                       </span>
-                      <span className="mt-1 text-meta font-bold uppercase leading-none">
+                      <span className="mt-1 text-meta font-semibold uppercase leading-none">
                         {step.label}
                       </span>
                     </label>

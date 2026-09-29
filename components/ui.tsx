@@ -28,16 +28,26 @@ import type { ComponentProps, ReactNode } from 'react';
  * The standard reading-screen wrapper: capped at 980px, left-aligned content, comfortable
  * padding. Replaces the old centred 896px ("max-w-4xl") shell — see CLAUDE.md's spec for the
  * exact number.
+ *
+ * `animate` (default true) fades the content in with a slight rise on load — see the
+ * `.animate-enter` rule in app/globals.css for the exact timing. The ONE place that passes
+ * `animate={false}` is the results screen's flagged verdict: CLAUDE.md's brief for this pass
+ * says a safety verdict must appear immediately, with no delay or animation, so that screen
+ * opts out rather than the default silently growing an exception into every screen.
  */
 export function PageShell({
   children,
   className = '',
+  animate = true,
 }: {
   children: ReactNode;
   className?: string;
+  animate?: boolean;
 }) {
   return (
-    <div className={`mx-auto w-full max-w-[980px] px-4 py-8 sm:px-8 sm:py-12 ${className}`}>
+    <div
+      className={`mx-auto w-full max-w-[980px] px-4 py-8 sm:px-8 sm:py-12 ${animate ? 'animate-enter' : ''} ${className}`}
+    >
       {children}
     </div>
   );
@@ -48,10 +58,16 @@ export function PageShell({
  * Apple's own way of separating sections: alternating canvas/surface bands, never a
  * floating box. Use on pages that have more than one distinct section (the home page);
  * a single-section screen can use PageShell directly and skip this.
+ *
+ * `animate` (default true) is the same on-load fade-and-rise as PageShell — see the note
+ * there. It is a separate prop from the scroll-triggered reveal in components/reveal.tsx:
+ * this one plays once when the section first paints, the other plays once when a section
+ * below the fold scrolls into view. A section should use exactly one of the two, never both.
  */
 export function Section({
   tone = 'canvas',
   divider = false,
+  animate = true,
   children,
   className = '',
   ...rest
@@ -59,6 +75,7 @@ export function Section({
   tone?: 'canvas' | 'surface';
   /** A full-width hairline along the top edge, for two adjacent bands of the same tone. */
   divider?: boolean;
+  animate?: boolean;
   children: ReactNode;
   className?: string;
 } & ComponentProps<'div'>) {
@@ -67,7 +84,9 @@ export function Section({
       className={`${tone === 'surface' ? 'bg-surface' : 'bg-canvas'} ${divider ? 'border-t border-hairline' : ''}`}
       {...rest}
     >
-      <div className={`mx-auto w-full max-w-[980px] px-4 py-16 sm:px-8 sm:py-24 ${className}`}>
+      <div
+        className={`mx-auto w-full max-w-[980px] px-4 py-16 sm:px-8 sm:py-24 ${animate ? 'animate-enter' : ''} ${className}`}
+      >
         {children}
       </div>
     </div>
@@ -131,7 +150,7 @@ export function Kicker({ children }: { children: ReactNode }) {
 
 const buttonBase =
   'inline-flex items-center justify-center gap-2 text-center text-body font-semibold ' +
-  'leading-tight transition-colors disabled:cursor-not-allowed disabled:opacity-40';
+  'leading-tight transition disabled:cursor-not-allowed disabled:opacity-40';
 
 const buttonVariants = {
   /**
@@ -139,19 +158,29 @@ const buttonVariants = {
    * the reading-screen tap-target floor (see CLAUDE.md) — smaller than the instrument
    * floor below because a reading screen is tapped once, calmly, not repeatedly under
    * time pressure.
+   *
+   * `active:` classes are the reading-screen press feedback from CLAUDE.md's motion pass:
+   * a quick opacity dip plus a slight scale down, ~150ms (buttonBase's `transition` covers
+   * both colour and transform, so widening it here is not needed). Reading screens only —
+   * see the note on `instrument` below for why the two instrument variants do not get this.
    */
-  primary: 'min-h-11 rounded-full bg-action px-6 py-2 text-canvas hover:opacity-90',
+  primary: 'min-h-11 rounded-full bg-action px-6 py-2 text-canvas hover:opacity-90 active:scale-[0.98] active:opacity-80 duration-150',
   /** Secondary action on a reading screen. Transparent, 1px #0071e3 border and text. */
   secondary:
-    'min-h-11 rounded-full border border-action bg-transparent px-6 py-2 text-action hover:bg-surface',
+    'min-h-11 rounded-full border border-action bg-transparent px-6 py-2 text-action hover:bg-surface active:scale-[0.98] active:bg-surface/80 duration-150',
   /**
    * Primary action on a dark instrument screen. Unchanged shape and size from before this
    * pass — 56px tall, rounded rectangle — because a test screen is pressed one-handed, in a
    * hurry, on a sideline, and a mis-hit there is recorded as an answer. Only the colours
    * moved (see app/globals.css); this class name and its geometry did not.
+   *
+   * DELIBERATELY NO PRESS ANIMATION. CLAUDE.md's motion brief is explicit that nothing may
+   * animate on the six test modules — this button variant is used there (and on the tool
+   * pages that share the instrument look), so it gets none of the `active:` scale/opacity
+   * classes the reading-screen variants above carry.
    */
   instrument: 'min-h-14 rounded-xl px-6 py-4 bg-instrument-ink text-instrument hover:bg-instrument-ink-soft',
-  /** Secondary action on a dark instrument screen. Same geometry note as above. */
+  /** Secondary action on a dark instrument screen. Same geometry and no-motion note as above. */
   'instrument-quiet':
     'min-h-14 rounded-xl px-6 py-4 border-2 border-instrument-ink-soft bg-instrument-panel text-instrument-ink hover:border-instrument-ink',
 } as const;
@@ -283,14 +312,48 @@ export function InstrumentHeader({
   instruction?: ReactNode;
   children?: ReactNode;
 }) {
+  /*
+   * THE PROGRESS BAR — CLAUDE.md Task 7.
+   *
+   * Battery position used to be text only ("Step 5 of 6"). This parses that same string back
+   * into numbers so a thin bar can sit under it, rather than widening the `step` prop into a
+   * {current, total} shape and touching all six call sites that pass it — see lib/session.ts's
+   * stepPosition, which is the only place this string is built.
+   *
+   * WHY IT CANNOT ANIMATE OR APPEAR MID-TIMING (both required by the brief): this header is
+   * rendered once when a module page mounts and `step` does not change again until the athlete
+   * navigates to the NEXT module (a fresh mount, a fresh header). Nothing inside a single
+   * module's run — a trial advancing, a stimulus appearing — ever changes it, so the bar has
+   * nothing to animate and sits entirely above the timed regions those screens paint through
+   * refs (see app/tests/gonogo/page.tsx's timing rules for why those regions avoid React
+   * entirely). `aria-hidden` because the text right above it already says the same thing; a
+   * screen reader does not need to hear it twice.
+   */
+  const stepNumbers = step?.match(/^Step (\d+) of (\d+)$/);
+  const current = stepNumbers ? Number(stepNumbers[1]) : null;
+  const total = stepNumbers ? Number(stepNumbers[2]) : null;
+
   return (
     <header className="mb-6">
       {step && (
-        <p className="mb-2 text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
-          {step}
-        </p>
+        <>
+          <p className="mb-2 text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
+            {step}
+          </p>
+          {current !== null && total !== null && total > 0 && (
+            <div
+              aria-hidden="true"
+              className="mb-4 h-1 w-full overflow-hidden rounded-full bg-instrument-panel"
+            >
+              <div
+                className="h-full rounded-full bg-instrument-ink-soft"
+                style={{ width: `${(current / total) * 100}%` }}
+              />
+            </div>
+          )}
+        </>
       )}
-      <h1 className="text-display font-black">{title}</h1>
+      <h1 className="text-display font-semibold">{title}</h1>
       {instruction && <p className="mt-2 text-body text-instrument-ink-soft">{instruction}</p>}
       {children && <div className="mt-2">{children}</div>}
     </header>
@@ -318,7 +381,7 @@ export function ModuleIntro({
 }) {
   return (
     <div className="rounded-xl border border-instrument-ink/20 bg-instrument-panel p-4 sm:p-6">
-      <h2 className="text-title font-bold">{heading}</h2>
+      <h2 className="text-title font-semibold">{heading}</h2>
       {detail && <p className="mt-2 text-body text-instrument-ink-soft">{detail}</p>}
       <Button variant="instrument" className="mt-6 w-full" onClick={onStart}>
         {actionLabel}

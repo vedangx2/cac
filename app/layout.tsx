@@ -1,6 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import './globals.css';
+// SELF-HOSTED TYPEFACE — IBM Plex Sans, weights 400 and 600 only (see app/globals.css for
+// why: the system font stack rendered as Segoe UI on Windows, and a self-hosted face ships
+// with the app instead of depending on whatever the OS happens to have). These two files are
+// the only network cost this app pays for text — no Google Fonts, no runtime font fetch, and
+// nothing here ever changes after `next build`. Importing CSS in the root layout is the
+// standard Next.js way to ship a self-hosted webfont: Next bundles the referenced .woff2
+// files as static assets served from this app's own origin.
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/600.css';
 import { ServiceWorkerRegistrar } from '@/components/service-worker';
 
 export const metadata: Metadata = {
@@ -35,7 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-canvas focus:px-4 focus:py-4 focus:font-bold focus:text-ink"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-canvas focus:px-4 focus:py-4 focus:font-semibold focus:text-ink"
         >
           Skip to main content
         </a>
@@ -57,13 +66,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           >
             <Link
               href="/"
-              className="inline-flex min-h-14 items-center text-meta font-black uppercase tracking-widest"
+              className="inline-flex min-h-14 items-center text-meta font-semibold uppercase tracking-widest"
             >
               Sideline&nbsp;Screen
             </Link>
             <Link
               href="/athletes"
-              className="inline-flex min-h-14 items-center text-meta font-bold underline underline-offset-4"
+              className="inline-flex min-h-14 items-center text-meta font-semibold underline underline-offset-4"
             >
               Athletes
             </Link>

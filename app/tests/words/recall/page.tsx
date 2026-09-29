@@ -99,20 +99,20 @@ export default function WordRecallPage() {
           would blunt the accent on the one screen where it has to land hardest.
         */}
         <div role="alert" className="rounded-xl bg-instrument-ink p-4 text-instrument sm:p-6">
-          <p className="text-display font-black">This part cannot be run</p>
+          <p className="text-display font-semibold">This part cannot be run</p>
           <p className="mt-3 text-body">
             {recordedFormId
               ? 'The word list used earlier in this sitting is not one this version of the app has any more, so there is no way to ask about the right words.'
               : 'The first word screen was not completed in this sitting, so there is nothing to ask about yet.'}
           </p>
-          <p className="mt-3 text-body font-bold">
+          <p className="mt-3 text-body font-semibold">
             Rather than test a different set of words and record a score that means nothing, this
             screen is stopping. Nothing has been saved for this part.
           </p>
           <div className="mt-6">
             <Link
               href="/athletes"
-              className="inline-flex min-h-14 items-center font-bold underline underline-offset-4"
+              className="inline-flex min-h-14 items-center font-semibold underline underline-offset-4"
             >
               Back to athletes
             </Link>
@@ -147,7 +147,7 @@ export default function WordRecallPage() {
                   aria-pressed={picked}
                   // Heavy fill for "picked" — never a green fill, never a tick. See CLAUDE.md.
                   // Pill-shaped chip (2026-09-27) — see app/tests/words/page.tsx for why.
-                  className={`min-h-16 rounded-full border-2 px-3 py-4 text-title font-bold transition-colors ${
+                  className={`min-h-16 rounded-full border-2 px-3 py-4 text-title font-semibold transition-colors ${
                     picked
                       ? 'border-instrument-ink bg-instrument-ink text-instrument'
                       : 'border-instrument-ink/20 bg-instrument-panel text-instrument-ink hover:border-instrument-ink-soft'
@@ -173,10 +173,10 @@ export default function WordRecallPage() {
 
       {finalScore && (
         <div className="rounded-2xl border border-instrument-ink/20 bg-instrument-panel p-6">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-instrument-ink-soft">
+          <h2 className="text-meta font-semibold uppercase tracking-widest text-instrument-ink-soft">
             Recorded
           </h2>
-          <p className="tabular mt-2 text-display font-black sm:text-stimulus">
+          <p className="tabular mt-2 text-display font-semibold sm:text-stimulus">
             {finalScore.correct} out of {MAX_WORD_CORRECT}
           </p>
           <p className="mt-3 text-body text-instrument-ink-soft">
