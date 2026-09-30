@@ -288,8 +288,8 @@
   more than a nicety here.
 
   UPDATED 2026-09-29: reading screens now carry real decorative motion — an on-load fade and
-  rise, a scroll-triggered reveal, a button's press feedback, and (once Task 3 lands) the
-  results screen's comparison bars growing to their values. This rule is a BLANKET override,
+  rise, a scroll-triggered reveal, a button's press feedback, and the results screen's
+  comparison bars growing to their values. This rule is a BLANKET override,
   not a list of the motion above: it turns off every animation and transition on the page for
   anyone who asks, so a later motion addition is covered automatically rather than needing its
   own line added here. The six test modules still carry none of this to switch off — see
@@ -305,5 +305,44 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+  ─────────────────────────────────────────────────────────────────────────────────────
+  PRINT — the results screen's printable report (CLAUDE.md Task 4).
+  No PDF library and no server: "save as PDF" is just what a browser's own print dialog
+  already offers window.print() (see the button on app/results/[id]/page.tsx), so this
+  stylesheet is the only new code Task 4 needed beyond that one call and that one page's own
+  print:hidden / print:block markup for which of its own sections belong on paper.
+
+  Comfortable page margins (a browser's own print default is often too tight once a printer's
+  hardware margin is added on top), and print-color-adjust so the flagged verdict's red border
+  and text survive onto paper — browsers strip background colours from a printout by default
+  to save ink unless a page opts back in, and the one place this app's single accent colour has
+  to reach is exactly the one page most likely to be printed.
+*/
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /*
+    INFORMATION DENSITY. The on-screen sizes and spacing (text-body at 17px, generous py-8/
+    py-16 section padding) are tuned for a phone held at arm's length outdoors — CLAUDE.md's
+    own reading-screen spec. A printed page is read at normal reading distance, held still,
+    and "clean one-to-two page report" is an explicit requirement, so print gets its own
+    scale. Every `text-*` size and every rem-based spacing utility in this app (px-4, py-8,
+    mt-10, and so on) is defined in rem, relative to the ROOT font-size — so scaling `html`
+    here scales both text and spacing together, proportionally, without touching a single
+    component's classes or inventing a second spacing scale for print alone.
+  */
+  html {
+    font-size: 70%;
   }
 }

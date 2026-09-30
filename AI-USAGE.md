@@ -1197,6 +1197,59 @@ drawn correctly); the existing ruled table renders underneath, unchanged, with t
 
 ---
 
+**2026-09-29 — Task 4: printable report.** A "Print or save as PDF" button on the results
+screen (`window.print()` — no server, no PDF library; "save as PDF" is simply what every
+modern browser's own print dialog already offers, so nothing about this leaves the device any
+differently from how the app already worked) plus a print stylesheet.
+
+`lib/format.ts` gained `initials(name)` — "Jordan Smith" → "JS" — used ONLY on the printed
+report. **Judgment call:** the brief lists "athlete initials" rather than the name the on-screen
+app uses everywhere else, which reads as a deliberate, privacy-conscious choice for the one
+artifact this app's data can actually leave the device in (a piece of paper), so a new,
+print-only summary block at the top of the report — athlete initials, baseline date, check
+date, one-line flag outcome — carries the initials, while the rest of the page's prose below it
+(explanations, the verdict headline) keeps the full name it already used, unchanged. Five new
+tests in `lib/format.test.ts` cover `initials` directly (multi-word, single-word, a
+three-letter cap for long names, whitespace handling, an empty-name fallback).
+
+Print/screen split via Tailwind's `print:` variant, no new class of its own needed:
+`print:hidden` on the site header/nav (`app/layout.tsx`), the print button itself, the Task 3
+comparison bars (the ruled table below already carries every number in print-friendly text,
+and a screen-only, colour-coded enhancement earns its keep by being interactive — neither
+survives onto paper), the bottom "Back to X / All athletes" buttons, and the top "← Back" link;
+`hidden print:block` on the new summary block. Everything else on the page — the verdict
+headline, "What we compared," the ruled table, the "get a professional opinion" notice, and the
+threshold disclaimer — prints as-is, which is how the brief's checklist (dates, flag outcome,
+per-module table, explanation sentences, full safety copy) ends up covered: it was already all
+there, this task's job was choosing what to hide and what a printed page needs restated
+up front.
+
+**The one number that took real iteration, not a single guess:** "clean one-to-two page report"
+was measured, not assumed. Rendering a real seeded result to PDF (`page.pdf()`, headless
+Chromium, discarded scratch setup — same pattern as every other task this session) with only
+`@page { margin: 1.5cm }` and a print-colour-adjust fix produced **4 pages** — this app's
+on-screen type scale and spacing (17px body text, generous section padding) are sized for a
+phone held outdoors, which is print-wasteful. Rather than cutting any of the required content,
+`app/globals.css` scales `html { font-size: 70% }` inside `@media print` only: every `text-*`
+size and every spacing utility in this app is defined in rem relative to the root, so this one
+line shrinks text and spacing together, proportionally, without touching a single component's
+classes. Tried 65% first (also 2 pages), settled on 70% as the least aggressive scale that still
+met the 2-page target, on the reasoning that more legible is better once the requirement is
+already satisfied.
+
+Verified, not assumed: `npx vitest run` — **477/477 passing** — `tsc --noEmit`, `eslint`, `npm
+run build` clean. Live-checked against the real dev server (same scratch Playwright setup):
+seeded a real flagged result, emulated `print` media, and checked actual rendering (via
+`getClientRects()`, not `getComputedStyle().display` — the latter does not reflect an ancestor's
+`display: none` and gave a false positive on the first pass, caught and corrected rather than
+reported as verified) — the header, print button, comparison bars and bottom nav are genuinely
+not rendered in print; the summary block IS rendered, reading "Athlete: VA · Baseline recorded:
+[date] · Check recorded: [date] · Result: Flagged — significant change from baseline" for a
+seeded athlete named "Verify Athlete." The actual generated PDF was checked with `pdf-lib`
+(page count, not a byte-pattern guess): **2 pages** at both 65% and 70%.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my

@@ -24,6 +24,29 @@ export function formatDate(timestamp: number): string {
 }
 
 /**
+ * "Jordan Smith" → "JS". "Jordan" → "J". Used ONLY on the printable report (CLAUDE.md Task 4)
+ * — a piece of paper is the one form this app's data ever leaves the device in, so the printed
+ * report identifies the athlete by initials rather than by the full name the on-screen app uses
+ * everywhere else.
+ *
+ * Capped at 3 letters (first + last + one middle, at most) so an athlete with several names
+ * does not produce a long, re-identifying string — initials are meant to be a short label a
+ * coach can match against their own memory of who was tested, not a full name in disguise.
+ */
+export function initials(name: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .filter(Boolean);
+
+  if (letters.length === 0) return '?';
+  if (letters.length <= 3) return letters.join('');
+  return `${letters[0]}${letters[1]}${letters[letters.length - 1]}`;
+}
+
+/**
  * Which modules actually got recorded in a sitting.
  *
  * Takes `unknown` per field rather than importing ModuleScores because all it ever does is ask

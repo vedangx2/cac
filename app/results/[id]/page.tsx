@@ -27,7 +27,7 @@ import type { ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDeviceData } from '@/components/use-device-data';
-import { ButtonLink, Notice, PageShell as PageShellBase, ThresholdDisclaimer } from '@/components/ui';
+import { Button, ButtonLink, Notice, PageShell as PageShellBase, ThresholdDisclaimer } from '@/components/ui';
 import { ComparisonBars } from '@/components/comparison-bar';
 // REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
 // This is a needs-agreement file; the brief that authorised this pass names "results"
@@ -45,7 +45,7 @@ import {
   resolveComparedBaselineId,
 } from '@/lib/engine';
 import type { Athlete, FlagOutcome, TestResult } from '@/lib/types';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, initials } from '@/lib/format';
 
 /**
  * This screen's own PageShell: never fades in on load.
@@ -409,6 +409,23 @@ export default function ResultPage() {
   const crossedRows = rows.filter((row) => row.flagged);
   const belowFlagRule = !outcome.flagged && crossedRows.length > 0;
 
+  /*
+   * ONE-LINE OUTCOME, for the printed report's summary block only (CLAUDE.md Task 4). Reuses
+   * exactly the same conditions the verdict section below branches on, in the same priority
+   * order, so the printed line can never disagree with the headline actually shown on screen.
+   */
+  const printOutcomeSummary = nothingCompared
+    ? 'Nothing could be compared — not a "no change" result'
+    : outcome.flagged
+      ? 'Flagged — significant change from baseline'
+      : belowFlagRule
+        ? 'Change found, below the flag rule — not a "no change" result'
+        : someUnjudged
+          ? 'No verdict available — some measurements not judged'
+          : 'No significant change detected — this does not rule out a concussion';
+
+  const athleteInitials = initials(name);
+
   return (
     <PageShell>
       <PageHeaderLite
@@ -416,6 +433,34 @@ export default function ResultPage() {
         subtitle={`${name} · ${formatDateTime(check.takenAt)} · compared against baseline from ${formatDateTime(baseline.takenAt)}`}
         backHref={athlete ? `/athletes/${athlete.id}` : '/athletes'}
       />
+
+      {/* ── Print action ──────────────────────────────────────────────────────────────
+          CLAUDE.md Task 4. print:hidden so the control itself never appears in the output
+          it produces — a button has no purpose on paper. window.print() only: no server, no
+          PDF library, and "save as PDF" is simply what every modern browser's own print
+          dialog already offers, so nothing about this app's data ever leaves the device. */}
+      <div className="mb-6 print:hidden">
+        <Button variant="secondary" onClick={() => window.print()}>
+          Print or save as PDF
+        </Button>
+      </div>
+
+      {/* ── Print-only report header ─────────────────────────────────────────────────
+          Screen-hidden, print-only (the inverse of print:hidden above). A printed page is
+          read cold, often not by whoever was looking at the screen a moment ago, so the
+          report restates the essentials as one compact block: athlete INITIALS rather than
+          the full name — see lib/format.ts's `initials` — because a piece of paper is the
+          one form this app's data ever leaves the device in, and the on-screen app can
+          afford to be less careful about that than the one artifact meant to be handed to
+          someone else. Everything below this block still prints too; this is a summary
+          placed first, not a replacement for the detail that follows. */}
+      <div className="hidden print:block mb-6 border border-hairline p-4 text-body text-ink">
+        <p className="font-semibold">Sideline Screen — printed result summary</p>
+        <p className="mt-2">Athlete: {athleteInitials}</p>
+        <p>Baseline recorded: {formatDateTime(baseline.takenAt)}</p>
+        <p>Check recorded: {formatDateTime(check.takenAt)}</p>
+        <p>Result: {printOutcomeSummary}</p>
+      </div>
 
       {/*
         ── THE VERDICT ──────────────────────────────────────────────────────────────
@@ -599,11 +644,18 @@ export default function ResultPage() {
         ── Visual comparison, per module ─────────────────────────────────────────────
         CLAUDE.md Task 3. ADDITIONAL to the ruled table below, not a replacement for it — the
         table stays exactly as it was and remains the precise textual record. This section
-        reads the same `rows` the table reads, drawn instead of printed. Rows the table hides
-        (a module absent from both sittings) are already absent here too, since both read the
-        same `rows` array from `buildBreakdown`.
+        reads the same `rows` the table reads. Rows the table hides (a module absent from both
+        sittings) are already absent here too, since both read the same `rows` array from
+        `buildBreakdown`.
+
+        print:hidden — CLAUDE.md Task 4 wants a clean one-to-two page report, and the ruled
+        table below already carries every number in this section in print-friendly text form.
+        A screen-only enhancement earns its keep by being interactive and colour-coded; neither
+        survives onto paper, so it costs the printed report a page for no information gained.
       */}
-      <ComparisonBars rows={rows} />
+      <div className="print:hidden">
+        <ComparisonBars rows={rows} />
+      </div>
 
       {/*
         ── Measurement by measurement ───────────────────────────────────────────────
@@ -676,7 +728,8 @@ export default function ResultPage() {
         <ThresholdDisclaimer />
       </section>
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+      {/* print:hidden — navigation has no purpose on a printed page. */}
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row print:hidden">
         {athlete && <ButtonLink href={`/athletes/${athlete.id}`}>Back to {athlete.name}</ButtonLink>}
         <ButtonLink href="/athletes" variant="secondary">
           All athletes
@@ -704,7 +757,7 @@ function PageHeaderLite({
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 inline-flex min-h-11 items-center gap-2 text-meta font-semibold text-ink-secondary underline underline-offset-4 hover:text-ink"
+          className="mb-4 inline-flex min-h-11 items-center gap-2 text-meta font-semibold text-ink-secondary underline underline-offset-4 hover:text-ink print:hidden"
         >
           <span aria-hidden="true">←</span> Back
         </Link>

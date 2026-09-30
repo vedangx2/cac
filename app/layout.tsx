@@ -58,8 +58,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           supposed to be watching. Making the chrome dark everywhere costs the document screens
           nothing (a dark band top and bottom frames the white page) and gives the instrument
           screens the one property they need.
+
+          print:hidden (added for CLAUDE.md Task 4's printable report) — the site's own
+          navigation has no purpose on a printed page and would otherwise print as a stray
+          black band on the results screen's report.
         */}
-        <header className="bg-instrument text-instrument-ink">
+        <header className="bg-instrument text-instrument-ink print:hidden">
           <nav
             aria-label="Main"
             className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-8"
