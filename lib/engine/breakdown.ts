@@ -30,7 +30,13 @@ import {
   WORD_RECOGNITION_FEWER_CORRECT,
   WORD_RECOGNITION_MORE_FALSE_ALARMS,
 } from './thresholds';
-import { type ChangeWords, type MeasurementKey, worseningFor } from './direction';
+import {
+  type ChangeWords,
+  type Direction,
+  type MeasurementKey,
+  MEASUREMENT_DIRECTIONS,
+  worseningFor,
+} from './direction';
 import { msText as ms, pointsText as points } from './units';
 
 /** Which module a row belongs to. Some modules contribute more than one row. */
@@ -63,6 +69,23 @@ export type ComparisonRow = {
    * would read as "checked, fine" — which is the opposite of what it means.
    */
   unevaluated: boolean;
+
+  /*
+   * THE FOUR FIELDS BELOW ARE FOR THE VISUAL COMPARISON ONLY (CLAUDE.md's 2026-09-29 motion
+   * and comparison-bar pass). Everything above this line is unchanged from before that pass —
+   * these are additive, presentation-only values pulled from numbers this function already
+   * computed, not a new judgement. They carry no verdict of their own: `flagged` and
+   * `unevaluated` above remain the only fields that say whether something matters. Null exactly
+   * when the row's baseline/check text says "Not recorded" (i.e. `compared` is false).
+   */
+  /** Raw baseline value, for drawing a bar. Null when the row was not compared. */
+  baselineValue: number | null;
+  /** Raw check value, for drawing a bar. Null when the row was not compared. */
+  checkValue: number | null;
+  /** Which way this measurement gets worse — the bar must grow in the worse direction, not just up. */
+  direction: Direction;
+  /** Raw threshold, for drawing the cut-off tick. Null exactly when `unevaluated` is true. */
+  threshold: number | null;
 };
 
 /** One row's worth of declaration. The table below is the only place these are written down. */
@@ -243,6 +266,10 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
         flagged: false,
         compared: false,
         unevaluated: false,
+        baselineValue: null,
+        checkValue: null,
+        direction: MEASUREMENT_DIRECTIONS[spec.measurement],
+        threshold: null,
       });
       continue;
     }
@@ -261,6 +288,10 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       flagged: spec.threshold !== null && worsening >= spec.threshold,
       compared: true,
       unevaluated: spec.threshold === null,
+      baselineValue,
+      checkValue,
+      direction: MEASUREMENT_DIRECTIONS[spec.measurement],
+      threshold: spec.threshold,
     });
   }
 

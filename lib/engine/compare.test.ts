@@ -532,3 +532,59 @@ describe('breakdown rows stay consistent with the engine verdict', () => {
     expect(digitRow?.thresholdText).toMatch(/no tested cut-off/i);
   });
 });
+
+/*
+  ═══════════════════════════════════════════════════════════════════════════════════
+  THE VISUAL-COMPARISON FIELDS (CLAUDE.md Task 3, 2026-09-29).
+  ═══════════════════════════════════════════════════════════════════════════════════
+  `baselineValue`, `checkValue`, `direction` and `threshold` on ComparisonRow are new,
+  presentation-only fields for components/comparison-bar.tsx to draw a bar from — they carry
+  no verdict of their own (`flagged`/`unevaluated` above are still the only fields that do).
+  But a WRONG `direction` here would draw a bar that visually reads backwards — a declining
+  athlete's bar growing the "better" way — which is exactly the failure direction.ts's own
+  tests exist to prevent, just one layer further out, so it gets its own check here rather than
+  trusting that exposing the value correctly is too simple to get wrong.
+*/
+describe('the visual-comparison fields on each row (Task 3)', () => {
+  it('exposes the raw baseline and check values for a compared row', () => {
+    const check = sitting('check', scores({ symptom: symptom(SYMPTOM_INCREASE) }));
+    const rows = buildBreakdown(healthyBaseline(), check);
+    const symptomRow = rows.find((row) => row.label.startsWith('Symptom score'));
+
+    expect(symptomRow?.baselineValue).toBe(0);
+    expect(symptomRow?.checkValue).toBe(SYMPTOM_INCREASE);
+    expect(symptomRow?.threshold).toBe(SYMPTOM_INCREASE);
+  });
+
+  it('gets the direction right for a higher-is-worse measurement (symptoms)', () => {
+    const rows = buildBreakdown(healthyBaseline(), unchangedCheck());
+    const symptomRow = rows.find((row) => row.label.startsWith('Symptom score'));
+    expect(symptomRow?.direction).toBe('higher-is-worse');
+  });
+
+  it('gets the direction right for a lower-is-worse measurement (digit span)', () => {
+    const rows = buildBreakdown(healthyBaseline(), unchangedCheck());
+    const digitRow = rows.find((row) => row.label.startsWith('Numbers backwards'));
+    expect(digitRow?.direction).toBe('lower-is-worse');
+  });
+
+  it('leaves threshold null exactly when the row is unevaluated', () => {
+    const rows = buildBreakdown(healthyBaseline(), unchangedCheck());
+    for (const row of rows) {
+      if (row.compared) expect(row.threshold === null).toBe(row.unevaluated);
+    }
+  });
+
+  it('leaves baselineValue, checkValue and threshold null for an uncompared row', () => {
+    const check = sitting('check', scores({ symptom: symptom(0) }));
+    const rows = buildBreakdown(healthyBaseline(), check);
+    const uncompared = rows.filter((row) => !row.compared);
+
+    expect(uncompared.length).toBeGreaterThan(0);
+    for (const row of uncompared) {
+      expect(row.baselineValue).toBeNull();
+      expect(row.checkValue).toBeNull();
+      expect(row.threshold).toBeNull();
+    }
+  });
+});

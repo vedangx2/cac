@@ -28,6 +28,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDeviceData } from '@/components/use-device-data';
 import { ButtonLink, Notice, PageShell as PageShellBase, ThresholdDisclaimer } from '@/components/ui';
+import { ComparisonBars } from '@/components/comparison-bar';
 // REPLACED 2026-09-23 — Apple's web design system (see app/globals.css, components/ui.tsx).
 // This is a needs-agreement file; the brief that authorised this pass names "results"
 // explicitly in its scope, which is the agreement CLAUDE.md asks for — see SESSION-REPORT.md.
@@ -593,6 +594,16 @@ export default function ResultPage() {
           ))}
         </ul>
       </section>
+
+      {/*
+        ── Visual comparison, per module ─────────────────────────────────────────────
+        CLAUDE.md Task 3. ADDITIONAL to the ruled table below, not a replacement for it — the
+        table stays exactly as it was and remains the precise textual record. This section
+        reads the same `rows` the table reads, drawn instead of printed. Rows the table hides
+        (a module absent from both sittings) are already absent here too, since both read the
+        same `rows` array from `buildBreakdown`.
+      */}
+      <ComparisonBars rows={rows} />
 
       {/*
         ── Measurement by measurement ───────────────────────────────────────────────

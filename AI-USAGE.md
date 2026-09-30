@@ -1141,6 +1141,62 @@ pure presentation, nothing here has pure-function behaviour to unit test). `tsc 
 
 ---
 
+**2026-09-29 — Task 3: visual baseline-vs-check comparison.** Added a bar per measurement on the
+results screen, above the existing ruled table, which is unchanged and stays exactly where it
+was — this is additional, not a replacement.
+
+`lib/engine/breakdown.ts` (not a listed "needs agreement" file, but the engine's own comparison
+table nonetheless) gained four new fields on `ComparisonRow`: `baselineValue`, `checkValue`,
+`direction`, `threshold` — the raw numbers the table already prints as formatted text, exposed
+so a bar can be drawn from them. **These are additive and presentation-only:** no change to
+`flagged`, `unevaluated`, `compared`, or any judgement the engine already made; `flagged` and
+`unevaluated` remain the only fields that carry a verdict. Five new tests in
+`lib/engine/compare.test.ts` check these fields directly, including that a higher-is-worse row
+(symptoms) and a lower-is-worse row (digit span) report the correct `direction` from
+`MEASUREMENT_DIRECTIONS` — a wrong direction here would draw a bar that visually reads
+backwards, which is the same failure `lib/engine/direction.ts`'s own tests exist to prevent, one
+layer further out.
+
+The bar itself is a new component, `components/comparison-bar.tsx` — its own file rather than
+part of `components/ui.tsx`, for the same reason as `components/reveal.tsx` (Task 2): the
+400ms grow-in motion needs a mount effect, and `ui.tsx`'s components are deliberately hook-free.
+One track per row: a hollow, full-height outline for the baseline, a thinner solid bar on top
+for the check (the same shape as a standard bullet chart), and a vertical tick at the point a
+change would have had to reach to flag — present only when a threshold exists. Each row scales
+to its OWN range (points, counts and milliseconds are not on one shared scale), matching how the
+existing table already treats each row's baseline/check/threshold independently.
+
+**Every hard rule from the brief, applied and checked:**
+- **Direction:** the tick position and which way the bar grows both read from `row.direction`,
+  never assumed. Live-checked (see below) with a go/no-go response-time row (higher-is-worse,
+  slower check) and a digit-span row (lower-is-worse, fewer correct) in the same screenshot.
+- **Null-threshold rows** ("not judged yet") draw no tick — the `{worsePoint !== null && ...}`
+  guard means there is nothing conditionally styled for these rows, there is nothing rendered at
+  all for the cut-off, matching the same "we did not look must never render as we looked and it
+  was fine" rule `FlagOutcome.unevaluated` already enforces elsewhere.
+- **No green, ever; red only when `row.flagged` is true.** The check bar's fill is a single
+  ternary — `bg-flag` or `bg-ink` — with nothing else it can evaluate to. Added to
+  `lib/design.test.ts`'s existing "red means flagged and appears nowhere else" allowlist
+  alongside the results screen itself, since this component is that screen's own visual, just
+  factored into a separate file for the hook reason above.
+- **A check numerically better than baseline gets no positive styling:** the fill colour
+  ternary above does not know or ask whether a check improved, only whether it flagged — there
+  is no code path that could apply a different colour for "better."
+
+Verified, not assumed: the five new engine tests above, plus `npx vitest run` — **472/472
+passing** — `tsc --noEmit`, `eslint`, and `npm run build` all clean. Live-checked against the
+real dev server (same external, non-dependency Playwright scratch setup as Tasks 1 and 2):
+seeded IndexedDB directly with a real flagged baseline/check pair (symptom score up 10 against a
+5-point cut-off, go/no-go response time up 70ms against a 25ms cut-off, digit span down from 6
+to 3 with no cut-off yet) and screenshotted the real rendered `/results/[id]` page. Confirmed
+by eye: the symptom and go/no-go bars are red with a visible cut-off tick; the digit-span bar is
+black with no tick and says "not judged yet"; the digit-span check bar is visibly SHORTER than
+its baseline outline (3 correct vs. 6, the lower-is-worse direction drawn correctly) while the
+go/no-go check bar is visibly LONGER than its baseline outline (420ms vs. 350ms, higher-is-worse
+drawn correctly); the existing ruled table renders underneath, unchanged, with the same numbers.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my

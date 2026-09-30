@@ -82,9 +82,14 @@ function sourceOf(path: string): string {
 
 describe('red means flagged and appears nowhere else', () => {
   it('is used only on the results screen', () => {
+    // components/comparison-bar.tsx is the results screen's own visual comparison (Task 3,
+    // 2026-09-29) — it lives in its own file only because it needs a mount effect for the
+    // grow-in motion (see the file comment there), not because it is a different screen. It is
+    // rendered nowhere except app/results/[id]/page.tsx.
+    const RESULTS_SCREEN_FILES = ['app/results/[id]/page.tsx', 'components/comparison-bar.tsx'];
     const offenders = FILES.filter(
       ([name, source]) =>
-        name !== 'app/results/[id]/page.tsx' && /\b(?:bg|text|border|decoration)-flag\b/.test(source),
+        !RESULTS_SCREEN_FILES.includes(name) && /\b(?:bg|text|border|decoration)-flag\b/.test(source),
     ).map(([name]) => name);
 
     // A destructive action, an error, a refusal and a "switched off" notice are all real
