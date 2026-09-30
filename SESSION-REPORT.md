@@ -1,3 +1,87 @@
+# Session report — 29 September 2026
+
+Branch: `feat/gonogo-and-calibration`. **Not merged. Branch pushed** (`86ff11a`). Autonomous
+session, all seven tasks named directly in the brief: a self-hosted typeface, reading-screen
+motion, a visual baseline-vs-check comparison on the results screen, a printable report, a
+cut-down homepage, a new About page, and a thin battery-position progress bar. The brief's own
+hard stops were honoured: no test logic, timing, scoring, or threshold value was touched;
+`CLAUDE.md` was not edited (§3 below lists what it needs); `AI-USAGE.md` got one dated entry
+per task rather than one entry for the whole session, which is where the full file-by-file
+detail and every verification transcript live — this report is the shorter index, not a
+duplicate.
+
+This picks up a session that had been started and interrupted overnight with nothing committed.
+The first thing done here was verifying the actual state of the working tree against the tasks
+(not trusting a summary of it) before writing a single new line — see AI-USAGE.md's task 1 entry
+for exactly what was and was not already in place.
+
+`npx vitest run` — **477 tests, 21 files, all passing** (12 more than the session's start: 5 new
+engine tests for the comparison-bar's `direction`/`baselineValue`/`checkValue`/`threshold`
+fields, 5 new tests for `lib/format.ts`'s new `initials`, plus 2 new `design.test.ts` assertions
+for the font-weight restriction). `tsc --noEmit`, `npm run lint`, `npm run build` (18 routes, one
+more than session start — `/about`) all clean, checked after every task. 6 commits: `6f90496`
+(tasks 1, 2 and 7, combined — see §2), `8c1336a` (task 3), `1b6375b` (task 4), `1ac8f10` (task 6),
+`b2e45f0` (task 5), `86ff11a` (before/after screenshots).
+
+---
+
+## §1 — Sequencing judgment calls (the brief's own numeric order was not followed literally)
+
+1. **Tasks 1, 2 and 7 were committed together**, not as three separate commits. CLAUDE.md's own
+   brief text names the font (Task 1) and the progress bar (Task 7) as the *only two* changes
+   the six test modules may carry — and both landed in the same shared component
+   (`InstrumentHeader` in `components/ui.tsx`). Task 2 (motion) rode along in the same commit
+   because it touched the same files (`components/ui.tsx`'s `PageShell`/`Section`/button
+   variants) while the font-weight sweep was already in progress there; splitting one file's
+   history into three commits for a boundary that is really "the same header component, twice"
+   would have been cosmetic, not more honest.
+2. **Task 3's "comparison bars grow to their values" motion shipped with Task 3, not Task 2** —
+   the bars did not exist yet when Task 2 landed, so there was nothing to animate.
+3. **Task 6 (the About page) was built and linked before Task 5 (the homepage cut)**, the
+   reverse of the brief's numbering. Reasoning: the homepage cut *removes* content that only
+   makes sense to remove once it has somewhere else to live. Building About first means a
+   visitor is never one commit away from content that used to be on the homepage and is not yet
+   anywhere.
+
+Full reasoning for each is in the matching AI-USAGE.md entry.
+
+## §2 — A real bug found live, not by a test, and fixed on the spot
+
+`components/reveal.tsx` (Task 2) shipped with a React hydration mismatch: its `visible` state
+was seeded from `typeof IntersectionObserver === 'undefined'`, which is a different answer
+during server-side rendering (no such global in Node — always "undefined," so the server always
+rendered "visible") than on a real browser's first client render (the global exists — always
+rendered "not visible"). Every page load using `Reveal` hit this. Nothing in `npx vitest run`
+caught it, because this project's test harness is node-only and does not render through
+Next.js's actual SSR path (the same limitation `lib/regression.test.ts`'s own header comment
+already names for a different pair of bugs). It surfaced in a browser console log while
+screenshotting the About page for Task 6, was fixed in the Task 6 commit, and was re-verified
+with a fresh console check on both `/about` and `/` showing zero hydration warnings.
+
+**The lesson for whoever reads this next:** a green `vitest run` on this project proves the pure
+functions are right. It does not prove a client component behaves the same on the server as in
+the browser. When a component's initial state depends on a browser-only global (here,
+`IntersectionObserver`; the same class of thing as `window`, `document`, or `localStorage`), that
+decision has to be made inside `useEffect`, never in the `useState` initialiser, no matter how
+tempting "compute it once" looks — the initialiser runs during SSR too.
+
+## §3 — What CLAUDE.md needs (not edited, per the brief's own instruction)
+
+- **`lib/engine/breakdown.ts` is not in the "needs agreement before editing" table, but arguably
+  should be now.** It gained four new fields on `ComparisonRow` this session
+  (`baselineValue`/`checkValue`/`direction`/`threshold`) specifically so a second consumer
+  (`components/comparison-bar.tsx`) could draw from it without recomputing anything — it is no
+  longer read by only the results screen's table. A wrong `direction` here would draw a bar that
+  visually reads backwards, which is exactly the failure class `lib/engine/direction.ts` is in
+  that table to guard against. Suggest adding a row.
+- **The homepage's "one-line hard rule" is now load-bearing text in a much shorter file than
+  before.** If `CLAUDE.md` is ever updated to reproduce homepage copy verbatim (it does not
+  currently), the line to quote is in `app/page.tsx`'s "THE ONE-LINE HARD RULE" comment block.
+- No other section needs a change this session's work would justify. Thresholds, the data
+  contract, and the file-ownership table are all still accurate as written.
+
+---
+
 # Session report — 23 September 2026
 
 Branch: `feat/gonogo-and-calibration`. **Not merged. Branch pushed after every commit.**
