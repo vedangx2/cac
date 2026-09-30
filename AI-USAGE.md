@@ -1298,6 +1298,38 @@ than assuming it matched the rendered page.
 
 ---
 
+**2026-09-29 — Task 5: cut the homepage to ten seconds.** `app/page.tsx` used to run four full
+sections (hero, "What this app will never do," "How it works," "The tests" + a privacy
+paragraph). It is now the hero alone: the kicker, headline, one paragraph on what the app does,
+the two primary actions (Get started / Run a practice battery), the product image, one loud
+one-sentence hard rule, and one line on privacy with a "Read more about how this works" link to
+the new About page (Task 6, built first for exactly this reason).
+
+Nothing was deleted outright — see the Task 6 entry above for where each removed section's
+content now lives. The one-line hard rule is new copy, not a trim of the old "Early days" notice
+(that notice explained WHICH measurements have a tested cut-off and why, which is now About's
+"Where the thresholds come from" section); the homepage's line only has to say the app flags and
+refers, never clears, and to always see a professional — CLAUDE.md's own words for what must
+stay — so it was rewritten to say exactly that in one sentence rather than shortened from a
+paragraph that was answering a different, longer question.
+
+The product image slot: `public/hero.jpg` still does not exist (checked again this task), so
+the phone mockup stays, with its "named slot" comment kept and pointed at Task 5 explicitly —
+unchanged in substance from before, since nothing about removing three sections required
+touching the image.
+
+Verified, not assumed: `npx vitest run` — 477/477 (grepped the test suite first for any
+reference to the removed sections' heading ids or copy — `how-heading`, `tests-heading`, "What
+this app will never do," "Three steps, always" — none exist; the removed content was never a
+test's subject, only About's new copy is, and that is covered by the same
+`READING_HEADLINE_FILES` rule added in the Task 6 commit). `tsc --noEmit`, `eslint`, `npm run
+build` clean. Screenshotted at phone and desktop width against the real dev server: the cut
+page reads in the ten seconds the brief asks for, the hard-rule notice and the privacy line
+with its link are both visible without scrolling on a 1280px desktop viewport, and the header's
+About/Athletes links both render.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my
