@@ -1330,6 +1330,27 @@ About/Athletes links both render.
 
 ---
 
+**2026-09-29 — Before/after screenshots for the whole session.** `docs/screenshots/before/` and
+`docs/screenshots/after/` gained six pairs (home, results, and the results screen's print
+output, each at 375px phone width and a 1280px desktop width) dated 2026-09-29.
+
+"Before" is genuinely the state this session started from, not a description of it: a
+`git worktree` was checked out at `63ea9d3` (the commit this session's first task built on),
+its own `npm install` run, and its own dev server started on a second port, so the "before"
+screenshots are the real, running, unmodified old app — same seeded athlete and flagged check
+in both, so the two sets differ only in what these seven tasks actually changed. The worktree
+and its port were torn down afterwards; nothing about it is part of the shipped app.
+
+The results-print pair is the clearest single comparison: "before" is the print-media-emulated
+old results page — no print handling existed yet, so it is just the ordinary interactive page
+(full site header, every button, none of this session's font, motion, or comparison bars,
+since none of that existed at `63ea9d3` either) rendered as if printed, because nothing told
+any of it not to be. "After" is Task 4's actual print output — no header, no buttons, no
+Task-3 bars, the initials-based summary block at the top, and noticeably less vertical space
+for the same underlying content.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my
