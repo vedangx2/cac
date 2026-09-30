@@ -74,12 +74,22 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             >
               Sideline&nbsp;Screen
             </Link>
-            <Link
-              href="/athletes"
-              className="inline-flex min-h-14 items-center text-meta font-semibold underline underline-offset-4"
-            >
-              Athletes
-            </Link>
+            {/* Order: About (a supplementary read) before Athletes (where the app's actual
+                work happens) — CLAUDE.md Task 6. */}
+            <div className="flex items-center gap-4">
+              <Link
+                href="/about"
+                className="inline-flex min-h-14 items-center text-meta font-semibold underline underline-offset-4"
+              >
+                About
+              </Link>
+              <Link
+                href="/athletes"
+                className="inline-flex min-h-14 items-center text-meta font-semibold underline underline-offset-4"
+              >
+                Athletes
+              </Link>
+            </div>
           </nav>
         </header>
 

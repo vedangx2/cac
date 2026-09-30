@@ -25,17 +25,34 @@ import type { ReactNode } from 'react';
 export function Reveal({ children, className = '' }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
-  // No IntersectionObserver support (very old browser): start already visible rather than
-  // leaving the content invisible forever. A missing enhancement should never hide real
-  // content. Computed once, in the initial state, rather than set from inside the effect below
-  // — calling setState synchronously in an effect body triggers a needless second render.
-  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined');
+  // Always starts false, on the server AND on the client's first render — see the fix note
+  // below for why this used to be a feature-detecting initialiser and no longer is.
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const node = ref.current;
-    // Nothing to observe: either the ref isn't attached yet, or this browser has no
-    // IntersectionObserver and `visible` already started true (see the initialiser above).
-    if (!node || typeof IntersectionObserver === 'undefined') return;
+    if (!node) return;
+
+    // No IntersectionObserver support (very old browser): show the content rather than
+    // leaving it invisible forever. A missing enhancement should never hide real content.
+    //
+    // FIXED 2026-09-29, found live while verifying Task 6: this used to be decided in the
+    // initial state — `useState(() => typeof IntersectionObserver === 'undefined')` — which
+    // reads as "compute it once, avoid an extra render," but `typeof IntersectionObserver`
+    // is NOT the same answer on the server and in the browser: Node has no such global at
+    // all, so a server-rendered page always started `visible`, while a real browser's first
+    // client render always started NOT visible. React caught the disagreement at hydration
+    // and logged "A tree hydrated but some attributes... didn't match" — the exact bug this
+    // component exists to avoid causing, on every single page load. Deciding it here, in an
+    // effect that never runs during SSR, means server and client agree on `false` through
+    // hydration and only correct it afterwards — the one extra render this trades for that is
+    // the correct, standard way to handle browser feature detection in React, which is why
+    // this line is exempted below rather than reworked again to avoid it.
+    if (typeof IntersectionObserver === 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
+      setVisible(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {

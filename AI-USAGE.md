@@ -1250,6 +1250,54 @@ seeded athlete named "Verify Athlete." The actual generated PDF was checked with
 
 ---
 
+**2026-09-29 — Task 6: the About page.** New `app/about/page.tsx`, linked from the header
+between the logo and "Athletes" (`app/layout.tsx`). Carries the content CLAUDE.md's brief
+names — how the comparison works, where thresholds come from, what the app cannot do, and
+technical limits — plus the full battery list, moved here rather than duplicated.
+
+**Sequencing judgment call, done out of the brief's own numeric order:** this page was built
+and linked BEFORE the homepage was cut (Task 5), even though the brief lists Task 5 first.
+Reasoning: the homepage cut removes content that only makes sense to remove once it has
+somewhere else to live — building About first means there is never a moment where a visitor
+loses information that used to be on the homepage and is not yet anywhere else. Task 5's own
+entry, next, describes exactly what moved and what stayed.
+
+What did NOT move, per the brief's own list, and is unchanged: the persistent footer, the full
+safety copy and transitional notice on the results screen, and (once Task 5 lands) the
+one-line hard rule on the homepage. `lib/design.test.ts`'s `READING_HEADLINE_FILES` list gained
+this new page, so the existing font-weight-600 rule for reading-screen headlines already
+covers it rather than needing a new, parallel check.
+
+**A real bug found live, not by inspection, and fixed on the spot — not part of Task 6 itself,
+but found while verifying it:** loading `/about` in a real browser logged a React hydration
+error naming `components/reveal.tsx` (Task 2, already committed in an earlier commit this
+session). Its `visible` state was seeded from `useState(() => typeof IntersectionObserver ===
+'undefined')`, intended as a one-time feature-detection check — but `typeof
+IntersectionObserver` is NOT the same answer during server-side rendering (no such global in
+Node, so the server always rendered "visible") and on a real browser's first client render (the
+global exists, so the client always started "not visible"). Every single page load hit this
+mismatch; it happened not to fail any existing test because none of them render through
+Next.js's actual SSR path. Fixed by moving the fallback into the existing `useEffect` (which
+never runs during SSR, so server and client now agree on `false` through hydration) and
+suppressing the one `react-hooks/set-state-in-effect` lint warning that decision reintroduces,
+with a comment explaining why — deferred feature detection is the standard, correct pattern
+this rule is not meant to catch, not a workaround for it. Re-verified after the fix: zero
+hydration warnings on `/about` and on `/` (which also uses `Reveal`) in the browser console,
+and the scroll-reveal behavior itself (Task 2's own live check, re-run) still passes unchanged.
+
+Verified, not assumed: `npx vitest run` — 477/477 (no new tests: this task is new reading-screen
+content plus the `Reveal` fix, and the fix's own regression risk is exactly the hydration
+mismatch a real SSR render exposes, which the project's node-only test harness cannot run —
+see the note at the top of `lib/regression.test.ts` about this same limitation elsewhere).
+`tsc --noEmit`, `eslint`, `npm run build` clean (18 routes now, `/about` added). Screenshotted
+at both phone width (375px) and desktop width against the real dev server, scrolling through
+gradually first — a naive full-page screenshot without scrolling left the below-the-fold
+sections blank, since Playwright's full-page capture does not actually scroll the page and so
+never triggers `Reveal`'s `IntersectionObserver`; caught by looking at the screenshot rather
+than assuming it matched the rendered page.
+
+---
+
 ### Written by Vedang, not by AI
 
 > **2026-08-31 — on go/no-go.** Go/no-go was written by Claude Code on 2026-08-31 at my

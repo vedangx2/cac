@@ -325,6 +325,7 @@ describe('reading-screen typography follows the spec: sentence case, no tracked 
     // everywhere on a reading screen.
     const READING_HEADLINE_FILES = [
       'app/page.tsx',
+      'app/about/page.tsx',
       'app/athletes/page.tsx',
       'app/athletes/[id]/page.tsx',
       'app/practice/page.tsx',
