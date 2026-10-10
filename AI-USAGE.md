@@ -1409,3 +1409,12 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
   athlete shape change is handled by the on-read migration instead. Existing baselines were recorded
   under the one-pass rule and are untouched. Their count is not knowable from the repo (IndexedDB is
   on each phone). `CLAUDE.md` updated to match the new rule (data contract, Practice mode, Recording).
+- **Task 3 — fixed scales on the comparison bars.** `ComparisonRow.scaleMax` (set in
+  `lib/engine/breakdown.ts`) is now the top of each bar, and `components/comparison-bar.tsx` uses it
+  instead of stretching to the larger of baseline/check. Words wrongly claimed: out of 10
+  distractors (20-word grid minus 10 studied). Stop-signal responses: out of 8 no-go trials. Missed
+  go signals: out of 22 go trials (every form has 8 and 22; tested). Response time: fixed
+  0–1000 ms (`RESPONSE_TIME_BAR_MAX_MS`), a readability choice, not a threshold: a median at or
+  past it fills the bar while the printed value stays exact. Symptom (30), words (20), digits (9),
+  patterns (9) keep their maxima. Balance, not built, keeps the old self-scaling. Colours, the
+  cut-off tick and the text are unchanged. Tests: `lib/engine/breakdownScale.test.ts`.

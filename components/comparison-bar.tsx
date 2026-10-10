@@ -33,11 +33,11 @@ import type { ComparisonRow } from '@/lib/engine';
  * for the check — the same "target vs. actual" shape as a standard bullet chart. A vertical
  * tick marks the point a change would have had to reach to flag, when a threshold exists.
  *
- * Both bars are scaled to THIS ROW'S OWN range, not a shared scale across every module — the
- * measurements here are not on the same units (points, counts, milliseconds), so a shared scale
- * would make most rows unreadably thin. This mirrors how the existing ruled table already
- * treats each row independently (its own baseline/check/threshold text, no shared column
- * scale), just drawn instead of printed.
+ * Each row has its own FIXED scale (`row.scaleMax`, set in lib/engine/breakdown.ts): the most
+ * that measurement can be. Units differ across rows (points, counts, milliseconds), so there is
+ * no single scale for the whole screen, but within a row the scale never moves with the data.
+ * It used to stretch to whichever of baseline or check was larger, which made one error fill the
+ * whole bar and a 1-to-1 result look maxed out.
  */
 export function ComparisonBar({ row }: { row: ComparisonRow }) {
   // Bars start at 0 width and grow to their real value once mounted — CLAUDE.md's motion pass,
@@ -72,16 +72,18 @@ export function ComparisonBar({ row }: { row: ComparisonRow }) {
         ? baselineValue + threshold
         : baselineValue - threshold;
 
-  // This row's own scale. Only the higher-is-worse direction can push the threshold point past
-  // both values (lower-is-worse's cut-off is a floor below them, never a ceiling above them),
-  // and a small floor keeps a division by zero impossible when every value here is 0.
+  // The fixed scale when the row has one. Only a measurement with no known maximum (balance
+  // sway, not built yet) falls back to stretching to its own values: there the threshold point
+  // can pass both values, and a small floor keeps a division by zero impossible at all zeros.
   const domainMax =
+    row.scaleMax ??
     Math.max(
       baselineValue,
       checkValue,
       direction === 'higher-is-worse' && worsePoint !== null ? worsePoint : 0,
       0.0001,
-    ) * 1.15;
+    ) *
+      1.15;
 
   const percent = (value: number) => `${Math.max(0, Math.min(100, (value / domainMax) * 100))}%`;
 

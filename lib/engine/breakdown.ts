@@ -16,7 +16,14 @@
 // can decide on its own which way "worse" runs.
 
 import type { TestResult } from '../types';
-import { DIGIT_TRIALS_PER_FORM, PATTERN_TRIALS_PER_FORM, RECOGNITION_GRID_SIZE } from '../forms';
+import {
+  DIGIT_TRIALS_PER_FORM,
+  GO_NO_NOGO_PER_FORM,
+  GO_NO_TRIALS_PER_FORM,
+  PATTERN_TRIALS_PER_FORM,
+  RECOGNITION_GRID_SIZE,
+  WORDS_PER_FORM,
+} from '../forms';
 import {
   BALANCE_SWAY_INCREASE,
   DIGIT_SPAN_FEWER_CORRECT,
@@ -38,6 +45,27 @@ import {
   worseningFor,
 } from './direction';
 import { msText as ms, pointsText as points } from './units';
+
+/**
+ * The fixed scales the comparison bars are drawn against, one per kind of measurement.
+ *
+ * WHY FIXED. A bar scaled to whichever of baseline or check is larger makes one error fill the
+ * whole bar, so a 1-to-1 result looked maxed out. Each scale is the most the measurement could
+ * possibly be, so a bar's length means the same thing in every sitting.
+ */
+/** Words in the grid that were NOT studied. A person can wrongly claim at most this many. */
+export const WORD_DISTRACTORS_PER_GRID = RECOGNITION_GRID_SIZE - WORDS_PER_FORM;
+/** Stop-signal (no-go) trials in a form: the most commission errors possible. */
+export const GO_NO_GO_STOP_TRIALS = GO_NO_NOGO_PER_FORM;
+/** Go trials in a form: the most omission errors possible. */
+export const GO_NO_GO_GO_TRIALS = GO_NO_TRIALS_PER_FORM - GO_NO_NOGO_PER_FORM;
+/**
+ * Response-time bars run from 0 to this many milliseconds. A readability choice, not a
+ * threshold and not a clinical range: typical medians sit well inside it, and a median at or
+ * beyond it simply fills the bar (the printed value is still exact). It is below the 1500 ms
+ * response window on purpose, so a 50 ms change is still visible.
+ */
+export const RESPONSE_TIME_BAR_MAX_MS = 1000;
 
 /** Which module a row belongs to. Some modules contribute more than one row. */
 export type BreakdownModule =
@@ -86,6 +114,12 @@ export type ComparisonRow = {
   direction: Direction;
   /** Raw threshold, for drawing the cut-off tick. Null exactly when `unevaluated` is true. */
   threshold: number | null;
+  /**
+   * The fixed top of this row's bar: the most this measurement can be (or, for response time,
+   * RESPONSE_TIME_BAR_MAX_MS). Null only for a measurement with no known maximum (balance
+   * sway, not built yet), where the bar falls back to scaling to its own values.
+   */
+  scaleMax: number | null;
 };
 
 /** One row's worth of declaration. The table below is the only place these are written down. */
@@ -94,6 +128,7 @@ type RowSpec = {
   measurement: MeasurementKey;
   label: string;
   threshold: number | null;
+  scaleMax: number | null;
   baselineValue: number | null;
   checkValue: number | null;
   format: (value: number) => string;
@@ -118,6 +153,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'symptomTotal',
       label: 'Symptom score (out of 30)',
       threshold: SYMPTOM_INCREASE,
+      scaleMax: 30,
       baselineValue: baseline.scores.symptom?.total ?? null,
       checkValue: check.scores.symptom?.total ?? null,
       format: outOf(30),
@@ -129,6 +165,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'wordLearningCorrect',
       label: `Word learning, immediate (out of ${RECOGNITION_GRID_SIZE})`,
       threshold: WORD_LEARNING_FEWER_CORRECT,
+      scaleMax: RECOGNITION_GRID_SIZE,
       baselineValue: baseline.scores.wordLearning?.correct ?? null,
       checkValue: check.scores.wordLearning?.correct ?? null,
       format: outOf(RECOGNITION_GRID_SIZE),
@@ -140,6 +177,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'wordLearningFalseAlarms',
       label: 'Word learning, immediate: words wrongly claimed',
       threshold: WORD_LEARNING_MORE_FALSE_ALARMS,
+      scaleMax: WORD_DISTRACTORS_PER_GRID,
       baselineValue: baseline.scores.wordLearning?.falseAlarms ?? null,
       checkValue: check.scores.wordLearning?.falseAlarms ?? null,
       format: count,
@@ -151,6 +189,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'wordRecognitionCorrect',
       label: `Word recall, delayed (out of ${RECOGNITION_GRID_SIZE})`,
       threshold: WORD_RECOGNITION_FEWER_CORRECT,
+      scaleMax: RECOGNITION_GRID_SIZE,
       baselineValue: baseline.scores.wordRecognition?.correct ?? null,
       checkValue: check.scores.wordRecognition?.correct ?? null,
       format: outOf(RECOGNITION_GRID_SIZE),
@@ -162,6 +201,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'wordRecognitionFalseAlarms',
       label: 'Word recall, delayed: words wrongly claimed',
       threshold: WORD_RECOGNITION_MORE_FALSE_ALARMS,
+      scaleMax: WORD_DISTRACTORS_PER_GRID,
       baselineValue: baseline.scores.wordRecognition?.falseAlarms ?? null,
       checkValue: check.scores.wordRecognition?.falseAlarms ?? null,
       format: count,
@@ -173,6 +213,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'digitSpanCorrect',
       label: `Numbers backwards (out of ${DIGIT_TRIALS_PER_FORM})`,
       threshold: DIGIT_SPAN_FEWER_CORRECT,
+      scaleMax: DIGIT_TRIALS_PER_FORM,
       baselineValue: baseline.scores.digitSpan?.correct ?? null,
       checkValue: check.scores.digitSpan?.correct ?? null,
       format: outOf(DIGIT_TRIALS_PER_FORM),
@@ -184,6 +225,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'patternSpanCorrect',
       label: `Tapped patterns (out of ${PATTERN_TRIALS_PER_FORM})`,
       threshold: PATTERN_SPAN_FEWER_CORRECT,
+      scaleMax: PATTERN_TRIALS_PER_FORM,
       baselineValue: baseline.scores.patternSpan?.correct ?? null,
       checkValue: check.scores.patternSpan?.correct ?? null,
       format: outOf(PATTERN_TRIALS_PER_FORM),
@@ -195,6 +237,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'goNoGoMedianMs',
       label: 'Go / no-go: response time',
       threshold: GO_NO_GO_SLOWER_MS,
+      scaleMax: RESPONSE_TIME_BAR_MAX_MS,
       baselineValue: baseline.scores.goNoGo?.medianMs ?? null,
       checkValue: check.scores.goNoGo?.medianMs ?? null,
       format: ms,
@@ -207,6 +250,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'goNoGoCommissionErrors',
       label: 'Go / no-go: responded on a stop signal',
       threshold: GO_NO_GO_MORE_COMMISSION_ERRORS,
+      scaleMax: GO_NO_GO_STOP_TRIALS,
       baselineValue: baseline.scores.goNoGo?.commissionErrors ?? null,
       checkValue: check.scores.goNoGo?.commissionErrors ?? null,
       format: count,
@@ -219,6 +263,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'goNoGoOmissionErrors',
       label: 'Go / no-go: missed a go signal',
       threshold: GO_NO_GO_MORE_OMISSION_ERRORS,
+      scaleMax: GO_NO_GO_GO_TRIALS,
       baselineValue: baseline.scores.goNoGo?.omissionErrors ?? null,
       checkValue: check.scores.goNoGo?.omissionErrors ?? null,
       format: count,
@@ -231,6 +276,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       measurement: 'balanceSway',
       label: 'Balance sway',
       threshold: BALANCE_SWAY_INCREASE,
+      scaleMax: null,
       baselineValue: baseline.scores.balance?.swayScore ?? null,
       checkValue: check.scores.balance?.swayScore ?? null,
       format: (value) => value.toFixed(1),
@@ -270,6 +316,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
         checkValue: null,
         direction: MEASUREMENT_DIRECTIONS[spec.measurement],
         threshold: null,
+        scaleMax: spec.scaleMax,
       });
       continue;
     }
@@ -292,6 +339,7 @@ export function buildBreakdown(baseline: TestResult, check: TestResult): Compari
       checkValue,
       direction: MEASUREMENT_DIRECTIONS[spec.measurement],
       threshold: spec.threshold,
+      scaleMax: spec.scaleMax,
     });
   }
 
