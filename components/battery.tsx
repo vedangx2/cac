@@ -183,7 +183,7 @@ export function SaveErrorNotice({ message, tone = 'dark' }: { message: string; t
       ? 'bg-instrument-ink text-instrument'
       : 'bg-ink text-canvas';
   return (
-    <div role="alert" className={`mt-6 rounded-xl p-4 ${box}`}>
+    <div role="alert" className={`mt-6 ${tone === 'dark' ? 'rounded-xl' : 'rounded-xs'} p-4 ${box}`}>
       <p className="text-title font-semibold">Not saved</p>
       <p className="mt-2 text-body">{message}</p>
     </div>
@@ -229,7 +229,7 @@ export function PracticeBanner({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
         };
 
   return (
-    <div className={`mb-6 rounded-xl p-4 ${styles.box}`}>
+    <div className={`mb-6 ${tone === 'dark' ? 'rounded-xl' : 'rounded-xs'} p-4 ${styles.box}`}>
       <p className={`text-title font-semibold ${styles.title}`}>Practice run. Nothing is saved</p>
       {practiceRun ? (
         <p className={`mt-2 text-body ${styles.body}`}>

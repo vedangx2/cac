@@ -42,7 +42,7 @@ import { Button, Notice, PageHeader, PageShell } from '@/components/ui';
 // pre-existing boxed-panel look rather than adopting the reading screens' "no card" rule;
 // this constant only exists because the shared `Card` component it used to import was
 // removed as part of that redesign.
-const DEV_TOOL_BOX = 'rounded-xl border-2 border-ink/30 bg-canvas p-4 sm:p-6';
+const DEV_TOOL_BOX = 'rounded-xs border-2 border-ink/30 bg-canvas p-4 sm:p-6';
 import {
   CALIBRATED_MEASUREMENTS,
   type CalibratedMeasurement,
@@ -267,7 +267,7 @@ function CalibrationTool() {
                 type="number"
                 value={pairsText}
                 onChange={(event) => setPairsText(event.target.value)}
-                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
+                className="mt-2 block min-h-14 w-full rounded-xs border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
               />
             </label>
             <label className="block">
@@ -276,7 +276,7 @@ function CalibrationTool() {
                 type="number"
                 value={seedText}
                 onChange={(event) => setSeedText(event.target.value)}
-                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
+                className="mt-2 block min-h-14 w-full rounded-xs border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
               />
               <span className="mt-1 block text-meta text-ink-secondary">
                 Same seed, same numbers. Change it to see whether a result is real or noise.
@@ -287,7 +287,7 @@ function CalibrationTool() {
               <select
                 value={focus}
                 onChange={(event) => setFocus(event.target.value as CalibratedMeasurement)}
-                className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
+                className="mt-2 block min-h-14 w-full rounded-xs border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
               >
                 {CALIBRATED_MEASUREMENTS.map((measurement) => (
                   <option key={measurement} value={measurement}>
@@ -341,7 +341,7 @@ function CalibrationTool() {
                       rows={4}
                       spellCheck={false}
                       placeholder={'412\n398\n431\n405'}
-                      className="tabular mt-2 block w-full rounded-xl border-2 border-ink/30 bg-canvas p-3 text-body text-ink"
+                      className="tabular mt-2 block w-full rounded-xs border-2 border-ink/30 bg-canvas p-3 text-body text-ink"
                     />
                   </label>
 
@@ -355,7 +355,7 @@ function CalibrationTool() {
                         value={inputs[measurement].degradation}
                         onChange={(event) => update(measurement, 'degradation', event.target.value)}
                         placeholder="your choice"
-                        className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
+                        className="mt-2 block min-h-14 w-full rounded-xs border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
                       />
                     </label>
                     <label className="block">
@@ -367,7 +367,7 @@ function CalibrationTool() {
                         value={inputs[measurement].threshold}
                         onChange={(event) => update(measurement, 'threshold', event.target.value)}
                         placeholder="leave blank = not judged"
-                        className="mt-2 block min-h-14 w-full rounded-xl border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
+                        className="mt-2 block min-h-14 w-full rounded-xs border-2 border-ink/30 bg-canvas px-4 text-body text-ink"
                       />
                     </label>
                   </div>
@@ -483,7 +483,7 @@ function CalibrationTool() {
                       <span className="inline-flex items-center gap-2">
                         <span
                           aria-hidden="true"
-                          className="inline-block h-2 rounded-sm bg-ink-secondary"
+                          className="inline-block h-2 rounded-xs bg-ink-secondary"
                           style={{ width: `${Math.max(1, point.falsePositiveRate * 120)}px` }}
                         />
                         {percent(point.falsePositiveRate)}
@@ -496,7 +496,7 @@ function CalibrationTool() {
                         <span className="inline-flex items-center gap-2">
                           <span
                             aria-hidden="true"
-                            className="inline-block h-2 rounded-sm bg-ink/30"
+                            className="inline-block h-2 rounded-xs bg-ink/30"
                             style={{ width: `${Math.max(1, point.falseNegativeRate * 120)}px` }}
                           />
                           {percent(point.falseNegativeRate)}

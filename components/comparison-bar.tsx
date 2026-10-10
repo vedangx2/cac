@@ -95,16 +95,16 @@ export function ComparisonBar({ row }: { row: ComparisonRow }) {
         {row.unevaluated && <p className="text-meta italic text-ink-secondary">Not judged yet</p>}
       </div>
 
-      <div className="relative mt-3 h-6 rounded-full bg-surface" aria-hidden="true">
+      <div className="relative mt-3 h-6 rounded-xs bg-surface" aria-hidden="true">
         {/* Baseline: the full-height, hollow reference bar. */}
         <div
-          className="absolute inset-y-0 left-0 rounded-full border-2 border-ink-secondary transition-[width] duration-[400ms] ease-out"
+          className="absolute inset-y-0 left-0 rounded-xs border-2 border-ink-secondary transition-[width] duration-[400ms] ease-out"
           style={{ width: grown ? percent(baselineValue) : '0%' }}
         />
         {/* Check: the thinner, solid bar on top. Red ONLY when this row actually flagged — see
             the file comment above. Never green, never a "better than baseline" colour. */}
         <div
-          className={`absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full transition-[width] duration-[400ms] ease-out ${
+          className={`absolute top-1/2 h-2.5 -translate-y-1/2 rounded-xs transition-[width] duration-[400ms] ease-out ${
             row.flagged ? 'bg-flag' : 'bg-ink'
           }`}
           style={{ width: grown ? percent(checkValue) : '0%' }}

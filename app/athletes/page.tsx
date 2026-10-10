@@ -144,7 +144,7 @@ export default function AthletesPage() {
                   server-side copy to restore from — so it asks first, inline.
                 */}
                 {confirmingDelete === athlete.id ? (
-                  <div className="mt-4 rounded-lg border border-ink p-4">
+                  <div className="mt-4 rounded-xs border border-ink p-4">
                     <p className="text-meta font-semibold text-ink">
                       Delete {athlete.name} and all of their recorded results? This cannot be
                       undone.
@@ -201,7 +201,7 @@ export default function AthletesPage() {
                 // Full ink-secondary colour rather than a faded version of it: at reduced
                 // opacity this fell below the 4.5:1 contrast floor, which matters most in the
                 // bright sunlight this gets used in.
-                className="mt-2 min-h-11 w-full rounded-lg border border-hairline bg-canvas px-4 text-title text-ink placeholder:text-ink-secondary focus:border-ink"
+                className="mt-2 min-h-11 w-full rounded-xs border border-hairline bg-canvas px-4 text-title text-ink placeholder:text-ink-secondary focus:border-ink"
               />
               {error && (
                 <p role="alert" className="mt-2 text-meta font-semibold text-ink">

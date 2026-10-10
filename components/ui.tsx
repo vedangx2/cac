@@ -12,7 +12,8 @@
 //   • RED IS NOT AVAILABLE HERE. It means "flagged" and lives only on the results screen.
 //     A warning, an error and a destructive action all use a heavy ink panel instead, which
 //     on a white page is at least as loud and costs the accent nothing.
-//   • Reading-screen buttons are pill-shaped and at least 44px tall. Instrument buttons keep
+//   • Reading-screen buttons, notices, inputs and bands share ONE corner: rounded-xs (2px), per the
+//     2026-10-10 reviewer request. Buttons are at least 44px tall. Instrument buttons keep
 //     their own rounded-rectangle shape and 56px floor — see the tap-target comment below.
 //
 // None of these use React hooks, so they drop into a server or client component either way.
@@ -164,10 +165,10 @@ const buttonVariants = {
    * both colour and transform, so widening it here is not needed). Reading screens only —
    * see the note on `instrument` below for why the two instrument variants do not get this.
    */
-  primary: 'min-h-11 rounded-full bg-action px-6 py-2 text-canvas hover:opacity-90 active:scale-[0.98] active:opacity-80 duration-150',
+  primary: 'min-h-11 rounded-xs bg-action px-6 py-2 text-canvas hover:opacity-90 active:scale-[0.98] active:opacity-80 duration-150',
   /** Secondary action on a reading screen. Transparent, 1px #0071e3 border and text. */
   secondary:
-    'min-h-11 rounded-full border border-action bg-transparent px-6 py-2 text-action hover:bg-surface active:scale-[0.98] active:bg-surface/80 duration-150',
+    'min-h-11 rounded-xs border border-action bg-transparent px-6 py-2 text-action hover:bg-surface active:scale-[0.98] active:bg-surface/80 duration-150',
   /**
    * Primary action on a dark instrument screen. Unchanged shape and size from before this
    * pass — 56px tall, rounded rectangle — because a test screen is pressed one-handed, in a
@@ -235,7 +236,7 @@ export function Notice({
   } as const;
 
   return (
-    <div className={`rounded-lg p-4 ${tones[tone]}`}>
+    <div className={`rounded-xs p-4 ${tones[tone]}`}>
       {title && <p className="mb-2 text-title font-semibold">{title}</p>}
       <div className="text-body">{children}</div>
     </div>
