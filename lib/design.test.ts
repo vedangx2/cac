@@ -343,12 +343,12 @@ describe('reading-screen typography follows the spec: sentence case, no tracked 
    BUTTONS — pill on reading screens, unchanged geometry on instrument screens
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
-describe('reading-screen buttons are pill-shaped; instrument buttons are unchanged by this pass', () => {
-  it('the reading-screen variants are rounded-full and at least 44px tall', () => {
+describe('reading-screen buttons are square-cornered (2px, 2026-10-10); instrument buttons are unchanged by this pass', () => {
+  it('the reading-screen variants are rounded-xs and at least 44px tall', () => {
     const primary = UI.slice(UI.indexOf('primary:'), UI.indexOf('secondary:'));
     const secondary = UI.slice(UI.indexOf('secondary:'), UI.indexOf('instrument:'));
     for (const variant of [primary, secondary]) {
-      expect(variant).toMatch(/rounded-full/);
+      expect(variant).toMatch(/rounded-xs/);
       expect(variant).toMatch(/min-h-11/);
     }
   });
