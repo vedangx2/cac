@@ -19,29 +19,31 @@ import { ButtonLink, Kicker, Notice, Section } from '@/components/ui';
 
 export default function HomePage() {
   return (
-    <Section tone="canvas" className="lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-center lg:gap-16">
+    <Section tone="canvas" compact className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-10">
       <div>
         <Kicker>Sideline concussion screening aid</Kicker>
         <h1 className="mt-3 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
-          Compare an athlete to themselves.
-          <br />
-          <span className="text-ink-secondary">Not to everyone else.</span>
+          Know what&rsquo;s normal for your athlete.
         </h1>
         <p className="mt-5 max-w-2xl text-title text-ink-secondary">
-          A slow reaction time only means something next to how fast that athlete normally is.
-          This app records a healthy baseline, then re-runs the same tests after a hard hit and
-          shows you exactly what moved.
+          Every athlete has a different normal. A reaction time that&rsquo;s fast for one player
+          could be slow for another. This app records each athlete&rsquo;s normal so you can see
+          what changed after a hit.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink href="/athletes">Get started</ButtonLink>
+          {/*
+            "Start a baseline" goes to the roster, NOT straight to a test: a new athlete's
+            practice pass and then their baseline begin from there. The practice gate stays.
+          */}
+          <ButtonLink href="/athletes">Start a baseline</ButtonLink>
           {/*
             The practice run: all six tests in order, scored and shown once, saved nowhere.
             Deliberately reachable with no athlete profile — and it is also how an athlete
             earns their practice pass, which a baseline requires (the first-exposure guard).
           */}
           <ButtonLink href="/practice" variant="secondary">
-            Run a practice battery
+            Try a practice round
           </ButtonLink>
         </div>
 
@@ -78,16 +80,17 @@ export default function HomePage() {
         monochrome. This app has no photography, but its dark instrument screens are its
         product — so a genuine screenshot of one, in a plain phone frame, stands in for it.
 
-        NAMED SLOT FOR A REAL PHOTOGRAPH (CLAUDE.md Task 5): if `public/hero.jpg` exists, it is
+        NAMED SLOT FOR A REAL PHOTOGRAPH (2026-10-10 Task 3): if `public/hero.jpg` exists, it is
         a real photograph the project owner took, and it replaces this screenshot outright — no
-        stock, generated, or placeholder imagery. As of this pass the file does not exist, so
-        this stays a genuine screenshot (public/images/pattern-span-screenshot.png) of the
+        stock, generated, or placeholder imagery. As of 2026-10-10 the file does not exist, so
+        the phone mockup stays, made larger (max-w-[380px], up from 280px) with the surrounding
+        space tightened. It is a genuine screenshot (public/images/pattern-span-screenshot.png) of the
         Tapped patterns module mid-practice-run, captured 2026-09-23 — not a mockup or an
         illustration, and no athlete data is visible in it (a practice run saves nothing and
         this one was never attached to an athlete).
       */}
-      <div className="mt-12 flex justify-center lg:mt-0 lg:justify-end">
-        <div className="w-full max-w-[280px] rounded-[2.5rem] border-[10px] border-ink bg-ink">
+      <div className="mt-8 flex justify-center lg:mt-0 lg:justify-end">
+        <div className="w-full max-w-[380px] rounded-[2.5rem] border-[10px] border-ink bg-ink">
           <div className="relative overflow-hidden rounded-[2rem]">
             <div
               aria-hidden="true"

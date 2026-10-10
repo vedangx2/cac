@@ -69,6 +69,7 @@ export function Section({
   tone = 'canvas',
   divider = false,
   animate = true,
+  compact = false,
   children,
   className = '',
   ...rest
@@ -77,6 +78,8 @@ export function Section({
   /** A full-width hairline along the top edge, for two adjacent bands of the same tone. */
   divider?: boolean;
   animate?: boolean;
+  /** Roughly half the vertical padding. Used by the homepage hero (2026-10-10). */
+  compact?: boolean;
   children: ReactNode;
   className?: string;
 } & ComponentProps<'div'>) {
@@ -86,7 +89,7 @@ export function Section({
       {...rest}
     >
       <div
-        className={`mx-auto w-full max-w-[980px] px-4 py-16 sm:px-8 sm:py-24 ${animate ? 'animate-enter' : ''} ${className}`}
+        className={`mx-auto w-full max-w-[980px] px-4 ${compact ? 'py-8 sm:py-12' : 'py-16 sm:py-24'} sm:px-8 ${animate ? 'animate-enter' : ''} ${className}`}
       >
         {children}
       </div>
