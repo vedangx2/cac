@@ -40,8 +40,9 @@ concussion on the sideline when no athletic trainer is present.**
   Never show green. Never show a checkmark. "No change detected" is not "all clear."
 - **Never** build return-to-play logic or recovery/progress tracking. We flag one moment
   in time; we do not manage a recovery.
-- A **persistent footer on every screen**: "Student-built screening aid — not a medical
-  device. Always consult a medical professional." This lives in the root layout so it
+- A **persistent footer on every screen**: "Built by students to explore baseline testing on the
+  sideline. Not a diagnostic tool or a substitute for medical evaluation. If you're worried,
+  see a medical professional." This lives in the root layout so it
   cannot be forgotten on a screen.
 
 Why we are this strict: a false "you're cleared" could send a concussed kid back onto the

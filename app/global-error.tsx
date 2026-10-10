@@ -84,7 +84,8 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
             color: '#4b565d',
           }}
         >
-          Student-built screening aid. Not a medical device. Always consult a medical
+          Built by students to explore baseline testing on the sideline. Not a diagnostic
+          tool or a substitute for medical evaluation. If you&apos;re worried, see a medical
           professional.
         </footer>
       </body>

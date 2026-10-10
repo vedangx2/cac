@@ -106,7 +106,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         */}
         <footer className="bg-instrument px-4 py-4 text-center text-meta text-instrument-ink-soft">
           <p className="mx-auto max-w-2xl">
-            Student-built screening aid. Not a medical device. Always consult a medical
+            Built by students to explore baseline testing on the sideline. Not a diagnostic
+            tool or a substitute for medical evaluation. If you&apos;re worried, see a medical
             professional.
           </p>
         </footer>
