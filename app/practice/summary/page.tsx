@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { Button, ButtonLink, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete } from '@/lib/storage';
+import { PRACTICE_PASSES_REQUIRED, canRecordBaseline, practicePassesRemaining } from '@/lib/practice';
 import {
   BATTERY_STEPS,
   STEP_LABELS,
@@ -205,9 +206,11 @@ export default function PracticeSummaryPage() {
           </div>
         ) : passRecorded ? (
           <div className="mb-6">
-            <Notice title={`This counted as ${athlete.name}'s practice pass`}>
-              Recording a baseline for {athlete.name} is now unlocked on their page. Only the
-              fact that this pass happened was stored. None of the numbers below were.
+            <Notice title={`This counted as one of ${athlete.name}'s practice passes`}>
+              {canRecordBaseline(athlete)
+                ? `${athlete.name} has now done ${PRACTICE_PASSES_REQUIRED} practice passes, so recording a baseline is unlocked on their page.`
+                : `${practicePassesRemaining(athlete)} more practice pass${practicePassesRemaining(athlete) === 1 ? '' : 'es'} needed before a baseline can be recorded for ${athlete.name}.`}{' '}
+              Only the fact that this pass happened was stored. None of the numbers below were.
             </Notice>
           </div>
         ) : (
@@ -215,7 +218,7 @@ export default function PracticeSummaryPage() {
             <Notice tone="loud" title="The practice pass could not be recorded">
               The run finished, but writing the pass to this device failed. That usually means
               this browser is blocking storage (private browsing does this). Recording a
-              baseline for {athlete.name} stays locked until a pass is recorded. You can run
+              baseline for {athlete.name} stays locked until both passes are recorded. You can run
               the practice again to retry.
             </Notice>
           </div>
@@ -223,8 +226,8 @@ export default function PracticeSummaryPage() {
       ) : (
         <div className="mb-6">
           <Notice title="No athlete was attached to this run">
-            Nothing about this run was recorded anywhere. To unlock recording a baseline for a
-            specific athlete, start a practice run from their page.
+            Nothing about this run was recorded anywhere. To count towards recording a baseline
+            for a specific athlete, start a practice run from their page.
           </Notice>
         </div>
       )}

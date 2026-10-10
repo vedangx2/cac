@@ -58,7 +58,7 @@ function result(
 }
 
 function athlete(): Athlete {
-  return { id: 'a1', name: 'Jordan Lee', baselineId: 'b1', checkIds: ['c1'], practiceCompletedAt: null };
+  return { id: 'a1', name: 'Jordan Lee', baselineId: 'b1', checkIds: ['c1'], practiceCompletedAt: null, practicePassCount: 0 };
 }
 
 /* ── The envelope ─────────────────────────────────────────────────────────────────── */

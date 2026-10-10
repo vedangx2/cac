@@ -492,12 +492,13 @@ describe('#7 results screen — a crossed measurement on an unflagged screen is 
 
 describe('#8 athlete page — the baseline button is gated on the practice pass (structural guard)', () => {
   it('disables Record baseline until a practice pass exists', () => {
-    expect(ATHLETE_DETAIL_SRC).toMatch(/disabled=\{athlete\.practiceCompletedAt === null\}/);
+    expect(ATHLETE_DETAIL_SRC).toMatch(/disabled=\{!canRecordBaseline\(athlete\)\}/);
   });
 
   it('says why, in the one-sentence form the brief required', () => {
-    expect(ATHLETE_DETAIL_SRC).toContain('One practice pass first');
+    expect(ATHLETE_DETAIL_SRC).toContain('Two practice passes first');
     expect(ATHLETE_DETAIL_SRC).toContain('worse than their true normal');
+    expect(ATHLETE_DETAIL_SRC).toContain('PRACTICE_PASSES_REQUIRED');
   });
 
   it('offers the practice pass as the way through, not a dead end', () => {

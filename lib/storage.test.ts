@@ -21,6 +21,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type StoredAthlete, normaliseAthlete } from './storage';
+import { PRACTICE_PASSES_REQUIRED, canRecordBaseline, practicePassesRemaining } from './practice';
 
 const STORAGE_SRC = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), 'storage.ts'),
@@ -86,6 +87,72 @@ describe('normaliseAthlete fails closed', () => {
     for (const shape of shapes) {
       expect(normaliseAthlete(shape).practiceCompletedAt).not.toBeUndefined();
     }
+  });
+});
+
+describe('practicePassCount migration — a legacy athlete is NOT unlocked', () => {
+  // An earlier migration of this guard unlocked old records by mistake. The old rule needed
+  // ONE pass; the new rule needs TWO, so a record with the old single timestamp is one pass in
+  // and must still be locked.
+  const base = { id: 'a1', name: 'Jordan', baselineId: 'b1', checkIds: [] as string[] };
+
+  it('counts a legacy single practiceCompletedAt as exactly ONE pass', () => {
+    const athlete = normaliseAthlete({ ...base, practiceCompletedAt: 1_700_000_000_000 });
+    expect(athlete.practicePassCount).toBe(1);
+    expect(canRecordBaseline(athlete)).toBe(false);
+    expect(practicePassesRemaining(athlete)).toBe(1);
+  });
+
+  it('counts a legacy never-practised athlete as zero, locked', () => {
+    for (const legacy of [
+      { ...base },
+      { ...base, practiceCompletedAt: null },
+      { ...base, practiceCompletedAt: undefined },
+    ] as StoredAthlete[]) {
+      const athlete = normaliseAthlete(legacy);
+      expect(athlete.practicePassCount).toBe(0);
+      expect(canRecordBaseline(athlete)).toBe(false);
+    }
+  });
+
+  it('keeps an existing baseline pointer — nothing is invalidated', () => {
+    expect(normaliseAthlete({ ...base, practiceCompletedAt: 5 }).baselineId).toBe('b1');
+  });
+
+  it('keeps a stored count of two, and unlocks only then', () => {
+    const athlete = normaliseAthlete({ ...base, practiceCompletedAt: 5, practicePassCount: 2 });
+    expect(athlete.practicePassCount).toBe(2);
+    expect(canRecordBaseline(athlete)).toBe(true);
+  });
+
+  it('a stored count wins over the timestamp (one stamp, two passes is not one)', () => {
+    expect(normaliseAthlete({ ...base, practiceCompletedAt: 5, practicePassCount: 1 }).practicePassCount).toBe(1);
+  });
+
+  it('treats unusable counts as untrusted: falls back to the timestamp, never unlocks', () => {
+    for (const bad of [NaN, -3, 1.5, Infinity]) {
+      const athlete = normaliseAthlete({ ...base, practiceCompletedAt: null, practicePassCount: bad });
+      expect(athlete.practicePassCount).toBe(0);
+      expect(canRecordBaseline(athlete)).toBe(false);
+    }
+    const withStamp = normaliseAthlete({ ...base, practiceCompletedAt: 5, practicePassCount: NaN });
+    expect(withStamp.practicePassCount).toBe(1);
+    expect(canRecordBaseline(withStamp)).toBe(false);
+  });
+
+  it('the gate itself fails closed on a record that skipped normalisation', () => {
+    // @ts-expect-error — deliberately the un-normalised shape the compiler normally prevents
+    expect(canRecordBaseline({})).toBe(false);
+    // @ts-expect-error — NaN/undefined must not compare their way to "unlocked"
+    expect(canRecordBaseline({ practicePassCount: undefined })).toBe(false);
+    expect(canRecordBaseline({ practicePassCount: NaN })).toBe(false);
+    expect(canRecordBaseline({ practicePassCount: -1 })).toBe(false);
+    expect(canRecordBaseline({ practicePassCount: 1 })).toBe(false);
+    expect(canRecordBaseline({ practicePassCount: 2 })).toBe(true);
+  });
+
+  it('requires two passes', () => {
+    expect(PRACTICE_PASSES_REQUIRED).toBe(2);
   });
 });
 

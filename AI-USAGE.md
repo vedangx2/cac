@@ -1389,3 +1389,23 @@ by a human reviewer and used verbatim.** The footer wording change to the quoted
 - Environment note: `.git/HEAD` and `.git/refs/heads/main` were found zero-filled (all NUL
   bytes). `HEAD` was repaired to point at `feat/gonogo-and-calibration`; `refs/heads/main` was
   NOT touched.
+
+## 2026-10-10 (resumed after a crash) — Tasks 1–4, branch `feat/gonogo-and-calibration`
+
+Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier Task 1 commit
+(`7184a93`) was lost in the crash; the test was recreated with synthetic data.
+
+- **Task 1 — `lib/sittings.test.ts`.** Synthetic sittings: same go/no-go median, different
+  commission counts and raw times. The finding (baseline commission 1, check 1 commission 2, check 2
+  commission 1, both checks 331ms) stands as the human reported it: coincidence.
+- **Task 2 — two practice passes before a baseline.** New `Athlete.practicePassCount`, rule in
+  `lib/practice.ts` (`PRACTICE_PASSES_REQUIRED = 2`, `TODO(NEEDS_SOURCE)`: two is a response to two
+  testers, not a validated number). Only that passes happened is stored, never scores. **Migration:**
+  `normaliseAthlete` counts a legacy `practiceCompletedAt` stamp as exactly ONE pass, so those
+  athletes still need one more; absent/null/unusable counts mean zero; the gate fails closed on
+  undefined/NaN/negative. Tested in `lib/storage.test.ts`. A replayed finish of the same run does not
+  count twice. **`schemaVersion` was NOT bumped:** it versions `TestResult.scores`, not the athlete
+  record, and bumping it would make every existing baseline unreadable — which was ruled out. The
+  athlete shape change is handled by the on-read migration instead. Existing baselines were recorded
+  under the one-pass rule and are untouched. Their count is not knowable from the repo (IndexedDB is
+  on each phone). `CLAUDE.md` updated to match the new rule (data contract, Practice mode, Recording).

@@ -119,8 +119,10 @@ type Athlete = {
   baselineId: string | null;
   checkIds: string[];
   practiceCompletedAt: number | null; // when this athlete last completed a full practice pass,
-                                       // or null if never. Gates recording a baseline — see
-                                       // "Practice mode" below. Added 2026-09-10.
+                                       // or null if never. Added 2026-09-10.
+  practicePassCount: number;          // how many full practice passes; TWO unlock recording a
+                                       // baseline — see "Practice mode" below. Added 2026-10-10.
+                                       // Legacy records: a practiceCompletedAt stamp = ONE pass.
 };
 
 type FlagOutcome = {
@@ -226,10 +228,14 @@ as not directly comparable when deriving a threshold from noise-floor data.
 
 ### Practice mode
 
-Before an athlete can have a baseline recorded, they must complete one full **practice pass** of
-the battery — all six tests, in order, scored and shown once at `/practice/summary`, then thrown
+Before an athlete can have a baseline recorded, they must complete **two** full **practice passes** of
+the battery (raised from one on 2026-10-10: two testers still showed a large practice effect after a
+single pass — one tester's two checks both beat his baseline by 58ms on go/no-go and 1 to 2 points on
+digits and patterns. Two is a response to that, not a validated number — `TODO(NEEDS_SOURCE)`) — all six tests, in order, scored and shown once at `/practice/summary`, then thrown
 away. Nothing from a practice run is written to the database except one fact, stamped on the
-athlete: `Athlete.practiceCompletedAt`.
+athlete: `Athlete.practicePassCount` (and the time, `practiceCompletedAt`). Athletes saved under the
+one-pass rule count as one pass and need one more; the migration is in `normaliseAthlete`, and
+existing baselines are not invalidated.
 
 **Why this exists (the first-exposure guard):** the project owner's own noise-floor collection
 measured a ~20ms practice effect on reaction time that survived a week off. An athlete's very
@@ -256,8 +262,8 @@ buttons existed to protect baseline quality, and it must never stand between a c
 referral screen: a check with no baseline on file still warns on screen, and the engine still
 refuses to compare it against nothing rather than silently passing it as "no flag."
 
-**"Record a baseline" is enabled only after that athlete has completed one practice pass**
-(`Athlete.practiceCompletedAt` — see "Practice mode" above). Recording was re-enabled on
+**"Record a baseline" is enabled only after that athlete has completed two practice passes**
+(`Athlete.practicePassCount` — see "Practice mode" above). Recording was re-enabled on
 2026-09-10, at the project owner's direction, once the battery itself was complete (go/no-go
 built) — it was **not** re-enabled because thresholds are in place. As of this file, **9 of 10
 flagging thresholds are still `null`**; only the symptom score (a placeholder carried over from

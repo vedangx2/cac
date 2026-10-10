@@ -172,8 +172,29 @@ export type Athlete = {
    * On disk this field may be absent (athletes saved before it existed). Storage fills it in
    * as null on read — see normaliseAthlete in lib/storage.ts — which fails CLOSED: an athlete
    * we know nothing about is treated as never having practised.
+   *
+   * Since 2026-10-10 this is only the TIME of the latest pass. The gate reads
+   * `practicePassCount` below, not this field.
    */
   practiceCompletedAt: number | null;
+
+  /**
+   * How many full practice passes this athlete has completed. Added 2026-10-10.
+   *
+   * WHY TWO ARE REQUIRED (PRACTICE_PASSES_REQUIRED in lib/practice.ts): two testers still showed
+   * a large practice effect after ONE pass — one tester's two checks both beat his baseline by
+   * 58 ms on go/no-go and by 1 to 2 points on digits and patterns. A baseline still on the
+   * learning curve hides a real decline, which is a false negative.
+   *
+   * Like practiceCompletedAt, it stores only THAT passes happened, never their scores.
+   *
+   * MIGRATION: an athlete saved before this field existed is counted from practiceCompletedAt —
+   * a non-null value means exactly ONE pass, never two, so they need one more. Absent and null
+   * both mean zero. See normaliseAthlete in lib/storage.ts. The athlete record carries no
+   * schemaVersion of its own (that field belongs to TestResult), so this migration happens on
+   * read and no baseline is invalidated.
+   */
+  practicePassCount: number;
 };
 
 /**

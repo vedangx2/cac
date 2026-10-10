@@ -14,8 +14,8 @@
 // cancel out a real decline and hide it. That is the exact failure this app exists to
 // prevent, arriving through the front door.
 //
-// So: recording a baseline is locked until the athlete has completed at least one practice
-// pass (Athlete.practiceCompletedAt — see lib/types.ts). This page is where a pass starts.
+// So: recording a baseline is locked until the athlete has completed two practice
+// passes (Athlete.practicePassCount — see lib/types.ts). This page is where a pass starts.
 //
 // Two ways in:
 //   • from an athlete's page (?athlete=<id>) — finishing counts as THAT athlete's pass;
@@ -82,8 +82,8 @@ export default function PracticePage() {
         <div className="mb-8">
           <Notice tone="loud" title="That athlete could not be found on this device">
             The link that brought you here named an athlete this browser does not have. You can
-            still run a practice pass, but it will not count for anyone. To unlock recording a
-            baseline for a specific athlete, open them from the roster and start practice from
+            still run a practice pass, but it will not count for anyone. To count towards
+            recording a baseline for a specific athlete, open them from the roster and start practice from
             their page.
           </Notice>
         </div>
@@ -98,9 +98,10 @@ export default function PracticePage() {
         <div>
           <Kicker>Why practice before recording a baseline</Kicker>
           <p className="mt-2 max-w-2xl text-title text-ink-secondary">
-            A baseline recorded on someone&apos;s very first attempt reads worse than their
-            true normal. Later sittings improve just from familiarity, and that improvement
-            can cancel out a real decline and hide it on the day it matters.
+            A baseline recorded while someone is still learning the tests reads worse than their
+            true normal. Testers kept improving after a single pass, and that improvement can
+            cancel out a real decline and hide it on the day it matters. So a baseline needs
+            two practice passes first.
           </p>
 
           <h2 className="mt-10 text-title font-semibold text-ink">What happens</h2>
@@ -128,16 +129,17 @@ export default function PracticePage() {
           <div className="border-t border-hairline pt-6">
             {athlete ? (
               <Notice title={`Practicing as ${athlete.name}`}>
-                Finishing this run counts as {athlete.name}&apos;s practice pass and unlocks
-                recording a baseline for them. Only the fact that the pass happened is stored,
-                never its scores.
+                Finishing this run counts as one of {athlete.name}&apos;s two required
+                practice passes ({athlete.practicePassCount} done so far). Recording a baseline
+                unlocks after the second. Only the fact that a pass happened is stored, never
+                its scores.
               </Notice>
             ) : (
               !athleteMissing && (
                 <p className="text-body text-ink-secondary">
                   No athlete is attached, and nothing about this run will be recorded anywhere.
-                  To unlock recording a baseline for a specific athlete, start practice from
-                  their page instead.
+                  To count towards recording a baseline for a specific athlete, start practice
+                  from their page instead.
                 </p>
               )
             )}

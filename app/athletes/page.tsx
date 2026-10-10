@@ -60,6 +60,7 @@ export default function AthletesPage() {
       checkIds: [],
       // Nobody starts with a practice pass — the first-exposure guard begins locked.
       practiceCompletedAt: null,
+      practicePassCount: 0,
     };
 
     await saveAthlete(athlete);

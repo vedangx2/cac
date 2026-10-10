@@ -277,7 +277,7 @@ export async function finishSession(session: RecordedBatterySession): Promise<Te
 /**
  * Finish a PRACTICE pass: record only the fact that it happened, never its scores.
  *
- * Writes exactly one thing — `practiceCompletedAt` on the attached athlete — because that
+ * Writes exactly one fact — the pass time and pass count on the attached athlete — because that
  * fact is what unlocks recording a baseline (the first-exposure guard, see lib/types.ts).
  * It deliberately writes NO TestResult and copies nothing out of `session.scores`: practice
  * numbers are first-exposure numbers, which is precisely the data this guard exists to keep
@@ -296,6 +296,14 @@ export async function finishPracticeRun(session: PracticeBatterySession): Promis
   const athlete = athletes.find((a) => a.id === session.athleteId);
   if (!athlete) return;
 
+  // Count each run once. A run already counted has stamped practiceCompletedAt at or after its
+  // own start, so if the screen replays (back button, a second tap) it must not count twice —
+  // two "passes" from one run would unlock the baseline a pass early.
+  const alreadyCounted =
+    athlete.practiceCompletedAt !== null && athlete.practiceCompletedAt >= session.startedAt;
+  if (alreadyCounted) return;
+
   athlete.practiceCompletedAt = Date.now();
+  athlete.practicePassCount += 1;
   await saveAthlete(athlete);
 }

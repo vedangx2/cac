@@ -70,6 +70,7 @@ function putAthlete(baselineId: string | null): Athlete {
     baselineId,
     checkIds: [],
     practiceCompletedAt: null,
+    practicePassCount: 0,
   };
   athletes.set(ATHLETE, athlete);
   return athlete;
@@ -178,6 +179,28 @@ describe('finishPracticeRun records that a pass happened, and nothing else', () 
     const stored = athletes.get(ATHLETE);
     expect(stored?.practiceCompletedAt).toBeTypeOf('number');
     expect(stored?.practiceCompletedAt).toBeGreaterThan(0);
+    expect(stored?.practicePassCount).toBe(1);
+  });
+
+  it('counts a second, separate run as a second pass', async () => {
+    putAthlete(null);
+
+    await finishPracticeRun(practiceSession(ATHLETE));
+    // A later run starts after the first pass was stamped.
+    const later = { ...practiceSession(ATHLETE), startedAt: Date.now() + 1000 };
+    await finishPracticeRun(later);
+
+    expect(athletes.get(ATHLETE)?.practicePassCount).toBe(2);
+  });
+
+  it('does not count the SAME run twice (replayed finish)', async () => {
+    putAthlete(null);
+    const run = practiceSession(ATHLETE);
+
+    await finishPracticeRun(run);
+    await finishPracticeRun(run);
+
+    expect(athletes.get(ATHLETE)?.practicePassCount).toBe(1);
   });
 
   it('writes NO TestResult — practice scores never reach storage', async () => {

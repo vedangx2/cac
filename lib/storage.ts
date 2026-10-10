@@ -58,8 +58,9 @@ import { type StoredTestResult, normaliseTestResult, normaliseTestResults } from
  * Exported only so lib/storage.test.ts can exercise the normaliser with a legacy-shaped
  * record; the read paths below are the real consumers.
  */
-export type StoredAthlete = Omit<Athlete, 'practiceCompletedAt'> & {
+export type StoredAthlete = Omit<Athlete, 'practiceCompletedAt' | 'practicePassCount'> & {
   practiceCompletedAt?: number | null;
+  practicePassCount?: number;
 };
 
 /**
@@ -73,7 +74,22 @@ export type StoredAthlete = Omit<Athlete, 'practiceCompletedAt'> & {
  * is false, so the baseline gate would silently unlock for a never-practised athlete.
  */
 export function normaliseAthlete(stored: StoredAthlete): Athlete {
-  return { ...stored, practiceCompletedAt: stored.practiceCompletedAt ?? null };
+  const practiceCompletedAt = stored.practiceCompletedAt ?? null;
+  return { ...stored, practiceCompletedAt, practicePassCount: passCountFor(stored) };
+}
+
+/**
+ * The pass count for a record that may predate `practicePassCount` (added 2026-10-10).
+ *
+ * A record WITH a valid count keeps it. A record without one is counted from
+ * practiceCompletedAt: a timestamp means exactly ONE pass (the old rule allowed only one to
+ * be recorded), never two — so a legacy athlete still needs one more and is NOT unlocked.
+ * No timestamp means zero. Anything unusable (NaN, negative, fractional) also means zero.
+ */
+function passCountFor(stored: StoredAthlete): number {
+  const count = stored.practicePassCount;
+  if (typeof count === 'number' && Number.isInteger(count) && count >= 0) return count;
+  return stored.practiceCompletedAt != null ? 1 : 0;
 }
 
 const DB_NAME = 'concussion-screen';

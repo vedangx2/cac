@@ -20,6 +20,7 @@ import { Button, ButtonLink, Notice, PageHeader, PageShell } from '@/components/
 import { useDeviceData } from '@/components/use-device-data';
 import { getAthlete, getResultsFor } from '@/lib/storage';
 import { isCurrentSchema } from '@/lib/schema';
+import { PRACTICE_PASSES_REQUIRED, canRecordBaseline, practicePassesRemaining } from '@/lib/practice';
 import { buildAthleteExport, downloadJson, exportFilename, serialiseExport } from '@/lib/export';
 import { BATTERY_STEPS, STEP_PATHS, startSession } from '@/lib/session';
 import type { Athlete, TestResult } from '@/lib/types';
@@ -58,6 +59,8 @@ export default function AthleteDetailPage() {
 
   const begin = (kind: 'baseline' | 'check') => {
     if (!athlete) return;
+    // The button is disabled too; this stops a baseline starting by any other route.
+    if (kind === 'baseline' && !canRecordBaseline(athlete)) return;
     startSession(athlete.id, athlete.name, kind);
     router.push(STEP_PATHS[BATTERY_STEPS[0]]);
   };
@@ -169,9 +172,9 @@ export default function AthleteDetailPage() {
              what a result can and cannot judge.
 
         What guards recording instead of a blanket off-switch:
-          • A BASELINE requires a completed practice pass first (the first-exposure guard —
-            see Athlete.practiceCompletedAt in lib/types.ts). The button stays disabled until
-            the pass exists, with the reason on screen.
+          • A BASELINE requires TWO completed practice passes first (the first-exposure guard —
+            see Athlete.practicePassCount in lib/types.ts). The button stays disabled until
+            both exist, with the reason on screen.
           • A CHECK still warns when there is no baseline, and the engine still refuses every
             illegitimate comparison (compare.ts rules 1–7).
       */}
@@ -226,42 +229,48 @@ export default function AthleteDetailPage() {
               )}
 
               {/*
-                THE FIRST-EXPOSURE GUARD. A baseline needs at least one completed practice
-                pass first — see Athlete.practiceCompletedAt in lib/types.ts for the whole
+                THE FIRST-EXPOSURE GUARD. A baseline needs two completed practice
+                passes first — see Athlete.practicePassCount in lib/types.ts for the whole
                 reasoning. The reason is stated here in one sentence because the person
                 blocked by this button deserves to know it is protecting their data, not
                 malfunctioning.
               */}
-              {athlete.practiceCompletedAt === null && (
+              {!canRecordBaseline(athlete) && (
                 <div className="mt-4">
-                  <Notice title="One practice pass first">
-                    A baseline recorded on {athlete.name}&apos;s very first attempt would read
-                    worse than their true normal. Later sittings improve just from
-                    familiarity, and that improvement can hide a real decline on the day it
-                    matters. Nothing from the practice run is saved.
+                  <Notice title="Two practice passes first">
+                    A baseline recorded while {athlete.name} is still getting used to the tests
+                    would read worse than their true normal. Testers kept improving after a
+                    single pass, and that improvement can hide a real decline on the day it
+                    matters, so a baseline needs {PRACTICE_PASSES_REQUIRED} practice passes.{' '}
+                    {practicePassesRemaining(athlete)} to go. Nothing from the practice runs is
+                    saved.
                   </Notice>
                 </div>
               )}
               <Button
                 className="mt-4 w-full sm:w-auto"
                 onClick={() => begin('baseline')}
-                disabled={athlete.practiceCompletedAt === null}
+                disabled={!canRecordBaseline(athlete)}
               >
                 {baseline ? 'Record new baseline' : 'Record baseline'}
               </Button>
-              {athlete.practiceCompletedAt === null ? (
+              {!canRecordBaseline(athlete) ? (
                 <div className="mt-3">
                   <ButtonLink
                     href={`/practice?athlete=${athlete.id}`}
                     variant="secondary"
                     className="w-full sm:w-auto"
                   >
-                    Run {athlete.name}&apos;s practice pass
+                    Run {athlete.name}&apos;s practice pass{' '}
+                    {athlete.practicePassCount + 1} of {PRACTICE_PASSES_REQUIRED}
                   </ButtonLink>
                 </div>
               ) : (
                 <p className="mt-2 text-meta font-semibold text-ink-secondary">
-                  Practice pass completed {formatDateTime(athlete.practiceCompletedAt)}.
+                  {athlete.practicePassCount} practice passes completed
+                  {athlete.practiceCompletedAt !== null &&
+                    `, the latest ${formatDateTime(athlete.practiceCompletedAt)}`}
+                  .
                 </p>
               )}
             </div>
