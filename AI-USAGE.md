@@ -1418,3 +1418,7 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
   past it fills the bar while the printed value stays exact. Symptom (30), words (20), digits (9),
   patterns (9) keep their maxima. Balance, not built, keeps the old self-scaling. Colours, the
   cut-off tick and the text are unchanged. Tests: `lib/engine/breakdownScale.test.ts`.
+- **Task 4 — timing report, no code changed.** Written up in `docs/TIMING-REPORT-2026-10-10.md`:
+  the go/no-go (150 ms) and noise-floor (180 ms) cut-offs differ with no stated reason; the stimulus
+  stamp is at or before the pixels appearing, so measured RT should err long, not short (the size of
+  the gap was not measured); rejected taps are not recorded anywhere.
