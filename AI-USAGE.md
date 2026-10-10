@@ -1361,3 +1361,31 @@ for the same underlying content.
 *(Recorded verbatim at the author's request; the only change is the cross-reference, which
 pointed at this file from outside it. The same statement heads
 `app/tests/gonogo/page.tsx`. AI does not edit or delete this entry.)*
+
+---
+
+## 2026-10-10 — copy, corners, hero, footer (branch `feat/gonogo-and-calibration`)
+
+Done by Claude Code (Sonnet 5.5) from a human reviewer's written task list. **The homepage
+headline ("Know what's normal for your athlete."), the paragraph under it, the two button labels
+("Start a baseline", "Try a practice round"), and the new persistent footer wording were written
+by a human reviewer and used verbatim.** The footer wording change to the quoted line in
+`CLAUDE.md` was authorized in the same instruction; nothing else in `CLAUDE.md` changed.
+
+- **Task 1 — homepage copy.** Headline, paragraph, buttons as given. "Start a baseline" still
+  goes to `/athletes`, so a new athlete's practice pass and the practice gate are unchanged.
+  The one-line hard rule and the privacy line are untouched.
+- **Task 2 — square corners.** One value, `rounded-xs` (2px), on reading-screen buttons,
+  notices, inputs, the delete-confirm panel, comparison bands, the practice banner / save-error
+  notice (light tone only) and the calibration dev tool. Instrument-screen controls, the six test
+  modules and the phone-frame mockup were not touched.
+- **Task 3 — hero.** `public/hero.jpg` does not exist, so the real screenshot in a phone frame
+  stayed, enlarged (280px → 380px max), with the hero's vertical padding roughly halved via a new
+  `compact` option on `Section`. No new imagery.
+- **Task 4 — footer.** `app/layout.tsx` and `app/global-error.tsx` (its duplicate) updated.
+- **Task 5 — About page paragraphs shortened** in plain words; meaning of every safety sentence
+  kept. Remaining paragraphs are listed in the session report for a human rewrite.
+- No test logic, timing, scoring, thresholds, or results-screen copy was changed.
+- Environment note: `.git/HEAD` and `.git/refs/heads/main` were found zero-filled (all NUL
+  bytes). `HEAD` was repaired to point at `feat/gonogo-and-calibration`; `refs/heads/main` was
+  NOT touched.
