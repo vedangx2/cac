@@ -58,7 +58,7 @@ export type AthleteExport = {
 export const EXPORT_FORMAT_VERSION = 1;
 
 const ABOUT =
-  'Raw test records exported from Sideline Check, a student-built concussion screening aid. ' +
+  'Raw test records exported from Rebound, a student-built concussion screening aid. ' +
   'Each entry under "results" is one sitting for one athlete, exactly as the app stored it. ' +
   'Scores are only meaningful compared against the same athlete\'s own baseline, and only ' +
   'between records sharing the same schemaVersion.';

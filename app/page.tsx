@@ -22,7 +22,7 @@ export default function HomePage() {
     <>
     <Section tone="canvas" compact className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-10">
       <div>
-        <Kicker>Sideline concussion screening aid</Kicker>
+        <Kicker>Rebound · sideline concussion screening aid</Kicker>
         <h1 className="mt-3 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-hero">
           Know what&rsquo;s normal for your athlete.
         </h1>

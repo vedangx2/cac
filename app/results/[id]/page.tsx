@@ -455,7 +455,7 @@ export default function ResultPage() {
           someone else. Everything below this block still prints too; this is a summary
           placed first, not a replacement for the detail that follows. */}
       <div className="hidden print:block mb-6 border border-hairline p-4 text-body text-ink">
-        <p className="font-semibold">Sideline Screen — printed result summary</p>
+        <p className="font-semibold">Rebound — printed result summary</p>
         <p className="mt-2">Athlete: {athleteInitials}</p>
         <p>Baseline recorded: {formatDateTime(baseline.takenAt)}</p>
         <p>Check recorded: {formatDateTime(check.takenAt)}</p>

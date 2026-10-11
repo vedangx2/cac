@@ -478,7 +478,7 @@ describe('anything you tap in a test module is big enough to hit', () => {
     const layout = readFileSync(join(REPO, 'app', 'layout.tsx'), 'utf8');
     const battery = readFileSync(join(REPO, 'components', 'battery.tsx'), 'utf8');
 
-    expect(layout).toMatch(/inline-flex min-h-14 items-center[^"]*Sideline|Sideline/);
+    expect(layout).toMatch(/inline-flex min-h-14 items-center[^"]*Rebound|Rebound/);
     expect((layout.match(/inline-flex min-h-14 items-center/g) ?? []).length).toBeGreaterThanOrEqual(2);
     expect(battery).toMatch(/inline-flex min-h-14 items-center/);
   });

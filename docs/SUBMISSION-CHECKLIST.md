@@ -1,4 +1,4 @@
-# Sideline Check — submission checklist
+# Rebound — submission checklist
 
 **Deadline: 12:00 pm EDT, Monday, October 26, 2026.**
 Written as of September 11. Six weeks.

@@ -1569,3 +1569,11 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
      word learning 5, word recall 5 (go/no-go stays 25 ms). The About page copy about which
      measurements have cut-offs was updated to match. Harness run (report only): see the session
      summary; no value was changed because of it.
+
+## 2026-10-11 — Rename to "Rebound"
+
+At the owner's direction, the user-facing app name changed from "Sideline Screen" to **Rebound**:
+page titles, header, homepage kicker, PWA manifest, printed report header, export/import
+messages, README and submission checklist. CLAUDE.md and this file were updated with the owner's
+authorization. No file names, routes or code identifiers were renamed. "Sideline check" (the
+feature name) is unchanged.

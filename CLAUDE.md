@@ -9,6 +9,9 @@ leave them disagreeing.
 
 ## What this is
 
+The app is named **Rebound** (renamed from "Sideline Screen" on 2026-10-11, at the project owner's direction).
+Only the user-facing name changed; file names, routes and code identifiers are unchanged.
+
 A **free mobile web app that helps youth athletes, coaches, and parents catch a possible
 concussion on the sideline when no athletic trainer is present.**
 
