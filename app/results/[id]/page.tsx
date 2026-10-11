@@ -529,7 +529,7 @@ export default function ResultPage() {
             <p className="font-semibold">This is not a &ldquo;no change&rdquo; result.</p>
             <p>
               {crossedRows.map((row) => row.label).join(', ')} changed more than the tested
-              cut-off for that measurement, and is marked in the table below. On its own that
+              cut-off for that measurement, and is marked below. On its own that
               does not raise this screen&apos;s flag. The flag needs a rise in reported
               symptoms, or two or more modules changing together.
             </p>
@@ -670,7 +670,13 @@ export default function ResultPage() {
         text-meta for the detail line. This is supporting detail, not a second
         headline.
       */}
-      <section className="mt-10">
+      {/*
+        PRINT ONLY (Task 4, 2026-10-11). On screen the comparison bars above already show every
+        measure, so showing the table too meant reading each one twice (about twenty rows for one
+        result). The table stays in the printed report as the precise textual record, with the
+        same flagged / not-judged marks.
+      */}
+      <section className="mt-10 hidden print:block">
         <h2 className="text-title font-semibold text-ink">Measurement by measurement</h2>
 
         <table className="mt-4 w-full border-collapse text-left">

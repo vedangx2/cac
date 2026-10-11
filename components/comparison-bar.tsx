@@ -136,6 +136,12 @@ export function ComparisonBar({ row }: { row: ComparisonRow }) {
  * `ThresholdDisclaimer` as one self-contained block from components/ui.tsx.
  */
 export function ComparisonBars({ rows }: { rows: ComparisonRow[] }) {
+  // Measures with no threshold (or nothing to compare) go in one group at the bottom, so
+  // "not judged yet" does not dominate the page. Each bar still says so itself — grouping only
+  // moves them, it never hides that they were not judged.
+  const judgedRows = rows.filter((row) => row.compared && !row.unevaluated);
+  const unjudgedRows = rows.filter((row) => !row.compared || row.unevaluated);
+
   return (
     <section className="mt-10">
       <h2 className="text-title font-semibold text-ink">Baseline compared to this check</h2>
@@ -144,10 +150,25 @@ export function ComparisonBars({ rows }: { rows: ComparisonRow[] }) {
         change would have had to reach to flag, where a cut-off exists yet.
       </p>
       <div className="mt-2 divide-y divide-hairline">
-        {rows.map((row) => (
+        {judgedRows.map((row) => (
           <ComparisonBar key={row.label} row={row} />
         ))}
       </div>
+
+      {unjudgedRows.length > 0 && (
+        <>
+          <h3 className="mt-8 text-body font-semibold text-ink">Not judged yet</h3>
+          <p className="mt-1 text-meta text-ink-secondary">
+            These have no cut-off, or were not recorded in both sittings. They were not judged,
+            so treat them as unread, not as normal.
+          </p>
+          <div className="mt-2 divide-y divide-hairline">
+            {unjudgedRows.map((row) => (
+              <ComparisonBar key={row.label} row={row} />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
