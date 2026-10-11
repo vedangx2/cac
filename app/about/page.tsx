@@ -80,6 +80,34 @@ export default function AboutPage() {
         />
       </Section>
 
+      {/* ── The problem ───────────────────────────────────────────────────────────────
+          Text and source line supplied verbatim by the project owner (2026-10-11). The one
+          statistic on this site: 34% comes from the cited study, not from us. Do not reword it. */}
+      <Reveal>
+        <Section tone="canvas" aria-labelledby="problem-heading" animate={false}>
+          <Kicker>The problem</Kicker>
+          <h2 id="problem-heading" className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
+            Many sidelines have no athletic trainer
+          </h2>
+          <p className="mt-6 max-w-2xl text-body text-ink-secondary">
+            A 2019 national study of every U.S. high school with an athletics program found that
+            34% had no access to an athletic trainer. Schools without one often rely on coaches to
+            judge injuries. Club and rec leagues have no requirement to provide one at all.
+          </p>
+          <p className="mt-3 max-w-2xl text-meta text-ink-secondary">
+            <a
+              href="https://www.nata.org/press-release/study-finds-student-athlete-safety-not-priority-high-schools-across-united-states"
+              className="text-link underline underline-offset-4"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Source: Athletic Training Locations and Services Project, Journal of Athletic
+              Training, via the National Athletic Trainers&rsquo; Association.
+            </a>
+          </p>
+        </Section>
+      </Reveal>
+
       {/* ── How the comparison works ──────────────────────────────────────────────── */}
       <Reveal>
         <Section tone="surface" divider aria-labelledby="how-heading" animate={false}>
