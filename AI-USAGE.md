@@ -1422,3 +1422,14 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
   the go/no-go (150 ms) and noise-floor (180 ms) cut-offs differ with no stated reason; the stimulus
   stamp is at or before the pixels appearing, so measured RT should err long, not short (the size of
   the gap was not measured); rejected taps are not recorded anywhere.
+- **2026-10-11 (pre-freeze session, Claude Code) — three tasks.**
+  1. Split the go/no-go rejection message: a tap in the blank wait gap now says "Wait for the
+     signal."; a tap under the 150 ms cut-off says "Too fast. Tap only after you see it." Text only —
+     cut-off, gap timing, discard-and-repeat, scoring and stamping untouched; the message is painted
+     through the existing `paintPad` (no React state). Constants `GO_NO_GAP_TAP_MESSAGE` /
+     `GO_NO_TOO_FAST_MESSAGE` in `lib/modules/gonogo.ts`; test in `lib/regression.test.ts`.
+  2. Recorded the 150 ms (go/no-go) vs 180 ms (noise-floor) difference as deliberate, in a comment
+     beside each constant and a short note in `CLAUDE.md` (authorised by the owner; nothing else in
+     CLAUDE.md changed). Both values kept.
+  3. Cleanup: `CACHE_NAME` in `public/sw.js` v4 → v5; uninstalled the unused
+     `@fontsource/ibm-plex-mono`. `npx vitest run` (504 tests) and `npm run build` pass.
