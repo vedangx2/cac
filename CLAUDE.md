@@ -191,7 +191,10 @@ also discards and repeats any trial under a **180ms anticipation floor** (too fa
 reaction — `TODO(NEEDS_SOURCE)` on the exact value), the same rule go/no-go applies to its own
 taps. This is a **comparability break in collected data**: readings taken before 2026-09-10 could
 contain anticipations that dragged their median down; readings taken after cannot. Treat the two
-as not directly comparable when deriving a threshold from noise-floor data.
+as not directly comparable when deriving a threshold from noise-floor data. Go/no-go's own
+cut-off is **150ms**, not 180: the difference is deliberate (180 came from the owner's data on a simple
+reaction task; go/no-go keeps the more lenient 150 so fast responders are not rejected and scoring
+does not change after real testing began) — keep both values.
 
 - **Symptom checklist** (`/tests/symptom`): 10 common symptoms, each rated 0–3, total out of
   30. Use plain common symptom names; **do not** reproduce a specific copyrighted instrument

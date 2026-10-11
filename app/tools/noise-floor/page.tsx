@@ -103,6 +103,11 @@ const MAX_PLAUSIBLE_REACTION_MS = 3000;
  * count, so that count keeps meaning what it meant on every reading already on paper: taps
  * while the pad was still red.
  *
+ * DELIBERATELY DIFFERENT from go/no-go's 150 ms (GO_NO_MIN_PLAUSIBLE_RESPONSE_MS in
+ * lib/modules/gonogo.ts): this 180 came from the owner's own data on a simple reaction task.
+ * Go/no-go keeps the more lenient 150 so genuinely fast responders are not rejected, and because
+ * changing it would alter scoring after real testing began. Keep both values.
+ *
  * TODO(NEEDS_SOURCE): 180 ms is the owner's own choice of "too fast to be a reaction to
  * this stimulus", not a value from any published protocol.
  *
