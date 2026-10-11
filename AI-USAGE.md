@@ -2,7 +2,7 @@
 
 ## Who did what
 
-This app was built by two high school students, Vedang and [PARTNER'S NAME]. We used AI tools
+This app was built by two high school students, Vedang and Aryaman. We used AI tools
 heavily, and every use is recorded in this file. This first section is our account of the
 project. The session-by-session log further down was written by the AI coding tool after each
 session and records its side in detail.
@@ -98,8 +98,14 @@ AI assistant (Claude, in chat)
 
 ### What we understand
 
-[WRITE THIS YOURSELF. Two or three sentences on what you can explain about how the app works.
-Only claim what you can back up if a judge asks "why?"]
+We understand the purpose of the code front to back. We know what each
+test measures, why it compares an athlete only to their own baseline, and
+why it scores the median rather than the average. We also understand why
+two practice runs come before the baseline, so a baseline isn't thrown off
+by someone not yet knowing how the app works, and how the thresholds come
+from our own data. AI was key in writing the code, and we are still
+learning some parts in depth, especially the go/no-go timing, so we can
+explain them in detail.
 
 ### Correction to an entry below
 
