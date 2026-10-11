@@ -590,11 +590,14 @@ describe('the harness never writes a threshold', () => {
     // The measurements with no collected data behind them stay null.
     expect(thresholds.GO_NO_GO_MORE_COMMISSION_ERRORS).toBeNull();
     expect(thresholds.GO_NO_GO_MORE_OMISSION_ERRORS).toBeNull();
-    expect(thresholds.DIGIT_SPAN_FEWER_CORRECT).toBeNull();
-    expect(thresholds.PATTERN_SPAN_FEWER_CORRECT).toBeNull();
-    expect(thresholds.WORD_LEARNING_FEWER_CORRECT).toBeNull();
     expect(thresholds.WORD_LEARNING_MORE_FALSE_ALARMS).toBeNull();
-    expect(thresholds.WORD_RECOGNITION_FEWER_CORRECT).toBeNull();
+
+    // The four counts below were set 2026-10-11 by a human (preliminary, three testers); a
+    // harness run must leave them exactly as the owner set them.
+    expect(thresholds.DIGIT_SPAN_FEWER_CORRECT).toBe(3);
+    expect(thresholds.PATTERN_SPAN_FEWER_CORRECT).toBe(3);
+    expect(thresholds.WORD_LEARNING_FEWER_CORRECT).toBe(5);
+    expect(thresholds.WORD_RECOGNITION_FEWER_CORRECT).toBe(5);
     expect(thresholds.WORD_RECOGNITION_MORE_FALSE_ALARMS).toBeNull();
   });
 

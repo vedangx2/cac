@@ -23,6 +23,7 @@ import { buildBreakdown } from './breakdown';
 import {
   BALANCE_SWAY_INCREASE,
   DIGIT_SPAN_FEWER_CORRECT,
+  GO_NO_GO_MORE_COMMISSION_ERRORS,
   GO_NO_GO_SLOWER_MS,
   SYMPTOM_INCREASE,
 } from './thresholds';
@@ -93,6 +94,25 @@ function balance(swayScore: number): NonNullable<ModuleScores['balance']> {
 /** A complete, unremarkable baseline to compare things against. */
 function healthyBaseline(): TestResult {
   return sitting('baseline', scores({ symptom: symptom(0), digitSpan: digits(6) }));
+}
+
+/*
+  A pair of sittings whose only compared measurements have NO threshold. Go/no-go commission and
+  omission errors are still null (2026-10-11); the digit, pattern and word counts gained
+  preliminary values that day, so they can no longer stand in for "unjudged" in these tests.
+*/
+const UNJUDGED_LABEL = 'Times they responded when the signal said stop';
+
+function goNoGoErrors(commission: number, omission = 0): NonNullable<ModuleScores['goNoGo']> {
+  return { formId: 'gono-a', medianMs: 300, commissionErrors: commission, omissionErrors: omission };
+}
+
+function unjudgedBaseline(): TestResult {
+  return sitting('baseline', scores({ symptom: symptom(0), goNoGo: goNoGoErrors(0) }));
+}
+
+function unjudgedCheck(commission = 0, omission = 0): TestResult {
+  return sitting('check', scores({ symptom: symptom(0), goNoGo: goNoGoErrors(commission, omission) }));
 }
 
 /** A check identical to the baseline — nothing has moved. */
@@ -261,17 +281,16 @@ describe('a measurement with no threshold yet is reported as UNJUDGED, never as 
   // indistinguishable from having been checked and found unremarkable.
 
   it('lists the measurement in `unevaluated`', () => {
-    const outcome = compareToBaseline(healthyBaseline(), unchangedCheck());
+    const outcome = compareToBaseline(unjudgedBaseline(), unjudgedCheck());
 
-    expect(DIGIT_SPAN_FEWER_CORRECT).toBeNull(); // the premise of this test
-    expect(outcome.unevaluated).toContain('Repeating numbers backwards');
+    expect(GO_NO_GO_MORE_COMMISSION_ERRORS).toBeNull(); // the premise of this test
+    expect(outcome.unevaluated).toContain(UNJUDGED_LABEL);
   });
 
   it('does not flag it, because it genuinely has no basis to', () => {
-    const collapsed = sitting('check', scores({ symptom: symptom(0), digitSpan: digits(0) }));
-    const outcome = compareToBaseline(healthyBaseline(), collapsed);
+    const outcome = compareToBaseline(unjudgedBaseline(), unjudgedCheck(20));
 
-    expect(outcome.modules.digitSpan).toBe(false);
+    expect(outcome.modules.goNoGo).toBe(false);
   });
 
   it('but STILL reports the size of the change, so it is not invisible', () => {
@@ -287,8 +306,8 @@ describe('a measurement with no threshold yet is reported as UNJUDGED, never as 
   });
 
   it('says explicitly that it was NOT judged', () => {
-    const { explanations } = compareToBaseline(healthyBaseline(), unchangedCheck());
-    const line = explanations.find((l) => l.startsWith('Repeating numbers backwards'));
+    const { explanations } = compareToBaseline(unjudgedBaseline(), unjudgedCheck());
+    const line = explanations.find((l) => l.startsWith(UNJUDGED_LABEL));
 
     expect(line).toMatch(/not judged/i);
     expect(line).toMatch(/unread, not as normal/i);
@@ -323,13 +342,13 @@ describe('a measurement with no threshold yet is reported as UNJUDGED, never as 
       'check',
       scores({
         symptom: symptom(0), // symptom unchanged, so the one real threshold does not fire
-        digitSpan: digits(0),
-        wordLearning: words(4, 6),
+        goNoGo: goNoGoErrors(30, 30), // every go/no-go error measure far worse, none has a cut-off
+        wordLearning: words(15, 5), // false alarms up by 5; the correct count is only 4 fewer
       }),
     );
     const baseline = sitting(
       'baseline',
-      scores({ symptom: symptom(0), digitSpan: digits(8), wordLearning: words(19, 0) }),
+      scores({ symptom: symptom(0), goNoGo: goNoGoErrors(0, 0), wordLearning: words(19, 0) }),
     );
 
     const outcome = compareToBaseline(baseline, collapsed);
@@ -525,11 +544,11 @@ describe('breakdown rows stay consistent with the engine verdict', () => {
   });
 
   it('shows a "no tested cut-off" threshold column for unjudged rows', () => {
-    const rows = buildBreakdown(healthyBaseline(), unchangedCheck());
-    const digitRow = rows.find((row) => row.label.startsWith('Numbers backwards'));
+    const rows = buildBreakdown(unjudgedBaseline(), unjudgedCheck());
+    const errorRow = rows.find((row) => row.label === 'Go / no-go: responded on a stop signal');
 
-    expect(digitRow?.unevaluated).toBe(true);
-    expect(digitRow?.thresholdText).toMatch(/no tested cut-off/i);
+    expect(errorRow?.unevaluated).toBe(true);
+    expect(errorRow?.thresholdText).toMatch(/no tested cut-off/i);
   });
 });
 

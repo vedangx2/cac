@@ -93,9 +93,11 @@ export const GO_NO_GO_SLOWER_MS = 25;
 /**
  * Word learning, immediate recognition. Grid words classified correctly, out of 20.
  * Would flag if the check gets at least this many FEWER right than the baseline.
- * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
+ * PRELIMINARY: 5 fewer out of 20. Set 2026-10-11 at the project owner's direction, value supplied
+ * verbatim. From three healthy testers, mostly same-day sittings; the largest healthy swing
+ * observed was 4 out of 20. TODO(NEEDS_SOURCE): needs more data. Not validated.
  */
-export const WORD_LEARNING_FEWER_CORRECT: number | null = null;
+export const WORD_LEARNING_FEWER_CORRECT = 5;
 
 /**
  * Word learning, immediate recognition. Distractors wrongly claimed as seen, out of 10.
@@ -107,9 +109,11 @@ export const WORD_LEARNING_MORE_FALSE_ALARMS: number | null = null;
 /**
  * Word learning, DELAYED recognition. Grid words classified correctly, out of 20.
  * Would flag if the check gets at least this many FEWER right than the baseline.
- * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
+ * PRELIMINARY: 5 fewer out of 20. Set 2026-10-11 at the project owner's direction, value supplied
+ * verbatim. From three healthy testers, mostly same-day sittings; the largest healthy swing
+ * observed was 4 out of 20. TODO(NEEDS_SOURCE): needs more data. Not validated.
  */
-export const WORD_RECOGNITION_FEWER_CORRECT: number | null = null;
+export const WORD_RECOGNITION_FEWER_CORRECT = 5;
 
 /**
  * Word learning, DELAYED recognition. Distractors wrongly claimed as seen, out of 10.
@@ -121,16 +125,20 @@ export const WORD_RECOGNITION_MORE_FALSE_ALARMS: number | null = null;
 /**
  * Digit span backward. Trials reproduced exactly, out of 9.
  * Would flag if the check gets at least this many FEWER right than the baseline.
- * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
+ * PRELIMINARY: 3 fewer correct. Set 2026-10-11 at the project owner's direction, value supplied
+ * verbatim. From three healthy testers, mostly same-day sittings; the largest healthy swing
+ * observed was 2 points. TODO(NEEDS_SOURCE): needs more data. Not validated.
  */
-export const DIGIT_SPAN_FEWER_CORRECT: number | null = null;
+export const DIGIT_SPAN_FEWER_CORRECT = 3;
 
 /**
  * Pattern span. Trials reproduced exactly, out of 9.
  * Would flag if the check gets at least this many FEWER right than the baseline.
- * TODO(NEEDS_SOURCE): no value. Needs collected healthy-variability data.
+ * PRELIMINARY: 3 fewer correct. Set 2026-10-11 at the project owner's direction, value supplied
+ * verbatim. From three healthy testers, mostly same-day sittings; the largest healthy swing
+ * observed was 2 points. TODO(NEEDS_SOURCE): needs more data. Not validated.
  */
-export const PATTERN_SPAN_FEWER_CORRECT: number | null = null;
+export const PATTERN_SPAN_FEWER_CORRECT = 3;
 
 /**
  * Go/no-go commission errors — responding on a no-go trial, i.e. failing to hold back.

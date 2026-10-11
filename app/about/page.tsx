@@ -144,13 +144,15 @@ export default function AboutPage() {
         <Section tone="canvas" animate={false}>
           <Kicker>Where the thresholds come from</Kicker>
           <h2 className="mt-2 text-display font-semibold leading-[1.1] tracking-[-0.02em] text-ink">
-            Most measurements are not judged yet
+            Some measurements are not judged yet
           </h2>
           <div className="mt-6 max-w-2xl space-y-4 text-body text-ink-secondary">
             <p>
-              You can practice, record a baseline, and run a check. But only two measurements
-              have a tested cut-off: the symptom score and go/no-go response time. That cut-off
-              comes from one student&apos;s own data. Everything else is shown as{' '}
+              You can practice, record a baseline, and run a check. Six measurements have a
+              cut-off, and every one is preliminary. The symptom score is a placeholder. Go/no-go
+              response time comes from one student&apos;s own data. Numbers backwards, tapped
+              patterns and the two word scores come from three healthy testers, mostly tested
+              on the same day. None of them is clinically validated. Everything else is shown as{' '}
               <strong className="text-ink">not judged</strong>, never as normal.
             </p>
             <p>
