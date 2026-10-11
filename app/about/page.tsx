@@ -245,6 +245,27 @@ export default function AboutPage() {
               to get started. <code className="text-meta text-ink-secondary">AI-USAGE.md</code> in
               the source lists where AI helped build it.
             </p>
+            <p className="text-meta">
+              Homepage photo by{' '}
+              <a
+                href="https://unsplash.com/@tjdragotta"
+                className="text-link underline underline-offset-4"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                TJ Dragotta
+              </a>{' '}
+              on{' '}
+              <a
+                href="https://unsplash.com"
+                className="text-link underline underline-offset-4"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Unsplash
+              </a>
+              .
+            </p>
           </div>
         </Section>
       </Reveal>

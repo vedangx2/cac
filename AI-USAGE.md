@@ -66,7 +66,7 @@ Design
 
 - Rejected several designs as generic and chose the references the final design follows.
 - Wrote the homepage headline and paragraph, the button labels, the audience line, and the footer
-  wording. Chose the square corners. Vedang took the homepage photo.
+  wording. Chose the square corners. The homepage photo is a free stock photo from Unsplash, credited on the About page.
 
 Directing the AI
 

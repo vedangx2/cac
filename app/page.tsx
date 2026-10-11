@@ -88,7 +88,7 @@ export default function HomePage() {
         The phone mockup. A genuine screenshot (public/images/pattern-span-screenshot.png) of
         the Tapped patterns module mid-practice-run, captured 2026-09-23 — not a mockup or an
         illustration, and no athlete data is visible in it (a practice run saves nothing and
-        this one was never attached to an athlete). The real photograph, public/hero.jpg, sits
+        this one was never attached to an athlete). The hero photo, public/hero.jpg (a free Unsplash stock photo by TJ Dragotta, credited on the About page), sits
         in its own large band below (2026-10-11 Task 6, at the owner's direction): both stay.
       */}
       <div className="mt-8 flex justify-center lg:mt-0 lg:justify-end">
@@ -113,21 +113,21 @@ export default function HomePage() {
 
     {/*
       ── Hero photograph ─────────────────────────────────────────────────────────
-      public/hero.jpg is a real photo the project owner took (576x1024, portrait). On phones
-      it is shown whole, uncropped, at full width. From sm up it is cropped to a wide frame, and
-      object-position keeps the foreground basketball (about 88% of the way down the photo) in
-      view. It is only 576px wide, so on a wide screen it is enlarged and will look soft: a
-      higher-resolution original would fix that, not code.
+      public/hero.jpg is a free stock photo from Unsplash by TJ Dragotta (Unsplash License),
+      NOT a photo taken by the team; it is credited at the bottom of the About page. It is
+      2500x1666, landscape. On phones it is shown whole, uncropped, at full width. From sm up it
+      is cropped to a 16:7 frame, and object-position keeps the basketball (spanning roughly
+      30-78% of the way down the photo, centred horizontally) in view.
     */}
     <Section tone="canvas" compact className="!pt-0">
       <div className="overflow-hidden rounded-xs bg-surface">
         <Image
           src="/hero.jpg"
-          alt="An empty indoor basketball court: a hoop on the left, a tall window behind, and basketballs on the polished wood floor."
-          width={576}
-          height={1024}
+          alt="A basketball resting on a wet outdoor court, with a hoop and bare trees blurred behind it."
+          width={2500}
+          height={1666}
           sizes="(min-width: 1024px) 916px, 100vw"
-          className="h-auto w-full max-w-[576px] sm:max-w-none sm:aspect-[16/7] sm:object-cover sm:object-[50%_96%] mx-auto"
+          className="h-auto w-full sm:aspect-[16/7] sm:object-cover sm:object-[50%_55%]"
           priority
         />
       </div>
