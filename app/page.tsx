@@ -30,6 +30,10 @@ export default function HomePage() {
           could be slow for another. This app records each athlete&rsquo;s normal so you can see
           what changed after a hit.
         </p>
+        {/* Audience line — written by a human (the project owner); used verbatim, do not reword. */}
+        <p className="mt-3 max-w-2xl text-body text-ink-secondary">
+          For teams without an athletic trainer on the sideline.
+        </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           {/*
