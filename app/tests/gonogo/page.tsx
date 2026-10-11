@@ -68,7 +68,9 @@ import { PracticeBanner, SaveErrorNotice, SittingLabel, useBatteryStep } from '@
 import { GO_NO_FORMS, GO_NO_NOGO_PER_FORM, pickForm } from '@/lib/forms';
 import {
   GO_NO_MAX_TRIAL_REPEATS,
+  GO_NO_GAP_TAP_MESSAGE,
   GO_NO_MESSAGE_MS,
+  GO_NO_TOO_FAST_MESSAGE,
   GO_NO_STIMULUS_WINDOW_MS,
   GO_NO_TOTAL_TRIALS,
   type GoNoGoRunResult,
@@ -361,7 +363,7 @@ export default function GoNoGoPage() {
       const judged = judgeResponse(elapsed);
 
       if (judged.kind === 'anticipation') {
-        discardAndRepeat('TOO SOON', 'That was faster than anyone can react — the round will repeat');
+        discardAndRepeat(GO_NO_TOO_FAST_MESSAGE.main, GO_NO_TOO_FAST_MESSAGE.sub);
         return;
       }
 
@@ -385,7 +387,7 @@ export default function GoNoGoPage() {
     // Tapped during the blank gap, before any stimulus existed. That is an anticipation too, and
     // the loudest kind: there was nothing there to react to.
     if (phase === 'gap') {
-      discardAndRepeat('TOO SOON', 'Nothing had appeared yet — the round will repeat');
+      discardAndRepeat(GO_NO_GAP_TAP_MESSAGE.main, GO_NO_GAP_TAP_MESSAGE.sub);
       return;
     }
 

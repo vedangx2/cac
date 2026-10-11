@@ -31,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 import type { ModuleScores, TestResult } from './types';
 import { CURRENT_SCHEMA_VERSION } from './schema';
 import { MissingBaselineError, buildBreakdown, compareToBaseline } from './engine';
+import { GO_NO_GAP_TAP_MESSAGE, GO_NO_TOO_FAST_MESSAGE } from './modules/gonogo';
 
 /* ── Reading source files, for the structural / copy guards ───────────────────────── */
 
@@ -384,6 +385,20 @@ describe('#6 go/no-go — taps are judged against refs, not React state (structu
   it('discards an anticipation and repeats the trial instead of recording it', () => {
     expect(GONOGO_SRC).toMatch(/judged\.kind === 'anticipation'/);
     expect(GONOGO_SRC).toMatch(/discardAndRepeat\(/);
+  });
+
+  it('shows a different message for a gap tap and a too-fast tap', () => {
+    expect(GO_NO_GAP_TAP_MESSAGE.main).toBe('Wait for the signal.');
+    expect(GO_NO_TOO_FAST_MESSAGE.main).toBe('Too fast. Tap only after you see it.');
+    expect(GO_NO_GAP_TAP_MESSAGE.main).not.toBe(GO_NO_TOO_FAST_MESSAGE.main);
+    // Each message is wired to its own branch: the too-fast one after the anticipation judgement,
+    // the gap one in the phase === 'gap' branch.
+    expect(GONOGO_SRC).toMatch(
+      /judged\.kind === 'anticipation'\) \{\s*discardAndRepeat\(GO_NO_TOO_FAST_MESSAGE\.main/,
+    );
+    expect(GONOGO_SRC).toMatch(
+      /phase === 'gap'\) \{\s*discardAndRepeat\(GO_NO_GAP_TAP_MESSAGE\.main/,
+    );
   });
 
   it('counts a go trial with no response as an omission', () => {

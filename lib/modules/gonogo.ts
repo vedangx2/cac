@@ -62,6 +62,23 @@ export const GO_NO_MAX_GAP_MS = 1600;
 /** How long the "too soon" / "that round will repeat" message sits on screen before re-arming. */
 export const GO_NO_MESSAGE_MS = 900;
 
+/**
+ * The two rejection messages, kept apart because the two taps mean different things: a tap in the
+ * blank gap had nothing on screen to react to, while a tap under the cut-off came after the
+ * stimulus but too soon to have been caused by it. The timing report (2026-10-10) found one shared
+ * "TOO SOON" left testers unable to tell which happened. Text only — the cut-off, the discard and
+ * the scoring are untouched.
+ */
+export const GO_NO_GAP_TAP_MESSAGE = {
+  main: 'Wait for the signal.',
+  sub: 'The round will repeat',
+} as const;
+
+export const GO_NO_TOO_FAST_MESSAGE = {
+  main: 'Too fast. Tap only after you see it.',
+  sub: 'The round will repeat',
+} as const;
+
 /* ═══════════════════════════════════════════════════════════════════════════════════
    DATA QUALITY — which taps are worth recording. NOT flagging thresholds.
    ═══════════════════════════════════════════════════════════════════════════════════ */
@@ -81,6 +98,11 @@ export const GO_NO_MESSAGE_MS = 900;
  * TODO(NEEDS_SOURCE): the exact number is our own choice of "obviously too fast to be a
  * reaction", not a value taken from any published protocol. It is deliberately well below any
  * real response so it only ever catches guessing.
+ *
+ * DELIBERATELY DIFFERENT from the noise-floor tool's 180 ms (MIN_PLAUSIBLE_REACTION_MS in
+ * app/tools/noise-floor/page.tsx). Noise-floor's 180 came from the owner's own data on a simple
+ * reaction task. Go/no-go keeps the more lenient 150 so genuinely fast responders are not
+ * rejected, and because changing it now would alter scoring after real testing began.
  */
 export const GO_NO_MIN_PLAUSIBLE_RESPONSE_MS = 150;
 
