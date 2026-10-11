@@ -1433,3 +1433,27 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
      CLAUDE.md changed). Both values kept.
   3. Cleanup: `CACHE_NAME` in `public/sw.js` v4 → v5; uninstalled the unused
      `@fontsource/ibm-plex-mono`. `npx vitest run` (504 tests) and `npm run build` pass.
+- **2026-10-11 (final pre-filming session, Claude Code).**
+  1. Homepage audience line added verbatim. **Written by a human (the project owner).**
+  2. About page "The problem" section, with the owner-supplied text and NATA source link, verbatim.
+     The 34% figure comes from the cited study, not from us. No TODO(NEEDS_SOURCE) in the repo
+     referred to it, so none was removed.
+  3. **"How we tested it" NOT added.** The brief still contained the placeholder
+     "[PASTE YOUR PARAGRAPH HERE]". When the owner supplies it, it must be added verbatim; the
+     text is to be **written by a human**.
+  4. Results screen: comparison bars stay on screen; the detail table is now print-only; measures
+     with no cut-off are grouped under "Not judged yet" below the judged ones. Verdict and all
+     safety copy untouched, except one phrase ("marked in the table below" became "marked below")
+     because the table no longer shows on screen.
+  5. Backup import on the roster (`lib/import.ts`, `restoreAthlete` in `lib/storage.ts`). Whole
+     file is refused if anything is malformed; replacing an existing athlete (same id or same
+     name) needs an explicit Replace; results owned by another athlete are refused. Tested by a
+     round trip through the real exporter (`lib/import.test.ts`); the IndexedDB write itself is
+     not run in tests (node-only harness).
+  6. Hero photo `public/hero.jpg` below the headline: whole on phones, 16:7 crop on wider screens
+     with the foreground ball kept in frame. The phone mockup stays. The photo is only 576px wide,
+     so it looks soft when enlarged.
+  7. Preliminary thresholds set at the owner's direction, values verbatim: digits 3, patterns 3,
+     word learning 5, word recall 5 (go/no-go stays 25 ms). The About page copy about which
+     measurements have cut-offs was updated to match. Harness run (report only): see the session
+     summary; no value was changed because of it.
