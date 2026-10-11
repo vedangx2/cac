@@ -19,6 +19,7 @@ import { ButtonLink, Kicker, Notice, Section } from '@/components/ui';
 
 export default function HomePage() {
   return (
+    <>
     <Section tone="canvas" compact className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-10">
       <div>
         <Kicker>Sideline concussion screening aid</Kicker>
@@ -84,14 +85,11 @@ export default function HomePage() {
         monochrome. This app has no photography, but its dark instrument screens are its
         product — so a genuine screenshot of one, in a plain phone frame, stands in for it.
 
-        NAMED SLOT FOR A REAL PHOTOGRAPH (2026-10-10 Task 3): if `public/hero.jpg` exists, it is
-        a real photograph the project owner took, and it replaces this screenshot outright — no
-        stock, generated, or placeholder imagery. As of 2026-10-10 the file does not exist, so
-        the phone mockup stays, made larger (max-w-[380px], up from 280px) with the surrounding
-        space tightened. It is a genuine screenshot (public/images/pattern-span-screenshot.png) of the
-        Tapped patterns module mid-practice-run, captured 2026-09-23 — not a mockup or an
+        The phone mockup. A genuine screenshot (public/images/pattern-span-screenshot.png) of
+        the Tapped patterns module mid-practice-run, captured 2026-09-23 — not a mockup or an
         illustration, and no athlete data is visible in it (a practice run saves nothing and
-        this one was never attached to an athlete).
+        this one was never attached to an athlete). The real photograph, public/hero.jpg, sits
+        in its own large band below (2026-10-11 Task 6, at the owner's direction): both stay.
       */}
       <div className="mt-8 flex justify-center lg:mt-0 lg:justify-end">
         <div className="w-full max-w-[380px] rounded-[2.5rem] border-[10px] border-ink bg-ink">
@@ -112,5 +110,28 @@ export default function HomePage() {
         </div>
       </div>
     </Section>
+
+    {/*
+      ── Hero photograph ─────────────────────────────────────────────────────────
+      public/hero.jpg is a real photo the project owner took (576x1024, portrait). On phones
+      it is shown whole, uncropped, at full width. From sm up it is cropped to a wide frame, and
+      object-position keeps the foreground basketball (about 88% of the way down the photo) in
+      view. It is only 576px wide, so on a wide screen it is enlarged and will look soft: a
+      higher-resolution original would fix that, not code.
+    */}
+    <Section tone="canvas" compact className="!pt-0">
+      <div className="overflow-hidden rounded-xs bg-surface">
+        <Image
+          src="/hero.jpg"
+          alt="An empty indoor basketball court: a hoop on the left, a tall window behind, and basketballs on the polished wood floor."
+          width={576}
+          height={1024}
+          sizes="(min-width: 1024px) 916px, 100vw"
+          className="h-auto w-full max-w-[576px] sm:max-w-none sm:aspect-[16/7] sm:object-cover sm:object-[50%_96%] mx-auto"
+          priority
+        />
+      </div>
+    </Section>
+    </>
   );
 }
