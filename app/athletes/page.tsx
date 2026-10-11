@@ -19,13 +19,23 @@ import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { Button, ButtonLink, Notice, PageHeader, PageShell } from '@/components/ui';
 import { useDeviceData } from '@/components/use-device-data';
-import { deleteAthlete, getAthletes, saveAthlete } from '@/lib/storage';
+import { deleteAthlete, getAthletes, getResultOwners, restoreAthlete, saveAthlete } from '@/lib/storage';
+import { type ParsedImport, parseAthleteExport, planImport } from '@/lib/import';
 import type { Athlete } from '@/lib/types';
 
 export default function AthletesPage() {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+
+  // Restoring an exported file. `pendingImport` is set only when the file is valid AND would
+  // replace an athlete already here, so nothing is written until the person says yes.
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<{
+    parsed: ParsedImport;
+    replaces: Athlete;
+  } | null>(null);
 
   const loadAthletes = useCallback(async () => {
     const all = await getAthletes();
@@ -67,6 +77,60 @@ export default function AthletesPage() {
     setName('');
     setError(null);
     await refresh();
+  };
+
+  /** Write a validated import. `replaces` is the athlete being overwritten, if any. */
+  const writeImport = async (parsed: ParsedImport, replaces: Athlete | null) => {
+    const athlete: Athlete = {
+      ...parsed.athlete,
+      // Practice passes are not part of an export. Keep them when replacing the same person;
+      // otherwise they start at zero, which fails closed (the baseline gate stays locked).
+      practiceCompletedAt: replaces?.practiceCompletedAt ?? null,
+      practicePassCount: replaces?.practicePassCount ?? 0,
+    };
+    try {
+      await restoreAthlete(athlete, parsed.results, replaces?.id ?? null);
+      setImportMessage(
+        `Restored ${athlete.name} with ${parsed.results.length} saved ${
+          parsed.results.length === 1 ? 'result' : 'results'
+        }.`,
+      );
+      setImportError(null);
+    } catch {
+      setImportError('Restoring failed and nothing was changed on this device.');
+      setImportMessage(null);
+    }
+    setPendingImport(null);
+    await refresh();
+  };
+
+  const chooseImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target;
+    const file = input.files?.[0];
+    input.value = ''; // so choosing the same file again still fires onChange
+    setImportMessage(null);
+    setImportError(null);
+    setPendingImport(null);
+    if (!file) return;
+
+    const result = parseAthleteExport(await file.text());
+    if (!result.ok) {
+      setImportError(result.error);
+      return;
+    }
+
+    const existing = await getAthletes();
+    const plan = planImport(result.data, existing, await getResultOwners());
+    if (plan.blocked) {
+      setImportError(plan.blocked);
+      return;
+    }
+    if (plan.replaces) {
+      // Never overwrite silently: wait for an explicit yes.
+      setPendingImport({ parsed: result.data, replaces: plan.replaces });
+      return;
+    }
+    await writeImport(result.data, null);
   };
 
   const removeAthlete = async (id: string) => {
@@ -218,6 +282,60 @@ export default function AthletesPage() {
               Names are stored only in this browser. Use whatever your team already uses. A
               first name and last initial is plenty.
             </p>
+
+            <div className="mt-8 border-t border-hairline pt-6">
+              <h2 className="text-title font-semibold text-ink">Restore from a backup</h2>
+              <p className="mt-2 text-meta text-ink-secondary">
+                Choose a file you exported from an athlete&apos;s page. It is read on this device
+                only. An athlete already here is never replaced without asking.
+              </p>
+              <label
+                htmlFor="import-file"
+                className="mt-4 block text-meta font-semibold text-ink"
+              >
+                Exported file (.json)
+              </label>
+              <input
+                id="import-file"
+                type="file"
+                accept="application/json,.json"
+                onChange={(event) => void chooseImportFile(event)}
+                className="mt-2 block w-full text-meta text-ink"
+              />
+              {importError && (
+                <p role="alert" className="mt-2 text-meta font-semibold text-ink">
+                  {importError}
+                </p>
+              )}
+              {importMessage && (
+                <p role="status" className="mt-2 text-meta font-semibold text-ink">
+                  {importMessage}
+                </p>
+              )}
+              {pendingImport && (
+                <div className="mt-4 rounded-xs border border-ink p-4">
+                  <p className="text-meta font-semibold text-ink">
+                    {pendingImport.replaces.name} is already on this device. Replace them and all
+                    of their saved results with the {pendingImport.parsed.results.length} in this
+                    file? Anything saved here that is not in the file will be lost. This cannot be
+                    undone.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="primary"
+                      onClick={() =>
+                        void writeImport(pendingImport.parsed, pendingImport.replaces)
+                      }
+                    >
+                      Replace
+                    </Button>
+                    <Button variant="secondary" onClick={() => setPendingImport(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </section>
       </div>

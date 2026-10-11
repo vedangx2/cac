@@ -266,3 +266,59 @@ export async function deleteAthlete(athleteId: string): Promise<void> {
   await transactionDone(tx);
   db.close();
 }
+
+/**
+ * Restore an imported athlete and their results in ONE transaction, so a failure part-way
+ * leaves the device exactly as it was.
+ *
+ * `replaceAthleteId` is the athlete already on the device that the import replaces (the roster
+ * has asked the person first); that athlete and all their results are deleted inside the same
+ * transaction, then the imported ones are written. Pass null when nothing is being replaced:
+ * then this REFUSES to overwrite an athlete or result with the same id, because `add` (unlike
+ * `put`) fails on an existing key instead of silently replacing it.
+ */
+export async function restoreAthlete(
+  athlete: Athlete,
+  results: TestResult[],
+  replaceAthleteId: string | null,
+): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction([ATHLETES_STORE, RESULTS_STORE], 'readwrite');
+  const athletes = tx.objectStore(ATHLETES_STORE);
+  const resultStore = tx.objectStore(RESULTS_STORE);
+
+  const writeImported = () => {
+    athletes.add(athlete);
+    for (const result of results) resultStore.add(result);
+  };
+
+  if (replaceAthleteId !== null) {
+    athletes.delete(replaceAthleteId);
+    const index = resultStore.index(RESULTS_BY_ATHLETE_INDEX);
+    const cursorRequest = index.openCursor(IDBKeyRange.only(replaceAthleteId));
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
+        return;
+      }
+      // Cursor finished: only now write the imported records, still inside this transaction.
+      writeImported();
+    };
+  } else {
+    writeImported();
+  }
+
+  await transactionDone(tx);
+  db.close();
+}
+
+/** Every stored result id mapped to the athlete that owns it, for import collision checks. */
+export async function getResultOwners(): Promise<Map<string, string>> {
+  const db = await openDb();
+  const tx = db.transaction(RESULTS_STORE, 'readonly');
+  const all: StoredTestResult[] = await promisifyRequest(tx.objectStore(RESULTS_STORE).getAll());
+  db.close();
+  return new Map(all.map((r) => [r.id, r.athleteId]));
+}
