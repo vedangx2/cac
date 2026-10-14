@@ -1577,3 +1577,9 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
   placeholder section ("How we tested it" was never added); the gap was two stacked 96px paddings,
   so the intro header now uses `compact`. Tests updated for the new name: `lib/export.test.ts`
   (filenames) and `lib/design.test.ts` (wordmark regex). No logic, thresholds or scoring changed.
+- **2026-10-13 (About spacing follow-up, Claude Code).** Checked `rename-rebound`: already merged
+  into `main` (same commit, `f9221c7`), so nothing to merge. About page gap: no empty or placeholder
+  section; it was padding stacking between two canvas-tone sections. The earlier `compact` change
+  was not enough, so the intro now also drops its bottom padding (`pb-0 sm:pb-0`), leaving only the
+  header margin plus "The problem" section's own top padding. Layout only; no copy, logic,
+  thresholds, scoring or storage changed. Full test suite (525 tests) and production build pass.
