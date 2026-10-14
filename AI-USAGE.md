@@ -1569,3 +1569,11 @@ Done by Claude Code (Sonnet 5.5) from a human's written task list. The earlier T
      word learning 5, word recall 5 (go/no-go stays 25 ms). The About page copy about which
      measurements have cut-offs was updated to match. Harness run (report only): see the session
      summary; no value was changed because of it.
+- **2026-10-13 (rename session, Claude Code).** Renamed the app to "Rebound" (copy and metadata
+  only). Page title, manifest `name`/`short_name`, iOS home-screen title, header wordmark, printed
+  result heading, import error messages and README title. Export download filename is now
+  `rebound-<name>-<date>.json`. IndexedDB, localStorage keys and the export file's contents were
+  not touched. `CACHE_NAME` in `public/sw.js` v5 → `rebound-v6`. About page: there was no empty or
+  placeholder section ("How we tested it" was never added); the gap was two stacked 96px paddings,
+  so the intro header now uses `compact`. Tests updated for the new name: `lib/export.test.ts`
+  (filenames) and `lib/design.test.ts` (wordmark regex). No logic, thresholds or scoring changed.

@@ -114,7 +114,7 @@ export function buildAthleteExport(
 /**
  * A filename that sorts sensibly and says what it is.
  *
- * e.g. `sideline-check-jordan-lee-2026-07-29.json`
+ * e.g. `rebound-jordan-lee-2026-07-29.json`
  *
  * The name is slugged rather than used raw because it ends up on a filesystem: spaces, quotes,
  * slashes and accents in a downloaded filename cause anything from an ugly name to a silently
@@ -130,7 +130,7 @@ export function exportFilename(athleteName: string, exportedAt: number): string 
 
   const date = new Date(exportedAt).toISOString().slice(0, 10); // YYYY-MM-DD
 
-  return `sideline-check-${slug}-${date}.json`;
+  return `rebound-${slug}-${date}.json`;
 }
 
 /** Pretty-printed, because a human is going to open this in a text editor. */

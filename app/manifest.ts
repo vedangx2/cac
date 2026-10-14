@@ -8,9 +8,9 @@ import type { MetadataRoute } from 'next';
 // appears, which is a miserable thing to debug.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Sideline Concussion Screen',
+    name: 'Rebound',
     // Home screens have very little room — this is what shows under the icon.
-    short_name: 'Sideline Screen',
+    short_name: 'Rebound',
     description:
       "A screening aid that compares an athlete's test scores against their own healthy baseline and refers them to a medical professional. Not a medical device.",
     start_url: '/',

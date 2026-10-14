@@ -78,18 +78,18 @@ const fail = (error: string): ImportParse => ({ ok: false, error });
 
 /** Parse and fully validate the text of an exported file. */
 export function parseAthleteExport(text: string): ImportParse {
-  if (text.length > MAX_IMPORT_BYTES) return fail('That file is too large to be a Sideline Check export.');
+  if (text.length > MAX_IMPORT_BYTES) return fail('That file is too large to be a Rebound export.');
 
   let raw: unknown;
   try {
     raw = JSON.parse(text);
   } catch {
-    return fail('That file is not valid JSON, so it cannot be a Sideline Check export.');
+    return fail('That file is not valid JSON, so it cannot be a Rebound export.');
   }
 
-  if (!isObj(raw)) return fail('That file is not a Sideline Check export.');
+  if (!isObj(raw)) return fail('That file is not a Rebound export.');
   if (raw.exportFormatVersion !== EXPORT_FORMAT_VERSION) {
-    return fail('That file is not a Sideline Check export, or comes from an incompatible version.');
+    return fail('That file is not a Rebound export, or comes from an incompatible version.');
   }
   if (!isObj(raw.athlete) || !Array.isArray(raw.results)) {
     return fail('That export is missing its athlete or its results.');

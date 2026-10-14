@@ -72,7 +72,9 @@ const TESTS = [
 export default function AboutPage() {
   return (
     <>
-      <Section tone="canvas">
+      {/* compact: this intro and "The problem" below are both canvas tone, so their padding
+          stacked into one ~190px blank band. Nothing is missing here; it was only spacing. */}
+      <Section tone="canvas" compact>
         <PageHeader
           eyebrow="About"
           title="How this app works, and what it cannot do"

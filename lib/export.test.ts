@@ -198,26 +198,26 @@ describe('buildAthleteExport copies records out faithfully', () => {
 
 describe('exportFilename', () => {
   it('builds a readable, date-stamped name', () => {
-    expect(exportFilename('Jordan Lee', EXPORTED_AT)).toBe('sideline-check-jordan-lee-2026-07-29.json');
+    expect(exportFilename('Jordan Lee', EXPORTED_AT)).toBe('rebound-jordan-lee-2026-07-29.json');
   });
 
   it('strips characters that break filesystems', () => {
     // A raw name reaches a filesystem here. Slashes, quotes and accents cause anything from an
     // ugly name to a silently failed save depending on the platform.
     expect(exportFilename('Ana "Nana" O\'Brien-Ruiz/2', EXPORTED_AT)).toBe(
-      'sideline-check-ana-nana-o-brien-ruiz-2-2026-07-29.json',
+      'rebound-ana-nana-o-brien-ruiz-2-2026-07-29.json',
     );
   });
 
   it('never produces leading or trailing hyphens in the slug', () => {
-    expect(exportFilename('  Sam  ', EXPORTED_AT)).toBe('sideline-check-sam-2026-07-29.json');
+    expect(exportFilename('  Sam  ', EXPORTED_AT)).toBe('rebound-sam-2026-07-29.json');
   });
 
   it('falls back to a usable name when nothing survives slugging', () => {
     // A name written entirely in a non-Latin script slugs to an empty string. A file called
-    // "sideline-check--2026-07-29.json" is confusing; falling back is kinder.
-    expect(exportFilename('日本語', EXPORTED_AT)).toBe('sideline-check-athlete-2026-07-29.json');
-    expect(exportFilename('', EXPORTED_AT)).toBe('sideline-check-athlete-2026-07-29.json');
+    // "rebound--2026-07-29.json" is confusing; falling back is kinder.
+    expect(exportFilename('日本語', EXPORTED_AT)).toBe('rebound-athlete-2026-07-29.json');
+    expect(exportFilename('', EXPORTED_AT)).toBe('rebound-athlete-2026-07-29.json');
   });
 
   it('caps a very long name', () => {

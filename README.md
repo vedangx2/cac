@@ -1,4 +1,4 @@
-# Sideline Concussion Screen
+# Rebound
 
 A free mobile web app that helps youth athletes, coaches, and parents catch a **possible**
 concussion on the sideline when no athletic trainer is present.

@@ -13,14 +13,14 @@ import '@fontsource/ibm-plex-sans/600.css';
 import { ServiceWorkerRegistrar } from '@/components/service-worker';
 
 export const metadata: Metadata = {
-  title: 'Sideline Concussion Screen',
+  title: 'Rebound',
   description:
     "A free, on-device screening aid that compares an athlete's post-hit test scores to " +
     'their own healthy baseline and refers them to a medical professional. Not a medical device.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    title: 'Sideline Screen',
+    title: 'Rebound',
     // The app chrome is near-black on every screen now, so the iOS status bar matches it.
     statusBarStyle: 'black-translucent',
   },
@@ -72,7 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               href="/"
               className="inline-flex min-h-14 items-center text-meta font-semibold uppercase tracking-widest"
             >
-              Sideline&nbsp;Screen
+              Rebound
             </Link>
             {/* Order: About (a supplementary read) before Athletes (where the app's actual
                 work happens) — CLAUDE.md Task 6. */}
